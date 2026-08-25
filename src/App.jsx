@@ -179,7 +179,7 @@ function App() {
 
           {isMobile && (
             <button className="mobile-panel-toggle" onClick={() => setMobilePanelOpen(o => !o)}>
-              {mobilePanelOpen ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+              {mobilePanelOpen ? <X size={16} /> : <ChevronUp size={16} />}
               <span>{currentStep?.title || 'Details'}</span>
             </button>
           )}
