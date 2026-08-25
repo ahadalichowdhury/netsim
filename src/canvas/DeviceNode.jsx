@@ -97,7 +97,7 @@ const icons = {
   )
 };
 
-const DeviceNode = ({ device, isHighlighted, isDragging, isSelected, onDragStart, onTouchStart, onClick }) => {
+const DeviceNode = ({ device, isHighlighted, isDragging, isSelected, onDragStart, onClick }) => {
   const { type, name, ip, mac, x, y } = device;
   const typeClass = `device-${type}`;
   const highlightClass = isHighlighted ? 'highlighted' : '';
@@ -121,24 +121,6 @@ const DeviceNode = ({ device, isHighlighted, isDragging, isSelected, onDragStart
     window.addEventListener('mouseup', onUp);
   }, [device.id, onDragStart]);
 
-  const handleTouchStartLocal = useCallback((e) => {
-    e.stopPropagation();
-    const touch = e.touches[0];
-    dragStarted.current = false;
-    const onMove = (te) => {
-      dragStarted.current = true;
-      const t = te.touches[0];
-      onTouchStart?.(device.id, { clientX: t.clientX, clientY: t.clientY });
-      te.preventDefault();
-    };
-    const onEnd = () => {
-      window.removeEventListener('touchmove', onMove);
-      window.removeEventListener('touchend', onEnd);
-    };
-    window.addEventListener('touchmove', onMove, { passive: false });
-    window.addEventListener('touchend', onEnd);
-  }, [device.id, onTouchStart]);
-
   const handleClick = useCallback((e) => {
     if (!dragStarted.current) {
       onClick?.(device);
@@ -149,8 +131,8 @@ const DeviceNode = ({ device, isHighlighted, isDragging, isSelected, onDragStart
     <div
       className={`device-node ${typeClass} ${highlightClass} ${dragClass} ${selectClass}`}
       style={{ left: `${x}px`, top: `${y}px` }}
+      data-device-id={device.id}
       onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStartLocal}
       onClick={handleClick}
     >
       <div className="device-icon-wrap">
