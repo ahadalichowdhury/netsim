@@ -40,6 +40,10 @@ const scenarioIcons = {
 const Sidebar = ({ scenarios, activeId, onSelect, stepIndex, totalSteps, collapsed, onToggle }) => {
   const listRef = useRef(null);
   const [expandedCategories, setExpandedCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('netsim-sidebar-expanded');
+      if (saved) return JSON.parse(saved);
+    } catch {}
     const cats = {};
     scenarios.forEach(s => {
       const cat = s.category || 'Other';
@@ -47,6 +51,10 @@ const Sidebar = ({ scenarios, activeId, onSelect, stepIndex, totalSteps, collaps
     });
     return cats;
   });
+
+  useEffect(() => {
+    localStorage.setItem('netsim-sidebar-expanded', JSON.stringify(expandedCategories));
+  }, [expandedCategories]);
 
   const toggleCategory = (cat) => {
     setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
