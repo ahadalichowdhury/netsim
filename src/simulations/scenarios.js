@@ -5,6 +5,7 @@ export const scenarios = [
     icon: '🔀',
     description: 'How switches forward frames using MAC addresses',
     category: 'Networking Fundamentals',
+    order: 10,
     topology: {
       devices: [
         { id: 'pc-a', type: 'computer', name: 'PC-A', ip: '192.168.1.10', mac: 'AA:BB:CC:DD:EE:01', x: 150, y: 280 },
@@ -21,7 +22,7 @@ export const scenarios = [
     steps: [
       {
         title: 'PC-A wants to send data to PC-B',
-        explanation: '<strong>PC-A</strong> has data to send to <strong>PC-B</strong> (192.168.1.20). Both are on the same subnet (192.168.1.0/24), so PC-A can send directly via Layer 2.\n\nBut first, PC-A needs to build an <strong>Ethernet frame</strong> with PC-B\'s MAC address as the destination.',
+        explanation: '<strong>PC-A</strong> has data to send to <strong>PC-B</strong> (192.168.1.20). Both are on the same subnet (192.168.1.0/24), so PC-A can send directly via Layer 2.\n\nBut first, PC-A needs to build an <strong>Ethernet frame</strong> with PC-B\'s MAC address as the destination.\n\n<strong>How does PC-A know PC-B\'s MAC?</strong>\nPC-A uses <strong>ARP</strong> (Address Resolution Protocol) to discover it. Before this step, PC-A sent an ARP broadcast: "Who has 192.168.1.20?" and PC-B replied with its MAC. See the <strong>ARP topic</strong> for the full process.\n\n<strong>How does PC-A know PC-B\'s IP?</strong> The user or application provided it — either directly (ping 192.168.1.20) or via DNS resolution (ping pc-b.local). See <strong>How Networks Start</strong> for the complete chain.\n\n<strong>See also:</strong> <strong>MAC Address</strong> and <strong>MAC Table</strong> topics for how switches learn and forward.',
         highlights: ['pc-a'],
         packets: [],
         tables: { 'switch': { mac: {} } }
@@ -220,6 +221,7 @@ export const scenarios = [
     icon: '📡',
     description: 'Address Resolution Protocol - IP to MAC mapping',
     category: 'Networking Fundamentals',
+    order: 11,
     topology: {
       devices: [
         { id: 'pc-a', type: 'computer', name: 'PC-A', ip: '192.168.1.10', mac: 'AA:BB:CC:DD:EE:01', x: 200, y: 280 },
@@ -234,7 +236,7 @@ export const scenarios = [
     steps: [
       {
         title: 'PC-A needs PC-B\'s MAC address',
-        explanation: 'PC-A wants to send data to PC-B (192.168.1.20). It knows PC-B\'s <strong>IP address</strong>, but to send an Ethernet frame, it needs the <strong>MAC address</strong>.\n\nPC-A checks its <strong>ARP cache</strong> \u2014 it\'s empty. It must use ARP to discover the MAC.',
+        explanation: 'PC-A wants to send data to PC-B (192.168.1.20). <strong>How does PC-A know this IP?</strong>\n\n• The user typed <code>ping 192.168.1.20</code> (IP given directly)\n• Or the user typed <code>ping pc-b.local</code> and <strong>DNS</strong> resolved it to 192.168.1.20\n\nSee the <strong>How Networks Start</strong> topic for the full journey from user action to first packet.\n\nNow PC-A needs to send an Ethernet frame, but it needs PC-B\'s <strong>MAC address</strong>. PC-A checks its ARP cache — it\'s empty. It must use ARP to discover the MAC.\n\n<strong>See also:</strong> <strong>ARP Table</strong> topic for cache entries and timeouts.',
         highlights: ['pc-a'],
         packets: [],
         tables: {
@@ -425,6 +427,7 @@ export const scenarios = [
     icon: '🌐',
     description: 'Dynamic Host Configuration Protocol - DORA process',
     category: 'Networking Fundamentals',
+    order: 14,
     topology: {
       devices: [
         { id: 'pc-new', type: 'computer', name: 'New PC', ip: '???.???.???.???', mac: 'AA:BB:CC:DD:EE:10', x: 200, y: 280 },
@@ -439,7 +442,7 @@ export const scenarios = [
     steps: [
       {
         title: 'New PC boots up — no IP address!',
-        explanation: 'A brand-new PC powers on with a <strong>burned-in MAC address</strong> (AA:BB:CC:DD:EE:10) but <strong>no IP configuration</strong> at all.\n\nWithout an IP, it cannot communicate on the network. It must run <strong>DHCP DORA</strong> to obtain one automatically.',
+        explanation: 'A brand-new PC powers on with a <strong>burned-in MAC address</strong> (AA:BB:CC:DD:EE:10) but <strong>no IP configuration</strong> at all.\n\nWithout an IP, it cannot communicate on the network. It must run <strong>DHCP DORA</strong> to obtain one automatically.\n\n<strong>Note:</strong> DHCP also provides the <strong>default gateway</strong> and <strong>DNS server</strong> addresses. See those topics for details.\n\n<strong>See also:</strong> <strong>DHCP Table</strong> topic for lease database details.',
         highlights: ['pc-new'],
         packets: [],
         tables: {
@@ -667,6 +670,7 @@ export const scenarios = [
     icon: '🌍',
     description: 'Routing between different networks via a router',
     category: 'Networking Fundamentals',
+    order: 15,
     topology: {
       devices: [
         { id: 'pc-a', type: 'computer', name: 'PC-A', ip: '192.168.1.10', mac: 'AA:BB:CC:DD:EE:01', x: 120, y: 280, subnet: '192.168.1.0/24', gw: '192.168.1.1' },
@@ -685,7 +689,7 @@ export const scenarios = [
     steps: [
       {
         title: 'PC-A wants to reach PC-C (different subnet)',
-        explanation: 'PC-A (192.168.1.10) wants to send data to PC-C (192.168.2.10).\n\nPC-A checks its subnet mask: <code>255.255.255.0</code>. The destination 192.168.2.10 is <strong>not</strong> in the 192.168.1.0/24 network.\n\n<strong>Key rule:</strong> When the destination is on a different subnet, the frame must go to the <strong>default gateway</strong> (Router) — never directly to the destination.',
+        explanation: 'PC-A (192.168.1.10) wants to send data to PC-C (192.168.2.10).\n\nPC-A checks its subnet mask: <code>255.255.255.0</code>. The destination 192.168.2.10 is <strong>not</strong> in the 192.168.1.0/24 network.\n\n<strong>Key rule:</strong> When the destination is on a different subnet, the frame must go to the <strong>default gateway</strong> (Router) — never directly to the destination.\n\n<strong>Prerequisite:</strong> Understand <strong>ARP</strong> (how MAC addresses are discovered) and <strong>Gateway</strong> (how routers connect networks) first.\n\n<strong>See also:</strong> <strong>Routing Table</strong> and <strong>IP Address</strong> topics for routing decisions and address structure.',
         highlights: ['pc-a'],
         packets: [],
         tables: {
@@ -878,6 +882,7 @@ export const scenarios = [
     icon: '🔍',
     description: 'Domain Name System — how names become IP addresses',
     category: 'Networking Fundamentals',
+    order: 16,
     topology: {
       devices: [
         { id: 'pc', type: 'computer', name: 'PC', ip: '192.168.1.10', mac: 'AA:BB:CC:DD:EE:01', x: 150, y: 280 },
@@ -892,7 +897,7 @@ export const scenarios = [
     steps: [
       {
         title: 'User types google.com in browser',
-        explanation: 'The user opens a browser and types <strong>google.com</strong> in the address bar.\n\nThe computer needs to convert this human-readable <strong>domain name</strong> into an IP address. It starts by checking its <strong>local DNS cache</strong> to see if it already knows the answer.',
+        explanation: 'The user opens a browser and types <strong>google.com</strong> in the address bar.\n\nThe computer needs to convert this human-readable <strong>domain name</strong> into an IP address. It starts by checking its <strong>local DNS cache</strong> to see if it already knows the answer.\n\n<strong>Note:</strong> DNS resolution happens before most network connections. After DNS, the <strong>TCP Handshake</strong> establishes the connection to the resolved IP.\n\n<strong>See also:</strong> <strong>TCP/UDP Ports</strong> topic — DNS uses port 53.',
         highlights: ['pc'],
         packets: [],
         tables: {
@@ -1084,6 +1089,7 @@ export const scenarios = [
     icon: '🤝',
     description: 'TCP 3-Way Handshake — how connections are established',
     category: 'Networking Fundamentals',
+    order: 17,
     topology: {
       devices: [
         { id: 'client', type: 'computer', name: 'Client', ip: '192.168.1.10', mac: 'AA:BB:CC:DD:EE:01', x: 200, y: 280 },
@@ -1098,7 +1104,7 @@ export const scenarios = [
     steps: [
       {
         title: 'Client wants to connect to Web Server',
-        explanation: 'The Client wants to fetch a web page from the <strong>Web Server</strong> (192.168.1.20).\n\nBefore any data can be exchanged, TCP requires a <strong>3-way handshake</strong> to establish a reliable connection. Both sides must agree on initial sequence numbers.',
+        explanation: 'The Client wants to fetch a web page from the <strong>Web Server</strong> (192.168.1.20).\n\nBefore any data can be exchanged, TCP requires a <strong>3-way handshake</strong> to establish a reliable connection. Both sides must agree on initial sequence numbers.\n\n<strong>Prerequisite:</strong> DNS resolution must happen first to get the server\'s IP address. See the <strong>DNS</strong> topic.\n\n<strong>See also:</strong> <strong>TCP/UDP Ports</strong> topic for port numbers used in the handshake.',
         highlights: ['client'],
         packets: [],
         tables: {}
@@ -1402,6 +1408,7 @@ export const scenarios = [
     icon: '🔄',
     description: 'Network Address Translation — private to public IP mapping',
     category: 'Networking Fundamentals',
+    order: 18,
     topology: {
       devices: [
         { id: 'pc-1', type: 'computer', name: 'PC-1', ip: '192.168.1.10', mac: 'AA:BB:CC:DD:EE:01', x: 100, y: 320 },
@@ -1420,7 +1427,7 @@ export const scenarios = [
     steps: [
       {
         title: 'PC-1 wants to access the internet',
-        explanation: 'PC-1 (192.168.1.10) wants to reach a Web Server at <code>93.184.216.34</code> on the internet.\n\nPC-1 uses a <strong>private IP address</strong> (192.168.1.x). Private IPs can\'t be routed on the public internet — the <strong>NAT Router</strong> must translate the address.',
+        explanation: 'PC-1 (192.168.1.10) wants to reach a Web Server at <code>93.184.216.34</code> on the internet.\n\nPC-1 uses a <strong>private IP address</strong> (192.168.1.x). Private IPs can\'t be routed on the public internet — the <strong>NAT Router</strong> must translate the address.\n\n<strong>Prerequisite:</strong> Understand <strong>Default Gateway</strong> (how packets reach the router) and <strong>Layer 3</strong> (how routers forward packets) first.',
         highlights: ['pc-1'],
         packets: [],
         tables: {
@@ -1736,6 +1743,7 @@ export const scenarios = [
     icon: '🏢',
     description: 'Virtual LANs — segmenting networks logically',
     category: 'Networking Fundamentals',
+    order: 19,
     topology: {
       devices: [
         { id: 'pc-a', type: 'computer', name: 'PC-A', ip: '192.168.10.10', mac: 'AA:BB:CC:DD:EE:01', x: 150, y: 350 },
@@ -1754,7 +1762,7 @@ export const scenarios = [
     steps: [
       {
         title: '4 PCs, 2 VLANs on one switch',
-        explanation: 'All four PCs are connected to the <strong>same physical switch</strong>, but the switch has been configured to create <strong>two VLANs</strong>:\n\n• <strong>VLAN 10</strong>: PC-A (Port 1) and PC-B (Port 2)\n• <strong>VLAN 20</strong>: PC-C (Port 3) and PC-D (Port 4)\n\nVLANs <strong>logically segment</strong> the network — even though all devices share one switch, they are isolated into separate broadcast domains.',
+        explanation: 'All four PCs are connected to the <strong>same physical switch</strong>, but the switch has been configured to create <strong>two VLANs</strong>:\n\n• <strong>VLAN 10</strong>: PC-A (Port 1) and PC-B (Port 2)\n• <strong>VLAN 20</strong>: PC-C (Port 3) and PC-D (Port 4)\n\nVLANs <strong>logically segment</strong> the network — even though all devices share one switch, they are isolated into separate broadcast domains.\n\n<strong>Prerequisite:</strong> Understand <strong>Layer 2</strong> (how switches forward frames) first. VLANs extend switching with logical segmentation.',
         highlights: [],
         packets: [],
         tables: {
@@ -1995,6 +2003,7 @@ export const scenarios = [
     icon: '🔌',
     description: 'How NICs receive, filter, and transmit frames',
     category: 'Linux Core Networking',
+    order: 20,
     diagramStyle: 'schematic',
     topology: {
       devices: [
@@ -2012,7 +2021,7 @@ export const scenarios = [
     steps: [
       {
         title: 'Web Server sends a frame to Linux Host',
-        explanation: 'The <strong>Web Server</strong> (192.168.1.20) has prepared an Ethernet frame destined for the Linux Host (192.168.1.10).\n\nThe frame travels across the network toward the Linux Host\'s NIC. Let\'s see how the NIC processes it step by step.',
+        explanation: 'The <strong>Web Server</strong> (192.168.1.20) has prepared an Ethernet frame destined for the Linux Host (192.168.1.10).\n\nThe frame travels across the network toward the Linux Host\'s NIC. Let\'s see how the NIC processes it step by step.\n\n<strong>Prerequisite:</strong> This topic shows how Linux handles network interfaces at the hardware level.',
         highlights: [],
         packets: [],
         tables: {},
@@ -2160,6 +2169,7 @@ export const scenarios = [
     icon: '📚',
     description: 'TCP/IP stack layers and packet flow through the kernel',
     category: 'Linux Core Networking',
+    order: 21,
     diagramStyle: 'schematic',
     topology: {
       devices: [
@@ -2183,7 +2193,7 @@ export const scenarios = [
     steps: [
       {
         title: 'App wants to send data to remote server',
-        explanation: 'A <strong>user application</strong> (e.g., curl, browser) wants to send data to a remote server at <code>10.0.0.50</code>.\n\nThe data must travel down through each layer of the <strong>TCP/IP network stack</strong> before it can be transmitted on the wire.',
+        explanation: 'A <strong>user application</strong> (e.g., curl, browser) wants to send data to a remote server at <code>10.0.0.50</code>.\n\nThe data must travel down through each layer of the <strong>TCP/IP network stack</strong> before it can be transmitted on the wire.\n\n<strong>Prerequisite:</strong> Understand the <strong>TCP Handshake</strong> and <strong>DNS</strong> topics to see how applications use the stack.\n\n<strong>See also:</strong> <strong>TCP/UDP Ports</strong> and <strong>IP Address</strong> topics for the headers at each layer.',
         highlights: ['user-app'],
         packets: [],
         tables: {}
@@ -2341,6 +2351,7 @@ export const scenarios = [
     icon: '🗺️',
     description: 'Linux routing decisions with ip route',
     category: 'Linux Core Networking',
+    order: 22,
     diagramStyle: 'schematic',
     topology: {
       devices: [
@@ -2364,7 +2375,7 @@ export const scenarios = [
     steps: [
       {
         title: 'Linux box has 2 interfaces, 2 route table entries',
-        explanation: 'The Linux box has two network interfaces:\n<code>eth0: 192.168.1.1/24</code>\n<code>eth1: 10.0.0.1/24</code>\n\nThe kernel maintains a <strong>routing table</strong> that determines where to send packets based on their destination IP.',
+        explanation: 'The Linux box has two network interfaces:\n<code>eth0: 192.168.1.1/24</code>\n<code>eth1: 10.0.0.1/24</code>\n\nThe kernel maintains a <strong>routing table</strong> that determines where to send packets based on their destination IP.\n\n<strong>Prerequisite:</strong> Understand <strong>Layer 3</strong> (routing decisions) and <strong>Gateway</strong> (how routers connect networks) first.\n\n<strong>See also:</strong> <strong>Routing Table</strong> topic for the conceptual overview.',
         highlights: [],
         packets: [],
         tables: {
@@ -2524,6 +2535,7 @@ export const scenarios = [
     icon: '🔥',
     description: 'Linux packet filtering with iptables chains',
     category: 'Linux Core Networking',
+    order: 25,
     diagramStyle: 'schematic',
     topology: {
       devices: [
@@ -2543,7 +2555,7 @@ export const scenarios = [
     steps: [
       {
         title: 'Firewall has iptables rules on 3 chains',
-        explanation: 'The Linux firewall uses <strong>iptables</strong> with three built-in chains:\n\n<strong>INPUT</strong> — packets destined for the firewall itself\n<strong>OUTPUT</strong> — packets originating from the firewall\n<strong>FORWARD</strong> — packets passing through the firewall (not destined for it)\n\nIncoming packets from the internet first hit the <strong>PREROUTING</strong> chain, then are routed to INPUT or FORWARD.',
+        explanation: 'The Linux firewall uses <strong>iptables</strong> with three built-in chains:\n\n<strong>INPUT</strong> — packets destined for the firewall itself\n<strong>OUTPUT</strong> — packets originating from the firewall\n<strong>FORWARD</strong> — packets passing through the firewall (not destined for it)\n\nIncoming packets from the internet first hit the <strong>PREROUTING</strong> chain, then are routed to INPUT or FORWARD.\n\n<strong>Prerequisite:</strong> Understand <strong>Linux Gateway</strong> (ip forwarding) and <strong>Route Table</strong> first.',
         highlights: [],
         packets: [],
         tables: {
@@ -2805,6 +2817,7 @@ export const scenarios = [
     icon: '📦',
     description: 'Linux network isolation with namespaces and veth pairs',
     category: 'Linux Core Networking',
+    order: 26,
     diagramStyle: 'schematic',
     topology: {
       devices: [
@@ -2826,7 +2839,7 @@ export const scenarios = [
     steps: [
       {
         title: 'Two isolated network namespaces: app1 and app2',
-        explanation: '<strong>Linux network namespaces</strong> provide complete network stack isolation. Each namespace has its own interfaces, routes, and iptables rules.\n\nWe\'ve created two namespaces:\n<code>ip netns add app1</code>\n<code>ip netns add app2</code>\n\nThey are completely invisible to each other — like two separate machines.',
+        explanation: '<strong>Linux network namespaces</strong> provide complete network stack isolation. Each namespace has its own interfaces, routes, and iptables rules.\n\nWe\'ve created two namespaces:\n<code>ip netns add app1</code>\n<code>ip netns add app2</code>\n\nThey are completely invisible to each other — like two separate machines.\n\n<strong>Prerequisite:</strong> Understand <strong>Network Interface (NIC)</strong> and <strong>Network Stack</strong> first.',
         highlights: [],
         packets: [],
         tables: {
@@ -2933,6 +2946,7 @@ export const scenarios = [
     icon: '🔗',
     description: 'Connecting VMs/containers with Linux bridge (brctl)',
     category: 'Linux Core Networking',
+    order: 27,
     diagramStyle: 'schematic',
     topology: {
       devices: [
@@ -2952,7 +2966,7 @@ export const scenarios = [
     steps: [
       {
         title: 'Linux bridge acts like a virtual switch',
-        explanation: 'A <strong>Linux bridge</strong> is a kernel-level virtual switch. It works just like a physical switch — it learns MAC addresses and forwards frames.\n\nCreated with:\n<code>ip link add br0 type bridge</code>\n<code>brctl show br0</code>\n\nThe bridge has ports where VMs/containers attach, and an uplink to the outside network.',
+        explanation: 'A <strong>Linux bridge</strong> is a kernel-level virtual switch. It works just like a physical switch — it learns MAC addresses and forwards frames.\n\nCreated with:\n<code>ip link add br0 type bridge</code>\n<code>brctl show br0</code>\n\nThe bridge has ports where VMs/containers attach, and an uplink to the outside network.\n\n<strong>Prerequisite:</strong> Understand <strong>Network Namespaces</strong> and <strong>Layer 2</strong> (MAC learning) first.',
         highlights: [],
         packets: [],
         tables: {}
@@ -3106,6 +3120,3713 @@ export const scenarios = [
             'Router MAC': { port: 'uplink', label: 'Router', isNew: true }
           } }
         }
+      }
+    ]
+  },
+
+  {
+    id: 'linux-gateway',
+    name: 'Linux Gateway',
+    icon: '🔀',
+    description: 'Linux as a gateway with ip forwarding enabled',
+    category: 'Linux Core Networking',
+    order: 24,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'ns1', type: 'linux', name: 'NS: web', x: 80, y: 100, cmds: ['curl 10.0.0.20'] },
+        { id: 'veth1', type: 'nic', name: 'veth1-ns', x: 280, y: 100 },
+        { id: 'br1', type: 'bridge', name: 'br0', subnet: '192.168.1.1/24', x: 400, y: 100 },
+        { id: 'fwd', type: 'box', name: 'ip_forward=1', color: 'var(--green)', x: 500, y: 200 },
+        { id: 'br2', type: 'bridge', name: 'br1', subnet: '10.0.0.1/24', x: 600, y: 300 },
+        { id: 'veth2', type: 'nic', name: 'veth2-ns', x: 700, y: 300 },
+        { id: 'ns2', type: 'linux', name: 'NS: db', x: 850, y: 300, cmds: ['10.0.0.20'] }
+      ],
+      links: [
+        { id: 'link-ns1-v1', from: 'ns1', to: 'veth1' },
+        { id: 'link-v1-br1', from: 'veth1', to: 'br1' },
+        { id: 'link-br1-br2', from: 'br1', to: 'br2' },
+        { id: 'link-br2-v2', from: 'br2', to: 'veth2' },
+        { id: 'link-v2-ns2', from: 'veth2', to: 'ns2' }
+      ]
+    },
+    steps: [
+      {
+        title: 'Linux box connects two networks',
+        explanation: 'A Linux box sits between two networks:\n<code>Network 1 (br0): 192.168.1.0/24</code>\n<code>Network 2 (br1): 10.0.0.0/24</code>\n\nThe Linux box has two bridges (br0, br1) and <strong>ip forwarding enabled</strong>, acting as a gateway between them.\n\n<strong>Prerequisite:</strong> Understand <strong>Default Gateway (Linux)</strong> and <strong>Network Namespaces</strong> first.',
+        highlights: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'ip_forward is enabled in kernel',
+        explanation: 'IP forwarding is checked:\n<code>cat /proc/sys/net/ipv4/ip_forward</code>\n\nOutput: <code>1</code> (enabled)\n\nWhen enabled, the Linux kernel can <strong>route packets between interfaces</strong> instead of dropping them. This turns the Linux box into a router/gateway.',
+        highlights: ['fwd'],
+        packets: [],
+        tables: {
+          'fwd': { kernel: { '/proc/sys/net/ipv4/ip_forward': '1 (enabled)' } }
+        }
+      },
+      {
+        title: 'Web namespace sends packet to 10.0.0.20',
+        explanation: 'The web namespace (NS: web) wants to reach the DB namespace (10.0.0.20) on a different subnet.\n\nThe packet is sent through <strong>veth1</strong> toward br0 (192.168.1.1).',
+        highlights: ['ns1'],
+        activeLinks: ['link-ns1-v1'],
+        packets: [
+          { id: 'gw1', type: 'data', from: 'ns1', to: 'veth1', color: 'var(--cyan)', label: '192.168.1.10→10.0.0.20', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Packet reaches br0 (192.168.1.1)',
+        explanation: 'The packet travels from veth1 to <strong>bridge br0</strong>.\n\nbr0 is the gateway for the 192.168.1.0/24 network. The kernel processes the packet and checks the routing table.',
+        highlights: ['br1'],
+        activeLinks: ['link-v1-br1'],
+        packets: [
+          { id: 'gw2', type: 'data', from: 'veth1', to: 'br1', color: 'var(--cyan)', label: 'To br0', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Kernel routing table: 10.0.0.0/24 via br1',
+        explanation: 'The kernel checks its routing table:\n<code>192.168.1.0/24 dev br0</code>\n<code>10.0.0.0/24 dev br1</code>\n\nDestination 10.0.0.20 matches the 10.0.0.0/24 route — forward to <strong>br1</strong>.',
+        highlights: ['fwd'],
+        packets: [],
+        tables: {
+          'fwd': {
+            routeTable: {
+              '192.168.1.0/24': { via: 'br0', metric: 0 },
+              '10.0.0.0/24': { via: 'br1', metric: 0 }
+            }
+          }
+        }
+      },
+      {
+        title: 'Kernel forwards packet to br1',
+        explanation: 'Since ip_forward is enabled, the kernel <strong>forwards the packet</strong> from br0 to br1.\n\nThe packet crosses the gateway — moving from one network to another.',
+        highlights: ['fwd'],
+        packets: [
+          { id: 'gw3', type: 'data', from: 'br1', to: 'br2', color: 'var(--green)', label: 'Forwarded', duration: 1200 }
+        ],
+        tables: {
+          'fwd': {
+            routeTable: {
+              '192.168.1.0/24': { via: 'br0', metric: 0 },
+              '10.0.0.0/24': { via: 'br1', metric: 0 }
+            }
+          }
+        }
+      },
+      {
+        title: 'Packet reaches veth2-ns',
+        explanation: 'The packet arrives at <strong>br1 (10.0.0.1)</strong> and is forwarded to <strong>veth2-ns</strong> on the 10.0.0.0/24 network.',
+        highlights: ['br2'],
+        activeLinks: ['link-br2-v2'],
+        packets: [
+          { id: 'gw4', type: 'data', from: 'br2', to: 'veth2', color: 'var(--green)', label: 'To veth2-ns', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'DB namespace receives packet',
+        explanation: 'The DB namespace (NS: db) receives the packet on <strong>veth2-ns</strong>.\n\nDestination IP 10.0.0.20 matches — the packet is accepted.',
+        highlights: ['ns2'],
+        activeLinks: ['link-v2-ns2'],
+        packets: [
+          { id: 'gw5', type: 'data', from: 'veth2', to: 'ns2', color: 'var(--green)', label: 'Delivered', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Reply flows back through gateway',
+        explanation: 'The DB namespace sends a reply back to the web namespace. The reply follows the reverse path through the Linux gateway.',
+        highlights: ['ns2', 'br2', 'br1', 'ns1'],
+        packets: [
+          { id: 'gw6', type: 'data', from: 'ns2', to: 'ns1', color: 'var(--amber)', label: 'Reply', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Linux Gateway summary!',
+        explanation: '<strong>Key takeaway:</strong> Linux can act as a <strong>network gateway</strong> using IP forwarding.\n\nHow it worked:\n1. <strong>ip_forward=1</strong> enables packet forwarding between interfaces\n2. Web namespace sends to 10.0.0.20 (remote subnet)\n3. Kernel checks <strong>routing table</strong> → route via br1\n4. Kernel <strong>forwards packet</strong> from br0 to br1\n5. DB namespace receives the packet\n6. Reply flows back through the gateway\n\nEnable with:\n<code>echo 1 > /proc/sys/net/ipv4/ip_forward</code>\n<code>sysctl -w net.ipv4.ip_forward=1</code>',
+        highlights: ['ns1', 'veth1', 'br1', 'fwd', 'br2', 'veth2', 'ns2'],
+        packets: [],
+        tables: {
+          'fwd': {
+            routeTable: {
+              '192.168.1.0/24': { via: 'br0', metric: 0 },
+              '10.0.0.0/24': { via: 'br1', metric: 0 }
+            }
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'linux-default-gw',
+    name: 'Default Gateway (Linux)',
+    icon: '🎯',
+    description: 'Configuring default gateway with ip route on Linux',
+    category: 'Linux Core Networking',
+    order: 23,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'host', type: 'linux', name: 'Linux Host', x: 100, y: 100, cmds: ['ping 8.8.8.8'] },
+        { id: 'eth0', type: 'nic', name: 'eth0', subnet: '192.168.1.10', x: 280, y: 100 },
+        { id: 'route', type: 'box', name: 'ip route', sub: 'default via 192.168.1.1', x: 400, y: 100 },
+        { id: 'router', type: 'router', name: 'Router', subnet: '192.168.1.1', x: 550, y: 200 },
+        { id: 'inet', type: 'internet', name: 'Internet', sub: '8.8.8.8', x: 720, y: 200 }
+      ],
+      links: [
+        { id: 'link-host-eth0', from: 'host', to: 'eth0' },
+        { id: 'link-eth0-router', from: 'eth0', to: 'router' },
+        { id: 'link-router-inet', from: 'router', to: 'inet' }
+      ]
+    },
+    steps: [
+      {
+        title: 'Linux host wants to reach 8.8.8.8',
+        explanation: 'The Linux host wants to ping <strong>8.8.8.8</strong> (Google DNS) on the internet.\n\nIt needs to determine how to reach this destination — time to check the <strong>routing table</strong>.\n\n<strong>Prerequisite:</strong> Understand <strong>Route Table</strong> (ip route basics) and <strong>Default Gateway</strong> (concept) first.',
+        highlights: ['host'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Check local routing table',
+        explanation: 'The kernel checks the routing table for a match:\n<code>ip route show</code>\n\nThe routing table contains connected routes and any static routes. The host looks for a route to 8.8.8.8.',
+        highlights: ['route'],
+        packets: [],
+        tables: {
+          'route': {
+            routeTable: {
+              '192.168.1.0/24': { via: 'eth0', metric: 0 },
+              'default': { via: '192.168.1.1', metric: 0 }
+            }
+          }
+        }
+      },
+      {
+        title: 'No specific route for 8.8.8.8 — use default',
+        explanation: 'The routing table has no specific entry for 8.8.8.8.\n\nThe kernel falls back to the <strong>default route</strong> (0.0.0.0/0) — a catch-all that matches any destination not covered by a more specific route.',
+        highlights: ['route'],
+        packets: [],
+        tables: {
+          'route': {
+            routeTable: {
+              '192.168.1.0/24': { via: 'eth0', metric: 0, match: false },
+              'default (0.0.0.0/0)': { via: '192.168.1.1', metric: 0, match: true }
+            }
+          }
+        }
+      },
+      {
+        title: 'Default route: via 192.168.1.1 dev eth0',
+        explanation: 'The default route specifies:\n<code>default via 192.168.1.1 dev eth0</code>\n\nThis means: send all unmatched traffic to <strong>192.168.1.1</strong> (the Router) through interface <strong>eth0</strong>.',
+        highlights: ['route'],
+        packets: [],
+        tables: {
+          'route': {
+            routeTable: {
+              '192.168.1.0/24': { via: 'eth0', metric: 0 },
+              'default (0.0.0.0/0)': { via: '192.168.1.1 dev eth0', metric: 0, match: true }
+            }
+          }
+        }
+      },
+      {
+        title: 'Packet: Host → eth0',
+        explanation: 'The kernel builds the ICMP Echo packet and passes it to <strong>eth0</strong> for transmission.\n\nThe frame is addressed to the Router\'s MAC (ARP resolved for 192.168.1.1).',
+        highlights: ['host'],
+        activeLinks: ['link-host-eth0'],
+        packets: [
+          { id: 'dg1', type: 'data', from: 'host', to: 'eth0', color: 'var(--cyan)', label: 'ICMP Echo', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'eth0 sends to Router (192.168.1.1)',
+        explanation: 'The packet travels from eth0 to the <strong>Router</strong> (default gateway).\n\nThe Router receives the packet on its LAN interface (192.168.1.1) and checks the destination IP.',
+        highlights: ['eth0'],
+        activeLinks: ['link-eth0-router'],
+        packets: [
+          { id: 'dg2', type: 'data', from: 'eth0', to: 'router', color: 'var(--cyan)', label: 'To Gateway', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Router forwards to Internet',
+        explanation: 'The Router receives the packet and performs <strong>NAT</strong> (Network Address Translation), replacing the private source IP with its public IP.\n\nIt then forwards the packet toward the Internet.',
+        highlights: ['router'],
+        activeLinks: ['link-router-inet'],
+        packets: [
+          { id: 'dg3', type: 'data', from: 'router', to: 'inet', color: 'var(--green)', label: 'NAT + Forward', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Reply comes back',
+        explanation: 'The Internet host (8.8.8.8) replies to the Router\'s public IP.\n\nThe Router receives the reply and looks up its NAT table to translate back to the private IP.',
+        highlights: ['inet'],
+        activeLinks: ['link-router-inet'],
+        packets: [
+          { id: 'dg4', type: 'data', from: 'inet', to: 'router', color: 'var(--amber)', label: 'Reply', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Router NAT translates, sends to Host',
+        explanation: 'The Router performs reverse NAT:\n<code>Public IP → 192.168.1.10</code>\n\nIt forwards the translated reply to the Linux Host via eth0.',
+        highlights: ['router'],
+        activeLinks: ['link-eth0-router', 'link-host-eth0'],
+        packets: [
+          { id: 'dg5', type: 'data', from: 'router', to: 'eth0', color: 'var(--green)', label: 'Reply → Host', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Default gateway routing complete!',
+        explanation: '<strong>Key takeaway:</strong> The default gateway is the <strong>fallback route</strong> for any destination not in the local routing table.\n\nHow it worked:\n1. Host checks routing table for 8.8.8.8 — <strong>no match</strong>\n2. Falls back to <strong>default route</strong> (0.0.0.0/0)\n3. Default via <strong>192.168.1.1</strong> (Router)\n4. Packet sent to Router → NAT → Internet\n5. Reply comes back through NAT\n\nConfigure with:\n<code>ip route add default via 192.168.1.1</code>\n<code>ip route show</code>',
+        highlights: ['host', 'eth0', 'route', 'router', 'inet'],
+        packets: [],
+        tables: {
+          'route': {
+            routeTable: {
+              '192.168.1.0/24': { via: 'eth0', metric: 0 },
+              'default (0.0.0.0/0)': { via: '192.168.1.1 dev eth0', metric: 0 }
+            }
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'gateway',
+    name: 'Gateway',
+    icon: '🚪',
+    description: 'How routers act as gateways between different networks',
+    category: 'Networking Fundamentals',
+    order: 13,
+    topology: {
+      devices: [
+        { id: 'pc-a', type: 'computer', name: 'PC-A', ip: '192.168.1.10', mac: 'AA:BB:CC:DD:EE:01', x: 100, y: 300 },
+        { id: 'switch', type: 'switch', name: 'Switch', x: 280, y: 300 },
+        { id: 'router', type: 'router', name: 'Router (Gateway)', ip: '192.168.1.1 / 10.0.0.1', mac: 'AA:BB:CC:DD:EE:FF', x: 500, y: 200 },
+        { id: 'switch-b', type: 'switch', name: 'Switch B', x: 700, y: 300 },
+        { id: 'server', type: 'server', name: 'Server', ip: '10.0.0.20', mac: '11:22:33:44:55:66', x: 880, y: 300 }
+      ],
+      links: [
+        { id: 'link-pc-sw', from: 'pc-a', to: 'switch' },
+        { id: 'link-sw-rt', from: 'switch', to: 'router' },
+        { id: 'link-rt-sw2', from: 'router', to: 'switch-b' },
+        { id: 'link-sw2-srv', from: 'switch-b', to: 'server' }
+      ]
+    },
+    steps: [
+      {
+        title: 'PC-A wants to reach Server (10.0.0.20)',
+        explanation: '<strong>PC-A</strong> (192.168.1.10) needs to send data to <strong>Server</strong> (10.0.0.20).\n\nThese two devices are on <strong>completely different networks</strong>:\n• PC-A: 192.168.1.0/24\n• Server: 10.0.0.0/24\n\nPC-A cannot send a frame directly to the Server — it needs help from a <strong>gateway</strong> (router).\n\n<strong>Prerequisite:</strong> Understand <strong>Default Gateway</strong> (how hosts reach other networks) and <strong>ARP</strong> (how MAC addresses are resolved) first.\n\n<strong>How does PC-A know the Server\'s IP?</strong> The application has it configured, or DNS resolved a hostname. See <strong>How Networks Start</strong> for the complete chain from user action to first packet.\n\n<strong>See also:</strong> <strong>Routing Table</strong> and <strong>Subnetting</strong> topics for routing decisions and network boundaries.',
+        highlights: ['pc-a'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'PC-A checks: 10.0.0.20 is NOT in my subnet',
+        explanation: 'PC-A compares the destination IP against its own subnet:\n\n<code>Destination: 10.0.0.20</code>\n<code>My subnet: 192.168.1.0/24</code>\n\nThe networks don\'t match — the Server is <strong>remote</strong>. PC-A must forward the frame to its <strong>default gateway</strong> (Router at 192.168.1.1).',
+        highlights: ['pc-a'],
+        packets: [],
+        tables: {
+          'pc-a': { routing: { 'default': '192.168.1.1 (Router)' } }
+        }
+      },
+      {
+        title: 'PC-A sends frame to default gateway (Router)',
+        explanation: 'PC-A builds an Ethernet frame with the <strong>Router\'s MAC</strong> as the Layer 2 destination.\n\nThe IP packet inside still has the <strong>Server\'s IP</strong> as the final destination — but the frame is addressed to the <strong>Router</strong> for local delivery.',
+        highlights: ['pc-a'],
+        activeLinks: ['link-pc-sw'],
+        packets: [
+          { id: 'gw1', type: 'data', from: 'pc-a', to: 'switch', color: 'var(--cyan)', label: 'Frame → Gateway', duration: 1200 }
+        ],
+        tables: {},
+        packetDetails: {
+          gw1: {
+            layers: [
+              { name: 'Ethernet II', color: 'var(--blue)', fields: [
+                ['Destination', 'AA:BB:CC:DD:EE:FF (Router)'],
+                ['Source', 'AA:BB:CC:DD:EE:01 (PC-A)'],
+                ['Type', 'IPv4 (0x0800)']
+              ]},
+              { name: 'IPv4', color: 'var(--cyan)', fields: [
+                ['Source IP', '192.168.1.10 (PC-A)'],
+                ['Destination', '10.0.0.20 (Server)'],
+                ['Protocol', 'ICMP (1)']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Switch forwards to Router',
+        explanation: 'The Switch receives the frame and looks up the destination MAC (AA:BB:CC:DD:EE:FF).\n\nIt finds the Router on the connected port and <strong>forwards</strong> the frame directly.',
+        highlights: ['switch'],
+        activeLinks: ['link-sw-rt'],
+        packets: [
+          { id: 'gw2', type: 'data', from: 'switch', to: 'router', color: 'var(--cyan)', label: 'Frame → Router', duration: 1000 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Router receives on eth0 (192.168.1.1)',
+        explanation: 'The Router receives the frame on its <strong>eth0 interface</strong> (192.168.1.1) — the gateway interface for the 192.168.1.0/24 network.\n\nIt strips the Ethernet header and examines the <strong>IP destination</strong>: 10.0.0.20.',
+        highlights: ['router'],
+        packets: [],
+        tables: {
+          'router': { routing: { '192.168.1.0/24': 'eth0 (connected)', '10.0.0.0/24': 'eth1 (connected)' } }
+        }
+      },
+      {
+        title: 'Router checks routing table for 10.0.0.0/24',
+        explanation: 'The Router looks up the destination IP (10.0.0.20) in its <strong>routing table</strong>.\n\nIt finds a match:\n<code>10.0.0.0/24 → eth1 (directly connected)</code>\n\nThe network 10.0.0.0/24 is <strong>directly attached</strong> to the Router\'s eth1 interface. No next-hop router needed.',
+        highlights: ['router'],
+        packets: [],
+        tables: {
+          'router': { routing: { '192.168.1.0/24': 'eth0 (connected)', '10.0.0.0/24': 'eth1 (connected)' } }
+        }
+      },
+      {
+        title: 'Router knows 10.0.0.0/24 is directly connected on eth1',
+        explanation: 'Since the destination network is <strong>directly connected</strong>, the Router knows it can reach the Server through its <strong>eth1 interface</strong> (10.0.0.1).\n\nThe Router decrements the TTL and prepares to build a <strong>new Ethernet frame</strong> for the Server.',
+        highlights: ['router'],
+        packets: [],
+        tables: {
+          'router': { routing: { '192.168.1.0/24': 'eth0 (connected)', '10.0.0.0/24': 'eth1 (connected)' } }
+        }
+      },
+      {
+        title: 'Router builds NEW frame for Server',
+        explanation: 'The Router constructs a <strong>brand-new Ethernet frame</strong> for the second hop:\n\n<code>Src MAC: AA:BB:CC:DD:EE:FF (Router eth1)</code>\n<code>Dst MAC: 11:22:33:44:55:66 (Server)</code>\n\n<strong>Crucial:</strong> The L2 header is completely new, but the L3 IP addresses remain unchanged — <code>192.168.1.10 → 10.0.0.20</code>.',
+        highlights: ['router'],
+        packets: [],
+        tables: {
+          'router': { routing: { '192.168.1.0/24': 'eth0 (connected)', '10.0.0.0/24': 'eth1 (connected)' } }
+        },
+        packetDetails: {
+          gw3: {
+            layers: [
+              { name: 'Ethernet II (new frame)', color: 'var(--green)', fields: [
+                ['Destination', '11:22:33:44:55:66 (Server)'],
+                ['Source', 'AA:BB:CC:DD:EE:FF (Router eth1)'],
+                ['Type', 'IPv4 (0x0800)']
+              ]},
+              { name: 'IPv4 (unchanged)', color: 'var(--cyan)', fields: [
+                ['Source IP', '192.168.1.10 (PC-A)'],
+                ['Destination', '10.0.0.20 (Server)'],
+                ['TTL', '63 (decremented)'],
+                ['Protocol', 'ICMP (1)']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Frame: Router → Switch B',
+        explanation: 'The Router sends the new frame out eth1 to <strong>Switch B</strong>.\n\nThe frame now carries the Router as source and Server as destination at Layer 2.',
+        highlights: ['router'],
+        activeLinks: ['link-rt-sw2'],
+        packets: [
+          { id: 'gw4', type: 'data', from: 'router', to: 'switch-b', color: 'var(--green)', label: 'New Frame → Server', duration: 1200 }
+        ],
+        tables: {},
+        packetDetails: {
+          gw4: {
+            layers: [
+              { name: 'Ethernet II', color: 'var(--green)', fields: [
+                ['Destination', '11:22:33:44:55:66 (Server)'],
+                ['Source', 'AA:BB:CC:DD:EE:FF (Router eth1)'],
+                ['Type', 'IPv4 (0x0800)']
+              ]},
+              { name: 'IPv4', color: 'var(--cyan)', fields: [
+                ['Source IP', '192.168.1.10 (PC-A)'],
+                ['Destination', '10.0.0.20 (Server)'],
+                ['TTL', '63'],
+                ['Protocol', 'ICMP (1)']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Switch B forwards to Server',
+        explanation: 'Switch B receives the frame, looks up the destination MAC — found on the port connected to the Server.\n\nIt <strong>forwards</strong> the frame directly. The Server receives it, checks the destination IP — it matches!',
+        highlights: ['switch-b', 'server'],
+        activeLinks: ['link-sw2-srv'],
+        packets: [
+          { id: 'gw5', type: 'data', from: 'switch-b', to: 'server', color: 'var(--green)', label: 'Delivered', duration: 1000 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Server receives and replies',
+        explanation: 'The Server accepts the frame — the destination IP matches its own.\n\nIt processes the data and sends a <strong>reply</strong> back:\n<code>Src IP: 10.0.0.20 (Server)</code>\n<code>Dst IP: 192.168.1.10 (PC-A)</code>\n\nThe reply travels back through the Router (gateway) to reach PC-A.',
+        highlights: ['server'],
+        activeLinks: ['link-sw2-srv'],
+        packets: [
+          { id: 'gw6', type: 'data', from: 'server', to: 'router', color: 'var(--amber)', label: 'Reply', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Gateway routing complete!',
+        explanation: 'The Router receives the reply from the Server, looks up the destination (192.168.1.10), and forwards it to PC-A via eth0.\n\n<strong>Key takeaway:</strong> A <strong>gateway</strong> (router) connects different networks. When devices need to communicate across networks, they send frames to the gateway, which:\n1. Strips the old L2 header\n2. Looks up the routing table\n3. Builds a <strong>new L2 header</strong> for the next network\n4. Forwards the packet\n\nThe L3 IP addresses stay the same end-to-end, but the L2 MAC addresses change at every hop.',
+        highlights: ['pc-a', 'switch', 'router', 'switch-b', 'server'],
+        packets: [],
+        tables: {
+          'router': { routing: { '192.168.1.0/24': 'eth0 (connected)', '10.0.0.0/24': 'eth1 (connected)' } }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'default-gateway',
+    name: 'Default Gateway',
+    icon: '🎯',
+    description: 'How hosts use 0.0.0.0/0 default route to reach the internet',
+    category: 'Networking Fundamentals',
+    order: 12,
+    topology: {
+      devices: [
+        { id: 'pc', type: 'computer', name: 'PC', ip: '192.168.1.10', mac: 'AA:BB:CC:DD:EE:01', x: 100, y: 300 },
+        { id: 'switch', type: 'switch', name: 'Switch', x: 300, y: 300 },
+        { id: 'gateway', type: 'router', name: 'Default Gateway', ip: '192.168.1.1', mac: 'AA:BB:CC:DD:EE:FF', x: 520, y: 200 },
+        { id: 'internet', type: 'internet', name: 'Internet', ip: '8.8.8.8', mac: '11:22:33:44:55:66', x: 750, y: 200 }
+      ],
+      links: [
+        { id: 'link-pc-sw', from: 'pc', to: 'switch' },
+        { id: 'link-sw-gw', from: 'switch', to: 'gateway' },
+        { id: 'link-gw-int', from: 'gateway', to: 'internet' }
+      ]
+    },
+    steps: [
+      {
+        title: 'PC wants to reach Google (8.8.8.8)',
+        explanation: '<strong>PC</strong> (192.168.1.10) wants to access Google at <code>8.8.8.8</code>.\n\nThe destination is on the <strong>internet</strong> — far beyond the local network. The PC needs a way to route traffic outside its own subnet.\n\n<strong>Prerequisite:</strong> You should first understand <strong>ARP</strong> (how MAC addresses are discovered) and <strong>Layer 2</strong> (how switches forward frames).\n\n<strong>How does PC know 8.8.8.8?</strong> The user typed <code>ping 8.8.8.8</code> or a DNS server resolved a hostname to this IP. See <strong>How Networks Start</strong> for the full journey.\n\n<strong>See also:</strong> <strong>Subnetting</strong> topic to understand why different subnets need a gateway.',
+        highlights: ['pc'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'PC checks routing table — no specific route for 8.8.8.8',
+        explanation: 'PC checks its <strong>routing table</strong> for a route to 8.8.8.8.\n\nThere is no specific route for this IP. But there IS a <strong>default route</strong>:\n<code>0.0.0.0/0 → 192.168.1.1 (Gateway)</code>\n\nThe <code>0.0.0.0/0</code> entry is a <strong>wildcard</strong> — it matches ANY destination that doesn\'t have a more specific route.',
+        highlights: ['pc'],
+        packets: [],
+        tables: {
+          'pc': { routing: { '0.0.0.0/0': '192.168.1.1 (Default Gateway)' } }
+        }
+      },
+      {
+        title: 'PC uses default gateway (0.0.0.0/0 matches everything)',
+        explanation: 'The default route <code>0.0.0.0/0</code> is like saying "send <strong>everything else</strong> to this gateway."\n\nIt\'s the network equivalent of a <strong>catch-all</strong>. Any traffic not destined for the local subnet gets forwarded to the Default Gateway (192.168.1.1), which knows how to reach the internet.',
+        highlights: ['pc'],
+        packets: [],
+        tables: {
+          'pc': { routing: { '0.0.0.0/0': '192.168.1.1 (Default Gateway)' } }
+        }
+      },
+      {
+        title: 'PC sends frame to Gateway MAC',
+        explanation: 'PC builds an Ethernet frame addressed to the <strong>Gateway\'s MAC</strong>:\n\n<code>Src MAC: AA:BB:CC:DD:EE:01 (PC)</code>\n<code>Dst MAC: AA:BB:CC:DD:EE:FF (Gateway)</code>\n\nThe IP packet inside targets <code>8.8.8.8</code>, but the frame is for local delivery to the Gateway.',
+        highlights: ['pc'],
+        activeLinks: ['link-pc-sw'],
+        packets: [
+          { id: 'dg1', type: 'data', from: 'pc', to: 'switch', color: 'var(--cyan)', label: 'To Gateway', duration: 1200 }
+        ],
+        tables: {
+          'pc': { routing: { '0.0.0.0/0': '192.168.1.1 (Default Gateway)' } }
+        },
+        packetDetails: {
+          dg1: {
+            layers: [
+              { name: 'Ethernet II', color: 'var(--blue)', fields: [
+                ['Destination', 'AA:BB:CC:DD:EE:FF (Gateway)'],
+                ['Source', 'AA:BB:CC:DD:EE:01 (PC)'],
+                ['Type', 'IPv4 (0x0800)']
+              ]},
+              { name: 'IPv4', color: 'var(--cyan)', fields: [
+                ['Source IP', '192.168.1.10 (PC)'],
+                ['Destination', '8.8.8.8 (Google)'],
+                ['Protocol', 'ICMP (1)']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Switch forwards to Gateway',
+        explanation: 'The Switch receives the frame and looks up the destination MAC — found on the port connected to the Default Gateway.\n\nIt <strong>forwards</strong> the frame directly to the Gateway.',
+        highlights: ['switch'],
+        activeLinks: ['link-sw-gw'],
+        packets: [
+          { id: 'dg2', type: 'data', from: 'switch', to: 'gateway', color: 'var(--cyan)', label: 'To Gateway', duration: 1000 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Gateway receives, checks routing table',
+        explanation: 'The Default Gateway receives the frame, strips the Ethernet header, and examines the IP destination: <code>8.8.8.8</code>.\n\nIt checks its <strong>routing table</strong> and finds a route to the internet via its <strong>eth1 interface</strong> (WAN side).',
+        highlights: ['gateway'],
+        packets: [],
+        tables: {
+          'gateway': { routing: { '192.168.1.0/24': 'eth0 (LAN)', '0.0.0.0/0': 'eth1 (WAN → ISP)' } }
+        }
+      },
+      {
+        title: 'Gateway has route to internet via eth1',
+        explanation: 'The Gateway\'s routing table shows:\n<code>192.168.1.0/24 → eth0 (LAN side)</code>\n<code>0.0.0.0/0 → eth1 (WAN → ISP)</code>\n\nThe default route on the WAN side means "send all non-local traffic to the <strong>ISP</strong>." The Gateway decrements the TTL and builds a new frame for the internet.',
+        highlights: ['gateway'],
+        packets: [],
+        tables: {
+          'gateway': { routing: { '192.168.1.0/24': 'eth0 (LAN)', '0.0.0.0/0': 'eth1 (WAN → ISP)' } }
+        }
+      },
+      {
+        title: 'Gateway forwards to Internet',
+        explanation: 'The Gateway sends the packet out its <strong>WAN interface</strong> (eth1) toward the Internet.\n\nIt may also perform <strong>NAT</strong> (replacing the private source IP with its public IP), but the key idea is that the Gateway knows how to reach the internet because of its default route.',
+        highlights: ['gateway'],
+        activeLinks: ['link-gw-int'],
+        packets: [
+          { id: 'dg3', type: 'data', from: 'gateway', to: 'internet', color: 'var(--green)', label: 'To Internet', duration: 1200 }
+        ],
+        tables: {},
+        packetDetails: {
+          dg3: {
+            layers: [
+              { name: 'Ethernet II', color: 'var(--green)', fields: [
+                ['Destination', '11:22:33:44:55:66 (ISP Gateway)'],
+                ['Source', 'AA:BB:CC:DD:EE:FF (Gateway)'],
+                ['Type', 'IPv4 (0x0800)']
+              ]},
+              { name: 'IPv4', color: 'var(--cyan)', fields: [
+                ['Source IP', '192.168.1.10 (PC)'],
+                ['Destination', '8.8.8.8 (Google)'],
+                ['TTL', '63 (decremented)'],
+                ['Protocol', 'ICMP (1)']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Internet responds — Gateway translates back',
+        explanation: 'Google (8.8.8.8) responds and the reply reaches the Gateway.\n\nThe Gateway looks up its <strong>NAT table</strong> (or routing table) and translates the destination back to the PC\'s private IP: <code>192.168.1.10</code>.',
+        highlights: ['gateway'],
+        activeLinks: ['link-gw-int'],
+        packets: [
+          { id: 'dg4', type: 'data', from: 'internet', to: 'gateway', color: 'var(--amber)', label: 'Reply', duration: 1200 }
+        ],
+        tables: {
+          'gateway': { routing: { '192.168.1.0/24': 'eth0 (LAN)', '0.0.0.0/0': 'eth1 (WAN → ISP)' } }
+        }
+      },
+      {
+        title: 'Default Gateway delivers reply to PC',
+        explanation: 'The Gateway builds a new frame and sends the reply through the Switch to the PC.\n\n<strong>Key takeaway:</strong> A <strong>default gateway</strong> is the exit door from a local network. The <code>0.0.0.0/0</code> route is the most important route on any host — it tells the device "if you don\'t know where to send a packet, send it here."\n\nEvery device on a network needs a default gateway to reach the internet. Without it, the PC could only communicate with devices on its own subnet (192.168.1.0/24).',
+        highlights: ['pc', 'switch', 'gateway'],
+        activeLinks: ['link-sw-gw'],
+        packets: [
+          { id: 'dg5', type: 'data', from: 'gateway', to: 'pc', color: 'var(--green)', label: 'Reply → PC', duration: 1200 }
+        ],
+        tables: {
+          'pc': { routing: { '0.0.0.0/0': '192.168.1.1 (Default Gateway)' } },
+          'gateway': { routing: { '192.168.1.0/24': 'eth0 (LAN)', '0.0.0.0/0': 'eth1 (WAN → ISP)' } }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'network-basics',
+    name: 'How Networks Start',
+    icon: '🚀',
+    description: 'From user action to first packet — the complete journey',
+    category: 'Networking Fundamentals',
+    order: 8,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'user', type: 'computer', name: 'User', x: 100, y: 200 },
+        { id: 'app', type: 'linux', name: 'Application', x: 250, y: 200 },
+        { id: 'dns', type: 'server', name: 'DNS Server', x: 450, y: 100 },
+        { id: 'arp', type: 'linux', name: 'ARP Cache', x: 450, y: 300 },
+        { id: 'nic', type: 'nic', name: 'NIC (eth0)', x: 650, y: 200 },
+        { id: 'switch', type: 'switch', name: 'Switch', x: 800, y: 200 }
+      ],
+      links: [
+        { id: 'l1', from: 'user', to: 'app' },
+        { id: 'l2', from: 'app', to: 'dns' },
+        { id: 'l3', from: 'app', to: 'arp' },
+        { id: 'l4', from: 'app', to: 'nic' },
+        { id: 'l5', from: 'nic', to: 'switch' }
+      ]
+    },
+    steps: [
+      {
+        title: 'User initiates a network action',
+        explanation: 'Everything starts with a <strong>user action</strong>:\n\n• User types <code>ping google.com</code>\n• User opens a web browser and enters a URL\n• User runs <code>ssh server.example.com</code>\n\nThe application now needs to communicate with a remote server. But how does it know <strong>where</strong> to send the data?',
+        highlights: ['user'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Application needs the server\'s IP address',
+        explanation: 'The application has a <strong>hostname</strong> (like google.com) but needs an <strong>IP address</strong> to route packets.\n\n<strong>Two scenarios:</strong>\n\n1. <strong>Hostname given</strong> (e.g., google.com) → Need <strong>DNS</strong> to resolve to IP\n2. <strong>IP given directly</strong> (e.g., ping 192.168.1.20) → Skip DNS\n\nSee the <strong>DNS topic</strong> for how resolution works.',
+        highlights: ['app'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'DNS resolves hostname to IP (if needed)',
+        explanation: 'If the user typed a <strong>hostname</strong>, the application sends a <strong>DNS query</strong>:\n\n<code>DNS Query: google.com → ?</code>\n<code>DNS Reply: google.com → 142.250.80.46</code>\n\nNow the application has the <strong>destination IP</strong>. See the <strong>DNS topic</strong> for the full process.',
+        highlights: ['app', 'dns'],
+        activeLinks: ['l2'],
+        packets: [
+          { id: 'dns1', type: 'data', from: 'app', to: 'dns', color: 'var(--purple)', label: 'DNS Query', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Application needs the destination MAC address',
+        explanation: 'Now the application has the <strong>IP address</strong>, but to send an <strong>Ethernet frame</strong>, it needs the <strong>MAC address</strong>.\n\n<strong>Question:</strong> How does the sender know the destination MAC?\n\n<strong>Answer:</strong> <strong>ARP</strong> (Address Resolution Protocol) discovers it.\n\nBut first — is the destination on the <strong>same network</strong> or a <strong>different network</strong>?',
+        highlights: ['app'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Same network? Use ARP directly. Different network? Use Gateway.',
+        explanation: '<strong>If same subnet</strong> (e.g., both 192.168.1.x):\n• Use <strong>ARP</strong> to find the destination MAC directly\n• See the <strong>ARP topic</strong>\n\n<strong>If different subnet</strong> (e.g., 192.168.1.x → 8.8.8.8):\n• Send frame to the <strong>default gateway</strong> (router)\n• Use <strong>ARP</strong> to find the gateway\'s MAC\n• See <strong>Default Gateway</strong> and <strong>Gateway</strong> topics\n\nThe <strong>routing table</strong> decides which path to take.',
+        highlights: ['app'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'ARP discovers the MAC address',
+        explanation: 'The application (or OS kernel) sends an <strong>ARP broadcast</strong>:\n\n<code>ARP Request: "Who has 192.168.1.20?"</code>\n<code>ARP Reply: "192.168.1.20 is at AA:BB:CC:DD:EE:02"</code>\n\nNow we have both the <strong>IP address</strong> and the <strong>MAC address</strong>. See the <strong>ARP topic</strong> for the full process.',
+        highlights: ['app', 'arp'],
+        activeLinks: ['l3'],
+        packets: [
+          { id: 'arp1', type: 'data', from: 'app', to: 'arp', color: 'var(--amber)', label: 'ARP Query', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Application builds the Ethernet frame',
+        explanation: 'Now the application has everything it needs:\n\n<code>Source MAC: AA:BB:CC:DD:EE:01 (our NIC)</code>\n<code>Destination MAC: AA:BB:CC:DD:EE:02 (target)</code>\n<code>Source IP: 192.168.1.10</code>\n<code>Destination IP: 192.168.1.20</code>\n\nThe <strong>Ethernet frame</strong> is constructed with the IP packet inside.',
+        highlights: ['app'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          frame: {
+            layers: [
+              { name: 'Ethernet II', color: 'var(--blue)', fields: [
+                ['Destination', 'AA:BB:CC:DD:EE:02 (PC-B)'],
+                ['Source', 'AA:BB:CC:DD:EE:01 (Our NIC)'],
+                ['Type', 'IPv4 (0x0800)']
+              ]},
+              { name: 'IPv4', color: 'var(--cyan)', fields: [
+                ['Source IP', '192.168.1.10'],
+                ['Destination', '192.168.1.20'],
+                ['Protocol', 'ICMP (1)']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'NIC transmits the frame onto the wire',
+        explanation: 'The <strong>NIC</strong> (Network Interface Card) takes the frame and <strong>transmits it</strong> as electrical/optical signals on the cable.\n\nThe <strong>switch</strong> receives the frame and forwards it to the destination. See the <strong>Layer 2 topic</strong> for how switches work.',
+        highlights: ['nic', 'switch'],
+        activeLinks: ['l4', 'l5'],
+        packets: [
+          { id: 'tx1', type: 'data', from: 'nic', to: 'switch', color: 'var(--green)', label: 'Frame on wire', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'The complete journey',
+        explanation: '<strong>Full chain from user action to network packet:</strong>\n\n1. <strong>User</strong> types command or opens URL\n2. <strong>Application</strong> needs destination IP\n3. <strong>DNS</strong> resolves hostname → IP (if needed)\n4. <strong>Routing table</strong> decides: same network or gateway?\n5. <strong>ARP</strong> discovers MAC address\n6. <strong>Frame</strong> is built with MAC + IP headers\n7. <strong>NIC</strong> transmits onto the wire\n8. <strong>Switch</strong> forwards to destination\n\nEach step is covered in detail in the other topics!',
+        highlights: ['user', 'app', 'dns', 'arp', 'nic', 'switch'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'mac-address',
+    name: 'MAC Address',
+    icon: '🏷️',
+    description: 'Physical address — the unique ID burned into every NIC',
+    category: 'Components',
+    order: 0,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'nic', type: 'nic', name: 'Network Card', subnet: 'AA:BB:CC:DD:EE:FF', x: 100, y: 100 },
+        { id: 'oui', type: 'box', name: 'OUI (Vendor)', sub: 'First 3 bytes: AA:BB:CC', x: 350, y: 60 },
+        { id: 'nicid', type: 'box', name: 'NIC ID (Device)', sub: 'Last 3 bytes: DD:EE:FF', x: 350, y: 160 },
+        { id: 'types', type: 'box', name: 'MAC Types', sub: 'Unicast / Multicast / Broadcast', x: 600, y: 100 }
+      ],
+      links: [
+        { id: 'link-nic-oui', from: 'nic', to: 'oui' },
+        { id: 'link-nic-id', from: 'nic', to: 'nicid' },
+        { id: 'link-nic-types', from: 'nic', to: 'types' }
+      ]
+    },
+    steps: [
+      {
+        title: 'What is a MAC Address?',
+        explanation: 'A <strong>MAC (Media Access Control)</strong> address is the <strong>physical address</strong> burned into every Network Interface Card (NIC) by the manufacturer.\n\nIt operates at <strong>Layer 2</strong> (Data Link layer) of the OSI model and is used to identify devices on a local network segment.\n\nUnlike IP addresses (which are logical and can change), a MAC address is a <strong>permanent hardware identifier</strong> — though it can be spoofed in software.',
+        highlights: ['nic'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'MAC Address Format',
+        explanation: 'A MAC address is a <strong>48-bit (6-byte)</strong> number written in hexadecimal:\n\n<code>AA:BB:CC:DD:EE:FF</code>\n\nEach pair of hex digits represents one byte. The first 3 bytes identify the <strong>vendor (OUI)</strong>, and the last 3 bytes identify the <strong>specific device</strong>.',
+        highlights: ['nic'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          mac: {
+            layers: [
+              { name: 'MAC Address (48-bit)', color: 'var(--blue)', fields: [
+                ['Full Address', 'AA:BB:CC:DD:EE:FF'],
+                ['Bit Length', '48 bits (6 bytes)'],
+                ['Format', 'Hexadecimal (XX:XX:XX:XX:XX:XX)']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'OUI — Vendor Identifier',
+        explanation: 'The first <strong>3 bytes (24 bits)</strong> of a MAC address form the <strong>OUI (Organizationally Unique Identifier)</strong>.\n\n<code>AA:BB:CC</code> ← OUI identifies the manufacturer\n\nThe IEEE (Institute of Electrical and Electronics Engineers) assigns OUIs to companies. For example:\n• Intel: <code>00:1B:21</code>\n• Cisco: <code>00:1A:A0</code>\n• Apple: <code>3C:22:FB</code>',
+        highlights: ['oui'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'NIC ID — Device Identifier',
+        explanation: 'The last <strong>3 bytes (24 bits)</strong> form the <strong>NIC ID</strong> — a unique identifier assigned by the manufacturer.\n\n<code>DD:EE:FF</code> ← NIC ID (device-specific)\n\nCombined with the OUI, this creates a globally unique address. With 2²⁴ (16.7 million) possible NIC IDs per OUI, manufacturers rarely run out.',
+        highlights: ['nicid'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Unicast MAC',
+        explanation: 'A <strong>unicast</strong> MAC address identifies a <strong>single device</strong> on the network.\n\nThe <strong>least significant bit</strong> of the first byte is <strong>even (0)</strong>:\n<code>AA:BB:CC:DD:EE:02</code> → Unicast\n\nWhen a frame is sent to a unicast address, only the device with that MAC will accept it. This is the most common type of MAC address.',
+        highlights: ['types'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Broadcast MAC',
+        explanation: 'The <strong>broadcast</strong> MAC address is <code>FF:FF:FF:FF:FF:FF</code> — all bits set to 1.\n\nWhen a frame is sent to this address, <strong>every device</strong> on the local network segment will process it.\n\nBroadcast MAC is used for:\n• ARP requests ("Who has this IP?")\n• DHCP discovery ("I need an IP!")\n• Network announcements',
+        highlights: ['types'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Multicast MAC',
+        explanation: 'A <strong>multicast</strong> MAC address identifies a <strong>group of devices</strong>.\n\nThe <strong>least significant bit</strong> of the first byte is <strong>odd (1)</strong>:\n<code>01:00:5E:xx:xx:xx</code> → IPv4 Multicast\n<code>33:33:xx:xx:xx:xx</code> → IPv6 Multicast\n\nMulticast allows one sender to reach multiple receivers efficiently — without broadcasting to everyone.',
+        highlights: ['types'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'MAC Address Summary',
+        explanation: '<strong>Key takeaway:</strong> MAC addresses are the foundation of Layer 2 communication.\n\n• <strong>48-bit</strong> hexadecimal address (e.g., AA:BB:CC:DD:EE:FF)\n• <strong>OUI</strong> (first 3 bytes) = vendor identifier\n• <strong>NIC ID</strong> (last 3 bytes) = device identifier\n• <strong>Unicast</strong> = single device (first byte even)\n• <strong>Broadcast</strong> = all devices (FF:FF:FF:FF:FF:FF)\n• <strong>Multicast</strong> = group of devices (first byte odd)\n\nSwitches use MAC addresses to forward frames. ARP maps IP addresses to MAC addresses.',
+        highlights: ['nic', 'oui', 'nicid', 'types'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'ip-address',
+    name: 'IP Address',
+    icon: '📍',
+    description: 'Logical address — how devices are identified across networks',
+    category: 'Components',
+    order: 1,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'ip', type: 'box', name: 'IPv4 Address', sub: '32-bit dotted decimal', x: 100, y: 100 },
+        { id: 'classA', type: 'box', name: 'Class A', sub: '1.0.0.0 — 126.255.255.255', color: 'var(--green)', x: 350, y: 40 },
+        { id: 'classB', type: 'box', name: 'Class B', sub: '128.0.0.0 — 191.255.255.255', color: 'var(--cyan)', x: 350, y: 120 },
+        { id: 'classC', type: 'box', name: 'Class C', sub: '192.0.0.0 — 223.255.255.255', color: 'var(--amber)', x: 350, y: 200 },
+        { id: 'priv', type: 'box', name: 'Private Ranges', sub: '10.x / 172.16-31.x / 192.168.x', x: 600, y: 100 }
+      ],
+      links: [
+        { id: 'link-ip-a', from: 'ip', to: 'classA' },
+        { id: 'link-ip-b', from: 'ip', to: 'classB' },
+        { id: 'link-ip-c', from: 'ip', to: 'classC' },
+        { id: 'link-ip-priv', from: 'ip', to: 'priv' }
+      ]
+    },
+    steps: [
+      {
+        title: 'What is an IP Address?',
+        explanation: 'An <strong>IP (Internet Protocol)</strong> address is a <strong>logical address</strong> assigned to devices for routing across networks.\n\nUnlike MAC addresses (which are burned into hardware), IP addresses are <strong>configured by software</strong> — via DHCP or manual assignment.\n\nIP addresses operate at <strong>Layer 3</strong> (Network layer) and enable communication across different networks.',
+        highlights: ['ip'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'IPv4 Format',
+        explanation: 'An <strong>IPv4 address</strong> is a <strong>32-bit</strong> number written in <strong>dotted decimal</strong> notation:\n\n<code>192.168.1.10</code>\n\nEach number (octet) represents 8 bits, ranging from 0 to 255. With 32 bits, IPv4 provides approximately <strong>4.3 billion</strong> unique addresses.',
+        highlights: ['ip'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          ipv4: {
+            layers: [
+              { name: 'IPv4 Address', color: 'var(--cyan)', fields: [
+                ['Address', '192.168.1.10'],
+                ['Bit Length', '32 bits (4 octets)'],
+                ['Format', 'Dotted Decimal (X.X.X.X)'],
+                ['Total Addresses', '~4.3 billion (2³²)']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Class A Networks',
+        explanation: '<strong>Class A</strong> networks use the first octet for the network and the remaining three for hosts:\n\n<code>Network.Host.Host.Host</code>\n<code>1.0.0.0 — 126.255.255.255</code>\n\nPrefix: <code>/8</code> (subnet mask 255.0.0.0)\nHosts per network: <strong>16.7 million</strong> (2²⁴)\n\nClass A is designed for <strong>very large networks</strong> — originally assigned to major corporations and governments.',
+        highlights: ['classA'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Class B Networks',
+        explanation: '<strong>Class B</strong> networks use the first two octets for the network and two for hosts:\n\n<code>Network.Network.Host.Host</code>\n<code>128.0.0.0 — 191.255.255.255</code>\n\nPrefix: <code>/16</code> (subnet mask 255.255.0.0)\nHosts per network: <strong>65,536</strong> (2¹⁶)\n\nClass B is suitable for <strong>medium to large organizations</strong> — universities, large companies.',
+        highlights: ['classB'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Class C Networks',
+        explanation: '<strong>Class C</strong> networks use the first three octets for the network and one for hosts:\n\n<code>Network.Network.Network.Host</code>\n<code>192.0.0.0 — 223.255.255.255</code>\n\nPrefix: <code>/24</code> (subnet mask 255.255.255.0)\nHosts per network: <strong>254</strong> (2⁸ - 2)\n\nClass C is used for <strong>small networks</strong> — small businesses, home networks.',
+        highlights: ['classC'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Private IP Ranges',
+        explanation: '<strong>Private IP addresses</strong> (defined in RFC 1918) are not routable on the public internet:\n\n<code>Class A: 10.0.0.0 — 10.255.255.255</code> (10.0.0.0/8)\n<code>Class B: 172.16.0.0 — 172.31.255.255</code> (172.16.0.0/12)\n<code>Class C: 192.168.0.0 — 192.168.255.255</code> (192.168.0.0/16)\n\nThese addresses can be used freely within private networks but must be <strong>translated (NAT)</strong> before reaching the internet.',
+        highlights: ['priv'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Public vs Private',
+        explanation: '<strong>Public IPs</strong> are globally unique and routable on the internet — assigned by ISPs.\n\n<strong>Private IPs</strong> are used within local networks and are not routable externally.\n\n<strong>NAT (Network Address Translation)</strong> allows many devices with private IPs to share a single public IP:\n\n<code>192.168.1.10 → NAT → 203.0.113.1 (public)</code>\n\nThis is how most home and office networks access the internet.',
+        highlights: ['priv'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'IP Address Summary',
+        explanation: '<strong>Key takeaway:</strong> IP addresses are the foundation of Layer 3 routing.\n\n• <strong>32-bit</strong> dotted decimal (e.g., 192.168.1.10)\n• <strong>Class A:</strong> /8 prefix, 16.7M hosts (large networks)\n• <strong>Class B:</strong> /16 prefix, 65K hosts (medium networks)\n• <strong>Class C:</strong> /24 prefix, 254 hosts (small networks)\n• <strong>Private ranges:</strong> 10.x / 172.16-31.x / 192.168.x\n• <strong>Public IPs</strong> are routable on the internet; <strong>private IPs</strong> need NAT\n\nIP addresses enable routing between different networks — the core function of Layer 3.',
+        highlights: ['ip', 'classA', 'classB', 'classC', 'priv'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'subnetting',
+    name: 'Subnetting & CIDR',
+    icon: '🧮',
+    description: 'How networks are divided — subnet masks, CIDR notation, IP ranges',
+    category: 'Components',
+    order: 2,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'ip', type: 'box', name: 'IP: 192.168.1.100', sub: '/24', x: 100, y: 80 },
+        { id: 'mask', type: 'box', name: 'Subnet Mask', sub: '255.255.255.0', x: 100, y: 180 },
+        { id: 'net', type: 'box', name: 'Network', sub: '192.168.1.0', color: 'var(--green)', x: 350, y: 40 },
+        { id: 'brd', type: 'box', name: 'Broadcast', sub: '192.168.1.255', color: 'var(--red)', x: 350, y: 120 },
+        { id: 'usable', type: 'box', name: 'Usable Hosts', sub: '192.168.1.1 — 192.168.1.254', color: 'var(--cyan)', x: 350, y: 200 },
+        { id: 'calc', type: 'box', name: 'Hosts: 254', sub: '2^8 - 2', x: 600, y: 100 }
+      ],
+      links: [
+        { id: 'link-ip-mask', from: 'ip', to: 'mask' },
+        { id: 'link-ip-net', from: 'ip', to: 'net' },
+        { id: 'link-ip-brd', from: 'ip', to: 'brd' },
+        { id: 'link-ip-usable', from: 'ip', to: 'usable' },
+        { id: 'link-ip-calc', from: 'ip', to: 'calc' }
+      ]
+    },
+    steps: [
+      {
+        title: 'What is Subnetting?',
+        explanation: '<strong>Subnetting</strong> is the process of dividing a large network into smaller, more manageable <strong>sub-networks (subnets)</strong>.\n\nEach subnet is a separate broadcast domain. Subnetting improves:\n• <strong>Security</strong> — isolate traffic between groups\n• <strong>Performance</strong> — reduce broadcast domain size\n• <strong>Management</strong> — organize devices logically\n\nThe key tool for subnetting is the <strong>subnet mask</strong>.',
+        highlights: ['ip'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Subnet Mask',
+        explanation: 'A <strong>subnet mask</strong> determines which part of an IP address is the <strong>network</strong> and which is the <strong>host</strong>.\n\n<code>IP: 192.168.1.100</code>\n<code>Mask: 255.255.255.0</code>\n\nThe mask performs a <strong>bitwise AND</strong> operation with the IP to extract the network address:\n\n<code>192.168.1.100 AND 255.255.255.0 = 192.168.1.0</code>',
+        highlights: ['mask'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          mask: {
+            layers: [
+              { name: 'Subnet Mask', color: 'var(--amber)', fields: [
+                ['Mask (Decimal)', '255.255.255.0'],
+                ['Mask (Binary)', '11111111.11111111.11111111.00000000'],
+                ['CIDR Notation', '/24'],
+                ['Network Bits', '24'],
+                ['Host Bits', '8']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'CIDR Notation',
+        explanation: '<strong>CIDR (Classless Inter-Domain Routing)</strong> notation uses a slash followed by the number of network bits:\n\n<code>/24 = 255.255.255.0</code> (24 network bits)\n<code>/16 = 255.255.0.0</code> (16 network bits)\n<code>/8 = 255.0.0.0</code> (8 network bits)\n\nCIDR replaced the old classful system, allowing <strong>flexible</strong> subnet sizes. A /20 network, for example, gives 4,094 hosts — between a /16 and a /24.',
+        highlights: ['mask'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Network Address',
+        explanation: 'The <strong>network address</strong> is the <strong>first address</strong> in a subnet — where all host bits are set to 0.\n\n<code>192.168.1.0</code> (for /24)\n\nThis address <strong>cannot</strong> be assigned to a host. It identifies the network itself and is used in routing tables.',
+        highlights: ['net'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Broadcast Address',
+        explanation: 'The <strong>broadcast address</strong> is the <strong>last address</strong> in a subnet — where all host bits are set to 1.\n\n<code>192.168.1.255</code> (for /24)\n\nWhen a frame is sent to this address, <strong>every host</strong> in the subnet receives it. This address also <strong>cannot</strong> be assigned to a host.',
+        highlights: ['brd'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Usable Host Range',
+        explanation: 'The <strong>usable host range</strong> includes all addresses between the network and broadcast addresses:\n\n<code>First usable: 192.168.1.1</code>\n<code>Last usable: 192.168.1.254</code>\n\nThese are the addresses that <strong>can</strong> be assigned to devices. For a /24 subnet, that gives 254 usable addresses.',
+        highlights: ['usable'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Calculating Hosts',
+        explanation: 'The number of usable hosts in a subnet is calculated with:\n\n<code>2^(32 - prefix) - 2</code>\n\nFor /24: 2^(32-24) - 2 = 2⁸ - 2 = <strong>254 hosts</strong>\n\nThe <strong>-2</strong> accounts for the network and broadcast addresses (which can\'t be assigned).\n\nCommon subnets:\n<code>/24 → 254 hosts</code>\n<code>/16 → 65,534 hosts</code>\n<code>/20 → 4,094 hosts</code>',
+        highlights: ['calc'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Subnetting Summary',
+        explanation: '<strong>Key takeaway:</strong> Subnetting divides networks into manageable segments.\n\n• <strong>Subnet mask</strong> separates network bits from host bits\n• <strong>CIDR notation</strong> (/24, /16, etc.) is shorthand for the mask\n• <strong>Network address</strong> = first address (all host bits 0) — unusable\n• <strong>Broadcast address</strong> = last address (all host bits 1) — unusable\n• <strong>Usable hosts</strong> = 2^(host bits) - 2\n\nUnderstanding subnetting is essential for network design, IP allocation, and troubleshooting.',
+        highlights: ['ip', 'mask', 'net', 'brd', 'usable', 'calc'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'dhcp-table',
+    name: 'DHCP Lease Table',
+    icon: '📑',
+    description: 'Active IP leases — who has what address and for how long',
+    category: 'Components',
+    order: 6,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'srv', type: 'box', name: 'DHCP Server', sub: '192.168.1.1', x: 100, y: 100 },
+        { id: 'table', type: 'box', name: 'Lease Table', sub: 'Active Assignments', x: 350, y: 80 },
+        { id: 'lease1', type: 'box', name: '192.168.1.100', sub: 'AA:BB:CC:01:01:01 — PC-A — 8h left', color: 'var(--green)', x: 550, y: 40 },
+        { id: 'lease2', type: 'box', name: '192.168.1.101', sub: 'AA:BB:CC:01:01:02 — PC-B — 6h left', color: 'var(--green)', x: 550, y: 120 },
+        { id: 'pool', type: 'box', name: 'Pool: 192.168.1.100-200', sub: '101 addresses available', x: 550, y: 200 }
+      ],
+      links: [
+        { id: 'link-srv-table', from: 'srv', to: 'table' },
+        { id: 'link-table-l1', from: 'table', to: 'lease1' },
+        { id: 'link-table-l2', from: 'table', to: 'lease2' },
+        { id: 'link-table-pool', from: 'table', to: 'pool' }
+      ]
+    },
+    steps: [
+      {
+        title: 'What is a DHCP Table?',
+        explanation: 'The <strong>DHCP Lease Table</strong> is a database maintained by the DHCP server.\n\nIt tracks which devices have been assigned which IP addresses, along with important metadata like MAC addresses, hostnames, and lease expiry times.\n\nThink of it as a <strong>guest registry</strong> — the DHCP server "checks in" each device and records the details of their stay.',
+        highlights: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Lease Entry Fields',
+        explanation: 'Each entry in the lease table contains several fields:\n\n<code>IP Address</code> — The assigned IP (e.g., 192.168.1.100)\n<code>MAC Address</code> — Hardware address of the client (e.g., AA:BB:CC:01:01:01)\n<code>Hostname</code> — Client name (e.g., PC-A)\n<code>Lease Time</code> — How long the lease is valid (e.g., 8 hours)\n<code>Expiry</code> — When the lease expires (countdown timer)\n\nThese fields let the server track who is using which IP and when the address will return to the pool.',
+        highlights: ['table'],
+        packets: [],
+        tables: {
+          'srv': {
+            dhcpLeases: {
+              '192.168.1.100': { mac: 'AA:BB:CC:01:01:01', hostname: 'PC-A', leaseTime: '8h', expiry: '7:59:58', isNew: true },
+              '192.168.1.101': { mac: 'AA:BB:CC:01:01:02', hostname: 'PC-B', leaseTime: '6h', expiry: '5:59:58' }
+            }
+          }
+        }
+      },
+      {
+        title: 'Lease Lifecycle',
+        explanation: 'DHCP leases follow a lifecycle defined by the <strong>DORA</strong> process:\n\n<strong>1. Discover</strong> — Client broadcasts looking for a DHCP server\n<strong>2. Offer</strong> — Server offers an available IP from the pool\n<strong>3. Request</strong> — Client accepts the offered IP\n<strong>4. Acknowledge</strong> — Server confirms and records the lease\n\nRenewal happens automatically:\n• At <strong>50% of lease time</strong> — client tries to renew with the original server\n• At <strong>87.5%</strong> — client broadcasts to any available server if the original is unreachable\n• At <strong>100%</strong> — lease expires, IP returns to the pool',
+        highlights: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'IP Pool Range',
+        explanation: 'The DHCP server manages an <strong>address pool</strong> — a range of IPs it can assign.\n\nIn this example:\n<code>Pool: 192.168.1.100 — 192.168.1.200</code>\n<code>Total: 101 addresses</code>\n<code>In use: 2 (PC-A, PC-B)</code>\n<code>Available: 99</code>\n\nAdministrators can also configure:\n• <strong>Exclusions</strong> — IPs reserved for static devices (printers, servers)\n• <strong>Reservations</strong> — Always assign the same IP to a specific MAC address',
+        highlights: ['pool'],
+        packets: [],
+        tables: {
+          'srv': {
+            dhcpPool: {
+              'Range': '192.168.1.100 — 192.168.1.200',
+              'Total': '101 addresses',
+              'In Use': '2',
+              'Available': '99',
+              'Exclusions': '192.168.1.1-99 (static)',
+              'Reservations': 'None configured'
+            }
+          }
+        }
+      },
+      {
+        title: 'Viewing DHCP Leases',
+        explanation: 'On Linux, you can view the DHCP lease table using:\n\n<code>dhcp-lease-list</code> — Shows active leases from the DHCP server\n<code>cat /var/lib/dhcp/dhclient.leases</code> — Client-side lease file\n<code>journalctl -u dhcpd</code> — DHCP server logs\n\nOn a router or dedicated DHCP server, the lease table is typically accessible via the web interface or CLI.',
+        highlights: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'DHCP Table Summary',
+        explanation: '<strong>Key takeaway:</strong> The DHCP Lease Table is the <strong>master record</strong> of IP address assignments on a network.\n\nHow it works:\n1. Clients request IPs via <strong>DORA</strong> (Discover, Offer, Request, Acknowledge)\n2. Server assigns an IP from the <strong>address pool</strong>\n3. Lease entry is recorded with <strong>MAC, hostname, lease time</strong>\n4. Clients <strong>renew</strong> before expiry to keep their IP\n5. Expired IPs return to the pool for reuse\n\n<strong>Why it matters:</strong>\n• Troubleshooting IP conflicts\n• Identifying unauthorized devices\n• Planning address space capacity\n• Tracking device history on the network',
+        highlights: ['srv', 'table', 'lease1', 'lease2', 'pool'],
+        packets: [],
+        tables: {
+          'srv': {
+            dhcpLeases: {
+              '192.168.1.100': { mac: 'AA:BB:CC:01:01:01', hostname: 'PC-A', leaseTime: '8h', expiry: '7:59:55' },
+              '192.168.1.101': { mac: 'AA:BB:CC:01:01:02', hostname: 'PC-B', leaseTime: '6h', expiry: '5:59:55' }
+            },
+            dhcpPool: {
+              'Range': '192.168.1.100 — 192.168.1.200',
+              'Total': '101 addresses',
+              'In Use': '2',
+              'Available': '99'
+            }
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'routing-table',
+    name: 'Routing Table',
+    icon: '🗺️',
+    description: 'The kernel\'s road map — how packets find their destination',
+    category: 'Components',
+    order: 7,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'host', type: 'box', name: 'Linux Host', x: 100, y: 100 },
+        { id: 'table', type: 'box', name: 'Routing Table', sub: 'ip route show', x: 350, y: 80 },
+        { id: 'r1', type: 'box', name: '192.168.1.0/24', sub: 'dev eth0 — Connected', color: 'var(--green)', x: 550, y: 40 },
+        { id: 'r2', type: 'box', name: '10.0.0.0/8', sub: 'via 192.168.1.1 — Static', color: 'var(--cyan)', x: 550, y: 120 },
+        { id: 'r3', type: 'box', name: '0.0.0.0/0', sub: 'via 192.168.1.1 — Default', color: 'var(--amber)', x: 550, y: 200 }
+      ],
+      links: [
+        { id: 'link-host-table', from: 'host', to: 'table' },
+        { id: 'link-table-r1', from: 'table', to: 'r1' },
+        { id: 'link-table-r2', from: 'table', to: 'r2' },
+        { id: 'link-table-r3', from: 'table', to: 'r3' }
+      ]
+    },
+    steps: [
+      {
+        title: 'What is a Routing Table?',
+        explanation: 'The <strong>routing table</strong> is the kernel\'s forwarding decision database.\n\nEvery time a packet arrives, the kernel consults this table to determine:\n• Is the destination <strong>local</strong> (deliver directly)?\n• Is the destination <strong>remote</strong> (forward to a gateway)?\n• Which <strong>interface</strong> should the packet go out on?\n\nThink of it as a <strong>road map</strong> — the kernel looks up the destination and picks the best route.',
+        highlights: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Connected Routes',
+        explanation: 'When you configure an IP address on an interface, the kernel <strong>automatically</strong> adds a connected route.\n\n<code>192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.10</code>\n\nThis means: "I can reach any device on 192.168.1.0/24 directly through eth0 — no gateway needed."\n\nConnected routes have the <strong>lowest metric</strong> (highest priority) because they are directly attached.',
+        highlights: ['r1'],
+        packets: [],
+        tables: {
+          'host': {
+            routeTable: {
+              '192.168.1.0/24': { via: 'dev eth0', type: 'Connected', metric: 0, isNew: true }
+            }
+          }
+        }
+      },
+      {
+        title: 'Static Routes',
+        explanation: 'Administrators can manually add routes using:\n\n<code>ip route add 10.0.0.0/8 via 192.168.1.1</code>\n\nThis tells the kernel: "To reach anything in the 10.0.0.0/8 network, send packets to the gateway at 192.168.1.1."\n\nStatic routes are useful when:\n• You need to reach a <strong>specific remote network</strong>\n• There are <strong>multiple paths</strong> and you want to control which one is used\n• You\'re building a <strong>lab or small network</strong> without dynamic routing protocols',
+        highlights: ['r2'],
+        packets: [],
+        tables: {
+          'host': {
+            routeTable: {
+              '192.168.1.0/24': { via: 'dev eth0', type: 'Connected', metric: 0 },
+              '10.0.0.0/8': { via: '192.168.1.1', type: 'Static', metric: 1, isNew: true }
+            }
+          }
+        }
+      },
+      {
+        title: 'Default Route',
+        explanation: 'The <strong>default route</strong> (0.0.0.0/0) is the catch-all entry:\n\n<code>default via 192.168.1.1 dev eth0</code>\n\nWhen no specific route matches the destination, the kernel uses the default route. It\'s like saying "send everything else to this gateway."\n\nEvery internet-connected host needs a default route — without it, you can only reach directly connected networks.',
+        highlights: ['r3'],
+        packets: [],
+        tables: {
+          'host': {
+            routeTable: {
+              '192.168.1.0/24': { via: 'dev eth0', type: 'Connected', metric: 0 },
+              '10.0.0.0/8': { via: '192.168.1.1', type: 'Static', metric: 1 },
+              '0.0.0.0/0': { via: '192.168.1.1', type: 'Default', metric: 0, isNew: true }
+            }
+          }
+        }
+      },
+      {
+        title: 'Route Lookup Order',
+        explanation: 'The kernel uses <strong>longest prefix match</strong> to find the best route:\n\n1. Compare the destination IP against all routes\n2. The route with the <strong>longest matching prefix</strong> wins\n3. If multiple routes have the same prefix length, use the one with the <strong>lowest metric</strong>\n4. If still tied, the kernel may use round-robin (equal-cost multipath)\n\n<strong>Example:</strong>\n<code>Destination: 10.5.5.5</code>\n<code>10.0.0.0/8 (matches) → via 192.168.1.1</code>\n<code>0.0.0.0/0 (matches) → via 192.168.1.1</code>\n<strong>Winner: 10.0.0.0/8</strong> (8-bit prefix > 0-bit prefix)',
+        highlights: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Viewing Routes',
+        explanation: 'Display the routing table using:\n\n<code>ip route show</code> — Modern Linux command\n<code>route -n</code> — Legacy command (same output)\n\n<strong>Output format:</strong>\n<code>192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.10</code>\n<code>10.0.0.0/8 via 192.168.1.1 dev eth0</code>\n<code>default via 192.168.1.1 dev eth0</code>\n\nEach line shows: destination, gateway (if remote), interface, and optional parameters like metric and protocol.',
+        highlights: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Routing Table Summary',
+        explanation: '<strong>Key takeaway:</strong> The routing table is the kernel\'s <strong>road map</strong> for forwarding packets.\n\nHow it works:\n1. <strong>Connected routes</strong> — auto-added when you configure an IP\n2. <strong>Static routes</strong> — manually added by administrators\n3. <strong>Default route</strong> — catch-all for unmatched destinations\n4. <strong>Longest prefix match</strong> — selects the most specific route\n\n<strong>Why it matters:</strong>\n• Troubleshooting connectivity issues\n• Understanding why packets take a certain path\n• Configuring multi-homed systems (multiple NICs)\n• Setting up firewalls and network security\n\n<strong>Commands:</strong>\n<code>ip route show</code> — view routes\n<code>ip route add</code> — add a route\n<code>ip route del</code> — remove a route\n<code>ip route get 8.8.8.8</code> — test which route is used',
+        highlights: ['host', 'table', 'r1', 'r2', 'r3'],
+        packets: [],
+        tables: {
+          'host': {
+            routeTable: {
+              '192.168.1.0/24': { via: 'dev eth0', type: 'Connected', metric: 0 },
+              '10.0.0.0/8': { via: '192.168.1.1', type: 'Static', metric: 1 },
+              '0.0.0.0/0': { via: '192.168.1.1', type: 'Default', metric: 0 }
+            }
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'ports',
+    name: 'TCP/UDP Ports',
+    icon: '🚪',
+    description: 'How multiple services share one IP — port numbers explained',
+    category: 'Components',
+    order: 3,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'server', type: 'server', name: 'Server', sub: '192.168.1.20', x: 100, y: 100 },
+        { id: 'p80', type: 'box', name: ':80', sub: 'HTTP (Web)', color: 'var(--green)', x: 350, y: 40 },
+        { id: 'p443', type: 'box', name: ':443', sub: 'HTTPS (Secure Web)', color: 'var(--green)', x: 350, y: 110 },
+        { id: 'p22', type: 'box', name: ':22', sub: 'SSH (Remote Login)', color: 'var(--cyan)', x: 350, y: 180 },
+        { id: 'p53', type: 'box', name: ':53', sub: 'DNS (Name Resolution)', color: 'var(--purple)', x: 350, y: 250 },
+        { id: 'ranges', type: 'box', name: 'Port Ranges', sub: '0-1023: Well-Known\n1024-49151: Registered\n49152-65535: Dynamic', x: 600, y: 100 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'What are Ports?',
+        explanation: 'A single server with one IP address (192.168.1.20) can run <strong>multiple services simultaneously</strong> — a web server, an SSH daemon, a DNS resolver, and more.\n\n<strong>Ports</strong> are the mechanism that makes this possible. A port is a 16-bit number (0–65535) that identifies a specific service or application on a host.\n\nThink of an IP address as a <strong>building address</strong> and port numbers as <strong>apartment numbers</strong> — the building (IP) gets you to the right place, but the apartment number (port) gets you to the right service.',
+        highlights: ['server'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'TCP vs UDP Ports',
+        explanation: 'Both <strong>TCP</strong> and <strong>UDP</strong> use port numbers, but they work differently:\n\n<strong>TCP (Transmission Control Protocol)</strong>:\n• Connection-oriented — establishes a connection before sending data\n• Reliable delivery with acknowledgments\n• Used for: HTTP, HTTPS, SSH, SMTP, FTP\n\n<strong>UDP (User Datagram Protocol)</strong>:\n• Connectionless — sends data without establishing a connection\n• No acknowledgments, no guaranteed delivery\n• Used for: DNS queries, streaming, gaming, VoIP\n\nBoth protocols use the same port number ranges — port 80 is HTTP whether TCP or UDP carries it.',
+        highlights: ['server'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Well-Known Ports (0-1023)',
+        explanation: 'Ports in the range <strong>0–1023</strong> are reserved for <strong>standardized services</strong> defined by IANA. These require root/admin privileges to bind.\n\nCommon well-known ports:\n<code>:80 — HTTP (Web traffic)</code>\n<code>:443 — HTTPS (Encrypted web)</code>\n<code>:22 — SSH (Secure Shell)</code>\n<code>:53 — DNS (Domain Name System)</code>\n<code>:25 — SMTP (Email sending)</code>\n<code>:21 — FTP (File Transfer)</code>\n<code>:3389 — RDP (Remote Desktop)</code>',
+        highlights: ['ranges'],
+        packets: [],
+        tables: {
+          'server': { ports: { ':80': 'HTTP', ':443': 'HTTPS', ':22': 'SSH', ':53': 'DNS' } }
+        }
+      },
+      {
+        title: 'Registered Ports (1024-49151)',
+        explanation: 'Ports in the range <strong>1024–49151</strong> are registered with IANA for specific applications but don\'t require elevated privileges.\n\nCommon registered ports:\n<code>:3306 — MySQL Database</code>\n<code>:5432 — PostgreSQL Database</code>\n<code>:6379 — Redis Cache</code>\n<code>:8080 — HTTP Alternate</code>\n<code>:8443 — HTTPS Alternate</code>\n<code>:27017 — MongoDB</code>\n\nThese are often used for development servers and databases that shouldn\'t need root access.',
+        highlights: ['ranges'],
+        packets: [],
+        tables: {
+          'server': { ports: { ':3306': 'MySQL', ':5432': 'PostgreSQL', ':6379': 'Redis' } }
+        }
+      },
+      {
+        title: 'Dynamic/Ephemeral Ports (49152-65535)',
+        explanation: 'Ports in the range <strong>49152–65535</strong> are dynamic or ephemeral — they\'re assigned <strong>temporarily</strong> to client-side applications.\n\nWhen your browser connects to a web server on port 80, it picks a random ephemeral port (e.g., 49152) as its source port. This allows:\n\n• <strong>Multiple connections</strong> to the same server from one client\n• <strong>Response routing</strong> — the server knows where to send the reply\n• <strong>Connection tracking</strong> — the OS knows which socket owns the packet',
+        highlights: ['ranges'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'How Ports Work in Communication',
+        explanation: 'When a client connects to a server, both <strong>source and destination ports</strong> are used:\n\n<code>Client (192.168.1.10:49152) → Server (192.168.1.20:80)</code>\n\nThe TCP/UDP header contains both port numbers:\n• <strong>Source port</strong> (49152) — the client\'s temporary port\n• <strong>Destination port</strong> (80) — the server\'s well-known port\n\nThe server responds using the <strong>reversed</strong> port pair:\n<code>Server (192.168.1.20:80) → Client (192.168.1.10:49152)</code>',
+        highlights: ['server', 'p80', 'p443', 'p22', 'p53'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          pkt1: {
+            layers: [
+              { name: 'TCP Header', color: 'var(--blue)', fields: [
+                ['Source Port', '49152 (Ephemeral)'],
+                ['Destination', '80 (HTTP)'],
+                ['Flags', 'SYN'],
+                ['Seq', '1000']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Ports Summary',
+        explanation: '<strong>Key takeaway:</strong> Ports enable a single IP address to host multiple services by assigning unique numbers to each.\n\n<strong>Range breakdown:</strong>\n• 0–1023: Well-known (root required)\n• 1024–49151: Registered (application-specific)\n• 49152–65535: Dynamic (client temporary)\n\n<strong>Protocol distinction:</strong>\n• TCP: Reliable, connection-oriented\n• UDP: Fast, connectionless\n\nUnderstanding ports is essential for <strong>firewall rules</strong>, <strong>port forwarding</strong>, <strong>NAT</strong>, and <strong>service troubleshooting</strong>.',
+        highlights: ['server', 'p80', 'p443', 'p22', 'p53', 'ranges'],
+        packets: [],
+        tables: {
+          'server': {
+            ports: {
+              ':80': 'HTTP',
+              ':443': 'HTTPS',
+              ':22': 'SSH',
+              ':53': 'DNS',
+              ':3306': 'MySQL',
+              ':6379': 'Redis'
+            }
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'arp-table',
+    name: 'ARP Table',
+    icon: '📋',
+    description: 'The mapping cache — IP to MAC address translations',
+    category: 'Components',
+    order: 4,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'pc', type: 'computer', name: 'PC', sub: '192.168.1.10', x: 100, y: 100 },
+        { id: 'cache', type: 'box', name: 'ARP Cache', sub: 'Dynamic entries', x: 350, y: 80 },
+        { id: 'entry1', type: 'box', name: '192.168.1.20', sub: 'AA:BB:CC:DD:EE:02', color: 'var(--green)', x: 550, y: 40 },
+        { id: 'entry2', type: 'box', name: '192.168.1.1', sub: 'AA:BB:CC:DD:EE:FF', color: 'var(--green)', x: 550, y: 120 },
+        { id: 'timer', type: 'box', name: 'Timeout: 300s', sub: 'Entries expire', x: 550, y: 200 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'What is an ARP Table?',
+        explanation: 'An <strong>ARP table</strong> (also called an ARP cache) is a local mapping stored on each device that translates <strong>IP addresses to MAC addresses</strong>.\n\nSince Ethernet frames require MAC addresses (not IPs), every device needs this mapping to communicate at Layer 2. The ARP table is the result of ARP requests and replies that have occurred on the local network.\n\nWithout an ARP table, every single packet would require a new ARP broadcast — incredibly inefficient.',
+        highlights: ['pc'],
+        packets: [],
+        tables: {
+          'pc': { arp: {} }
+        }
+      },
+      {
+        title: 'Dynamic Entries',
+        explanation: 'Most ARP table entries are <strong>dynamic</strong> — they are learned automatically through the ARP request/reply process.\n\nWhen a device needs to send data to an IP on the same subnet, it broadcasts an ARP request: <code>"Who has 192.168.1.20?"</code>. The target replies with its MAC address, and the asking device <strong>caches the mapping</strong> in its ARP table.\n\nDynamic entries have a <strong>timeout</strong> (typically 300 seconds) and are removed if not refreshed.',
+        highlights: ['cache'],
+        packets: [],
+        tables: {
+          'pc': { arp: { '192.168.1.20': { mac: 'AA:BB:CC:DD:EE:02', status: 'dynamic', isNew: true } } }
+        }
+      },
+      {
+        title: 'Static Entries',
+        explanation: 'You can also create <strong>static ARP entries</strong> manually using the <code>arp -s</code> command:\n\n<code>arp -s 192.168.1.20 AA:BB:CC:DD:EE:02</code>\n\nStatic entries:\n• <strong>Never expire</strong> — they persist until manually removed\n• <strong>Override dynamic</strong> — if both exist, static takes priority\n• <strong>Used for security</strong> — prevent ARP spoofing attacks\n• <strong>Used for reliability</strong> — critical infrastructure (gateways, DNS servers)\n\nView with <code>arp -a</code> — static entries are marked differently from dynamic ones.',
+        highlights: ['cache'],
+        packets: [],
+        tables: {
+          'pc': { arp: { '192.168.1.20': { mac: 'AA:BB:CC:DD:EE:02', status: 'static' } } }
+        }
+      },
+      {
+        title: 'ARP Cache Timeout',
+        explanation: 'Dynamic ARP entries are <strong>temporary</strong> and expire after a configurable timeout.\n\nOn Linux, the default timeout is <strong>300 seconds (5 minutes)</strong>. After this period, the entry is removed and the next packet will trigger a new ARP request.\n\nWhy the timeout?\n• Devices can <strong>change IPs</strong> (DHCP reassignment)\n• Devices can <strong>leave the network</strong> (laptop disconnects)\n• NICs can <strong>change</strong> (hardware replacement)\n• Prevents <strong>stale entries</strong> from causing communication failures\n\nThe timeout is configurable: <code>sysctl net.ipv4.neigh.default.gc_stale_time</code>',
+        highlights: ['timer'],
+        packets: [],
+        tables: {
+          'pc': { arp: { '192.168.1.20': { mac: 'AA:BB:CC:DD:EE:02', status: 'dynamic', timeout: '300s' } } }
+        }
+      },
+      {
+        title: 'Viewing ARP Table',
+        explanation: 'Use the <code>arp -a</code> command to view the ARP cache:\n\n<code>arp -a</code>\n<code>? (192.168.1.20) at AA:BB:CC:DD:EE:02 [ether] on eth0</code>\n<code>? (192.168.1.1) at AA:BB:CC:DD:EE:FF [ether] on eth0</code>\n\nOn Linux, you can also use:\n<code>ip neigh show</code>\n<code>ip neigh show dev eth0</code>\n\nThe output shows the IP address, MAC address, interface, and entry type (dynamic/static).',
+        highlights: ['cache', 'entry1', 'entry2'],
+        packets: [],
+        tables: {
+          'pc': { arp: { '192.168.1.20': { mac: 'AA:BB:CC:DD:EE:02', status: 'dynamic' }, '192.168.1.1': { mac: 'AA:BB:CC:DD:EE:FF', status: 'dynamic' } } }
+        }
+      },
+      {
+        title: 'ARP Table Summary',
+        explanation: '<strong>Key takeaway:</strong> The ARP table is a local cache that maps IP addresses to MAC addresses on the same subnet.\n\n<strong>Entry types:</strong>\n• <strong>Dynamic</strong> — learned via ARP request/reply, expires after 300s\n• <strong>Static</strong> — manually configured, never expires\n\n<strong>Commands:</strong>\n• <code>arp -a</code> — view ARP cache\n• <code>arp -s &lt;ip&gt; &lt;mac&gt;</code> — add static entry\n• <code>arp -d &lt;ip&gt;</code> — delete entry\n\nThe ARP table is essential for Layer 2 communication. Without it, devices cannot build the Ethernet frames needed to send data on the local network.',
+        highlights: ['pc', 'cache', 'entry1', 'entry2', 'timer'],
+        packets: [],
+        tables: {
+          'pc': {
+            arp: {
+              '192.168.1.20': { mac: 'AA:BB:CC:DD:EE:02', status: 'dynamic', timeout: '300s' },
+              '192.168.1.1': { mac: 'AA:BB:CC:DD:EE:FF', status: 'dynamic', timeout: '300s' }
+            }
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'mac-table',
+    name: 'MAC Address Table',
+    icon: '📊',
+    description: 'How switches remember which port connects to which device',
+    category: 'Components',
+    order: 5,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'sw', type: 'switch', name: 'Switch', x: 100, y: 100 },
+        { id: 'table', type: 'box', name: 'MAC Table', sub: 'Forwarding Database', x: 350, y: 80 },
+        { id: 'e1', type: 'box', name: 'AA:BB:CC:DD:EE:01', sub: 'Port 1 (PC-A)', color: 'var(--green)', x: 550, y: 40 },
+        { id: 'e2', type: 'box', name: 'AA:BB:CC:DD:EE:02', sub: 'Port 2 (PC-B)', color: 'var(--green)', x: 550, y: 120 },
+        { id: 'aging', type: 'box', name: 'Aging Time', sub: '300 seconds', x: 550, y: 200 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'What is a MAC Table?',
+        explanation: 'A <strong>MAC address table</strong> (also called a forwarding database or FDB) is the switch\'s internal database that maps <strong>MAC addresses to physical ports</strong>.\n\nWhen a switch receives an Ethernet frame, it looks at the <strong>source MAC address</strong> to learn which device is on which port. It then uses this table to <strong>forward frames</strong> to the correct port — rather than flooding all ports.\n\nThis is the fundamental mechanism that makes switches smarter than hubs.',
+        highlights: ['sw'],
+        packets: [],
+        tables: {
+          'sw': { mac: {} }
+        }
+      },
+      {
+        title: 'How Switches Learn',
+        explanation: 'Switches learn by inspecting the <strong>source MAC address</strong> of every incoming frame:\n\n1. Frame arrives on <strong>Port 1</strong> from MAC <code>AA:BB:CC:DD:EE:01</code>\n2. Switch records: <code>AA:BB:CC:DD:EE:01 → Port 1</code>\n3. Frame arrives on <strong>Port 2</strong> from MAC <code>AA:BB:CC:DD:EE:02</code>\n4. Switch records: <code>AA:BB:CC:DD:EE:02 → Port 2</code>\n\nThis process is called <strong>MAC learning</strong> — it happens automatically on every frame. The switch doesn\'t need any configuration to build its table.',
+        highlights: ['table'],
+        packets: [],
+        tables: {
+          'sw': {
+            mac: {
+              'AA:BB:CC:DD:EE:01': { port: 1, label: 'PC-A', isNew: true },
+              'AA:BB:CC:DD:EE:02': { port: 2, label: 'PC-B', isNew: true }
+            }
+          }
+        }
+      },
+      {
+        title: 'Forwarding Decision',
+        explanation: 'When a switch receives a frame, it uses its MAC table for the <strong>forwarding decision</strong>:\n\n<strong>Known destination MAC:</strong>\n• Look up the destination in the MAC table\n• Find the associated port\n• Forward the frame <strong>only to that port</strong> (unicast)\n\n<strong>Unknown destination MAC:</strong>\n• The MAC is not in the table\n• <strong>Flood</strong> the frame out all ports except the source\n• This is called <strong>unknown unicast flooding</strong>\n\n<strong>Broadcast (FF:FF:FF:FF:FF:FF):</strong>\n• Always flood to all ports except source',
+        highlights: ['table'],
+        packets: [],
+        tables: {
+          'sw': {
+            mac: {
+              'AA:BB:CC:DD:EE:01': { port: 1, label: 'PC-A' },
+              'AA:BB:CC:DD:EE:02': { port: 2, label: 'PC-B' }
+            }
+          }
+        }
+      },
+      {
+        title: 'Aging and Timeout',
+        explanation: 'MAC table entries are <strong>temporary</strong> and expire after an <strong>aging time</strong> (typically 300 seconds).\n\nIf a device stops sending frames (e.g., it\'s turned off or disconnected), its MAC entry will <strong>age out</strong> and be removed from the table.\n\nWhy aging matters:\n• Devices can <strong>move between ports</strong> (laptop moves to different jack)\n• Prevents <strong>stale entries</strong> from causing misforwarding\n• Keeps the MAC table <strong>compact and accurate</strong>\n\nThe aging time is configurable on managed switches:\n<code>switch(config)# mac address-table aging-time 600</code>',
+        highlights: ['aging'],
+        packets: [],
+        tables: {
+          'sw': {
+            mac: {
+              'AA:BB:CC:DD:EE:01': { port: 1, label: 'PC-A', aging: '300s' },
+              'AA:BB:CC:DD:EE:02': { port: 2, label: 'PC-B', aging: '300s' }
+            }
+          }
+        }
+      },
+      {
+        title: 'Viewing MAC Table',
+        explanation: 'On <strong>Cisco IOS</strong> switches:\n<code>show mac address-table</code>\n\n<code>MAC Address Table</code>\n<code>-------------------------------------------</code>\n<code>Vlan    MAC Address       Type    Ports</code>\n<code>----    -----------------  ------  ------</code>\n<code>1       AA:BB:CC:DD:EE:01  DYNAMIC  Fa0/1</code>\n<code>1       AA:BB:CC:DD:EE:02  DYNAMIC  Fa0/2</code>\n\nOn <strong>Linux bridges</strong>:\n<code>bridge fdb show</code>\n\nOn <strong>Linux</strong> with <code>brctl</code>:\n<code>brctl showmacs br0</code>',
+        highlights: ['table', 'e1', 'e2'],
+        packets: [],
+        tables: {
+          'sw': {
+            mac: {
+              'AA:BB:CC:DD:EE:01': { port: 'Fa0/1', label: 'PC-A', type: 'DYNAMIC' },
+              'AA:BB:CC:DD:EE:02': { port: 'Fa0/2', label: 'PC-B', type: 'DYNAMIC' }
+            }
+          }
+        }
+      },
+      {
+        title: 'MAC Table Summary',
+        explanation: '<strong>Key takeaway:</strong> The MAC address table is the switch\'s forwarding database that maps MAC addresses to physical ports.\n\n<strong>How it works:</strong>\n• Switch <strong>learns</strong> by inspecting source MACs on incoming frames\n• Switch <strong>forwards</strong> by looking up destination MACs in the table\n• Entries <strong>age out</strong> after 300 seconds if not refreshed\n\n<strong>Commands:</strong>\n• Cisco: <code>show mac address-table</code>\n• Linux bridge: <code>bridge fdb show</code>\n• Add static: <code>mac address-table static AA:BB:CC:DD:EE:01 vlan 1 interface Fa0/1</code>\n\nThe MAC table is what makes switches efficient — without it, every frame would be flooded like a hub.',
+        highlights: ['sw', 'table', 'e1', 'e2', 'aging'],
+        packets: [],
+        tables: {
+          'sw': {
+            mac: {
+              'AA:BB:CC:DD:EE:01': { port: 'Fa0/1', label: 'PC-A', type: 'DYNAMIC', aging: '300s' },
+              'AA:BB:CC:DD:EE:02': { port: 'Fa0/2', label: 'PC-B', type: 'DYNAMIC', aging: '300s' }
+            }
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'vpn',
+    name: 'VPN Basics',
+    icon: '🔒',
+    description: 'Encrypted tunnel — private communication over public networks',
+    category: 'Networking Fundamentals',
+    order: 36,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'client', type: 'box', name: 'Client', sub: 'Remote Worker', x: 100, y: 100 },
+        { id: 'tunnel', type: 'box', name: 'Encrypted Tunnel', sub: 'IPSec/WireGuard', color: 'var(--cyan)', x: 350, y: 100 },
+        { id: 'internet', type: 'box', name: 'Public Internet', sub: 'Untrusted', x: 350, y: 200 },
+        { id: 'corp', type: 'box', name: 'Corporate Network', sub: '10.0.0.0/8', x: 600, y: 100 },
+        { id: 'server', type: 'box', name: 'VPN Server', sub: '10.0.0.1', x: 600, y: 200 }
+      ],
+      links: [
+        { id: 'link-client-tunnel', from: 'client', to: 'tunnel' },
+        { id: 'link-tunnel-corp', from: 'tunnel', to: 'corp' },
+        { id: 'link-tunnel-server', from: 'tunnel', to: 'server' }
+      ]
+    },
+    steps: [
+      {
+        title: 'What is a VPN?',
+        explanation: 'A <strong>VPN (Virtual Private Network)</strong> creates an <strong>encrypted tunnel</strong> over a public network.\n\nIt allows a remote worker to securely access a private corporate network through the untrusted public internet. All traffic is encrypted end-to-end, so eavesdroppers on the public network cannot read the data.',
+        highlights: ['client', 'internet'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'How VPN Works',
+        explanation: 'The VPN client on the remote worker\'s machine establishes an <strong>encrypted tunnel</strong> to the VPN server.\n\nTraffic destined for the corporate network (10.0.0.0/8) is <strong>encapsulated</strong> inside an encrypted outer packet. This encrypted packet travels safely over the public internet.\n\nThe VPN server on the corporate side <strong>decrypts</strong> the packet and forwards it into the internal network.',
+        highlights: ['tunnel'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'VPN Protocols',
+        explanation: 'Two major VPN protocols:\n\n<strong>IPSec</strong> (traditional) — operates at Layer 3, uses IKE for key exchange, provides strong encryption but can be complex to configure.\n\n<strong>WireGuard</strong> (modern) — simpler, faster, and uses state-of-the-art cryptography. Growing rapidly in popularity due to its performance and ease of use.',
+        highlights: ['server'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'VPN Use Cases',
+        explanation: '<strong>Remote Access:</strong> Employees working from home connect securely to the corporate network.\n\n<strong>Site-to-Site:</strong> Two office networks connected via VPN over the internet.\n\n<strong>Privacy:</strong> Encrypting traffic on public WiFi to prevent eavesdropping.\n\n<strong>Bypass Geo-Restrictions:</strong> Accessing content available in other regions by routing through a VPN server in that location.',
+        highlights: ['client', 'tunnel', 'server'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'VPN Summary',
+        explanation: '<strong>Key takeaway:</strong> VPNs provide encrypted, private communication over public networks.\n\n<strong>Pros:</strong>\n• Security — encrypted traffic even on untrusted networks\n• Privacy — hides your real IP address from destination servers\n• Remote access — securely reach internal resources from anywhere\n\n<strong>Cons:</strong>\n• Latency — encryption/decryption adds overhead\n• Complexity — requires proper configuration and maintenance\n• Not bulletproof — VPN providers can still log traffic',
+        highlights: ['client', 'tunnel', 'corp', 'server', 'internet'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'wifi',
+    name: 'WiFi Fundamentals',
+    icon: '📶',
+    description: 'Wireless networking — SSID, channels, WPA2/3, 802.11',
+    category: 'Networking Fundamentals',
+    order: 37,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'ap', type: 'box', name: 'Access Point', sub: 'SSID: MyNetwork', x: 100, y: 100 },
+        { id: 'client', type: 'box', name: 'WiFi Client', sub: 'Phone/Laptop', x: 100, y: 200 },
+        { id: 'ch', type: 'box', name: 'Channels', sub: '2.4GHz: 1-11 | 5GHz: 36-165', color: 'var(--cyan)', x: 350, y: 60 },
+        { id: 'band', type: 'box', name: 'Bands', sub: '2.4GHz (range) vs 5GHz (speed)', color: 'var(--green)', x: 350, y: 150 },
+        { id: 'sec', type: 'box', name: 'Security', sub: 'WPA2/WPA3 — AES encryption', color: 'var(--amber)', x: 350, y: 240 },
+        { id: 'proto', type: 'box', name: '802.11 Standards', sub: 'ac (WiFi 5) / ax (WiFi 6)', color: 'var(--purple)', x: 350, y: 320 }
+      ],
+      links: [
+        { id: 'link-ap-ch', from: 'ap', to: 'ch' },
+        { id: 'link-ap-band', from: 'ap', to: 'band' },
+        { id: 'link-ap-sec', from: 'ap', to: 'sec' },
+        { id: 'link-ap-proto', from: 'ap', to: 'proto' }
+      ]
+    },
+    steps: [
+      {
+        title: 'WiFi Channels',
+        explanation: 'WiFi operates on specific <strong>frequency channels</strong> within the 2.4GHz and 5GHz bands.\n\nIn the <strong>2.4GHz band</strong>, channels 1, 6, and 11 are the only non-overlapping channels. Using overlapping channels causes interference from neighboring networks.\n\nThe <strong>5GHz band</strong> has many more non-overlapping channels (36, 40, 44, 48, etc.), reducing congestion.',
+        highlights: ['ch'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'WiFi Bands',
+        explanation: '<strong>2.4GHz band:</strong> Better range, penetrates walls better, but slower speeds and more interference from devices like microwaves and Bluetooth.\n\n<strong>5GHz band:</strong> Faster speeds, more available channels, but shorter range and less wall penetration.\n\nModern routers support <strong>dual-band</strong> or <strong>tri-band</strong> to combine both frequencies.',
+        highlights: ['band'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'WiFi Security',
+        explanation: '<strong>WEP</strong> (Wired Equivalent Privacy) — broken and deprecated. Never use.\n\n<strong>WPA2</strong> (WiFi Protected Access 2) — uses <strong>AES encryption</strong>, widely deployed and considered secure when using strong passwords.\n\n<strong>WPA3</strong> (latest) — stronger encryption, protection against offline dictionary attacks, and forward secrecy.',
+        highlights: ['sec'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: '802.11 Standards',
+        explanation: 'The IEEE 802.11 family defines WiFi standards:\n\n<strong>WiFi 4 (802.11n)</strong> — introduced MIMO, up to 600 Mbps\n<strong>WiFi 5 (802.11ac)</strong> — 5GHz only, MU-MIMO, up to 3.5 Gbps\n<strong>WiFi 6 (802.11ax)</strong> — OFDMA, BSS coloring, up to 9.6 Gbps, better in dense environments\n\nEach generation improves speed, capacity, and efficiency.',
+        highlights: ['proto'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'nftables',
+    name: 'nftables',
+    icon: '🛡️',
+    description: 'Modern Linux firewall — the successor to iptables',
+    category: 'Linux Core Networking',
+    order: 38,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'pkt', type: 'box', name: 'Incoming Packet', x: 100, y: 100 },
+        { id: 'tables', type: 'box', name: 'Tables', sub: 'ip, ip6, inet, arp', x: 350, y: 60 },
+        { id: 'chains', type: 'box', name: 'Chains', sub: 'input, forward, output', color: 'var(--cyan)', x: 350, y: 150 },
+        { id: 'rules', type: 'box', name: 'Rules', sub: 'accept, drop, reject', color: 'var(--green)', x: 350, y: 240 },
+        { id: 'verdicts', type: 'box', name: 'Verdicts', sub: 'accept / drop / continue / jump', x: 550, y: 100 }
+      ],
+      links: [
+        { id: 'link-pkt-tables', from: 'pkt', to: 'tables' },
+        { id: 'link-tables-chains', from: 'tables', to: 'chains' },
+        { id: 'link-chains-rules', from: 'chains', to: 'rules' },
+        { id: 'link-rules-verdicts', from: 'rules', to: 'verdicts' }
+      ]
+    },
+    steps: [
+      {
+        title: 'nftables Tables',
+        explanation: 'nftables organizes firewall rules into <strong>tables</strong> by protocol family:\n\n<strong>ip</strong> — IPv4 rules\n<strong>ip6</strong> — IPv6 rules\n<strong>inet</strong> — Both IPv4 and IPv6\n<strong>arp</strong> — ARP rules\n\nTables are containers for chains. A single table can hold all your firewall rules for a given protocol family.',
+        highlights: ['tables'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Chains',
+        explanation: 'Within each table, <strong>chains</strong> define where rules are evaluated in the packet flow:\n\n<strong>input</strong> — packets destined for the firewall itself\n<strong>forward</strong> — packets passing through the firewall\n<strong>output</strong> — packets originating from the firewall\n\nChains are attached to <strong>hooks</strong> (prerouting, input, forward, output, postrouting) that determine when they execute.',
+        highlights: ['chains'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Rules & Expressions',
+        explanation: 'Each chain contains an ordered list of <strong>rules</strong>. Each rule has <strong>match conditions</strong> and an <strong>action</strong>:\n\nExample rule:\n<code>tcp dport 22 accept</code>\n\nThis matches TCP packets on port 22 and accepts them. If no rule matches, the chain\'s <strong>default policy</strong> applies.',
+        highlights: ['rules'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'nft vs iptables',
+        explanation: '<strong>nftables</strong> is the modern successor to iptables with key advantages:\n\n<strong>Atomic ruleset changes</strong> — replace entire rulesets without locking\n<strong>Better performance</strong> — optimized kernel backend\n<strong>Simpler syntax</strong> — more readable configuration\n<strong>Native set/map support</strong> — efficient matching of IPs, ports, interfaces\n<strong>Unified framework</strong> — replaces iptables, ip6tables, arptables, ebtables\n\nMost modern Linux distributions now use nftables as the default firewall.',
+        highlights: ['verdicts'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'ethernet-frame',
+    name: 'Ethernet Frame',
+    icon: '📦',
+    description: 'The data container — how bits are packaged for the wire',
+    category: 'Components',
+    order: 8,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'pre', type: 'box', name: 'Preamble', sub: '7 bytes', color: 'var(--red)', x: 40, y: 100 },
+        { id: 'dst', type: 'box', name: 'Dst MAC', sub: '6 bytes', color: 'var(--amber)', x: 140, y: 100 },
+        { id: 'src', type: 'box', name: 'Src MAC', sub: '6 bytes', color: 'var(--amber)', x: 260, y: 100 },
+        { id: 'type', type: 'box', name: 'Type', sub: '2 bytes', color: 'var(--cyan)', x: 380, y: 100 },
+        { id: 'payload', type: 'box', name: 'Payload', sub: '46-1500 bytes', color: 'var(--green)', x: 480, y: 100 },
+        { id: 'fcs', type: 'box', name: 'FCS', sub: '4 bytes', color: 'var(--purple)', x: 620, y: 100 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'Preamble',
+        explanation: 'The <strong>preamble</strong> is the first field in an Ethernet frame — 7 bytes of alternating 1s and 0s (10101010 pattern).\n\nIts purpose is <strong>synchronization</strong>. It gives the receiving NIC time to lock onto the signal\'s timing before the actual frame begins.\n\nThe preamble is followed by the <strong>SFD (Start Frame Delimiter)</strong>, a 1-byte field that signals "the actual frame starts now."',
+        highlights: ['pre'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          frame: {
+            layers: [
+              { name: 'Ethernet II', color: 'var(--blue)', fields: [
+                ['Preamble', '10101010 (7 bytes)'],
+                ['SFD', '10101011 (1 byte)'],
+                ['Destination MAC', '—'],
+                ['Source MAC', '—'],
+                ['Type', '—'],
+                ['Payload', '—'],
+                ['FCS', '—']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Destination MAC',
+        explanation: 'The <strong>destination MAC address</strong> identifies who the frame is for — 6 bytes (48 bits).\n\nSpecial values:\n• <code>FF:FF:FF:FF:FF:FF</code> — broadcast, received by all devices\n• Multicast addresses — received by a group of devices\n• Unicast — addressed to a specific NIC\n\nIf the destination is on the same network, the frame goes directly. If it\'s on a different network, it goes to the default gateway (router).',
+        highlights: ['dst'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          frame: {
+            layers: [
+              { name: 'Ethernet II', color: 'var(--blue)', fields: [
+                ['Preamble', '10101010 (7 bytes)'],
+                ['SFD', '10101011 (1 byte)'],
+                ['Destination MAC', 'AA:BB:CC:DD:EE:02'],
+                ['Source MAC', '—'],
+                ['Type', '—'],
+                ['Payload', '—'],
+                ['FCS', '—']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Source MAC',
+        explanation: 'The <strong>source MAC address</strong> identifies who sent the frame — 6 bytes (48 bits).\n\nSwitches use the source MAC to <strong>learn</strong> which device is on which port. When a switch receives a frame, it records the source MAC and the incoming port in its MAC address table.\n\nThe source MAC is <strong>always</strong> a unicast address (never broadcast or multicast).',
+        highlights: ['src'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          frame: {
+            layers: [
+              { name: 'Ethernet II', color: 'var(--blue)', fields: [
+                ['Preamble', '10101010 (7 bytes)'],
+                ['SFD', '10101011 (1 byte)'],
+                ['Destination MAC', 'AA:BB:CC:DD:EE:02'],
+                ['Source MAC', 'AA:BB:CC:DD:EE:01'],
+                ['Type', '—'],
+                ['Payload', '—'],
+                ['FCS', '—']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'EtherType',
+        explanation: 'The <strong>EtherType</strong> field identifies which protocol is encapsulated in the payload — 2 bytes.\n\nCommon values:\n• <code>0x0800</code> — IPv4\n• <code>0x0806</code> — ARP\n• <code>0x86DD</code> — IPv6\n\nThis field tells the receiving device how to interpret the payload. If the payload is an IPv4 packet, the NIC passes it up to the IPv4 stack.',
+        highlights: ['type'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          frame: {
+            layers: [
+              { name: 'Ethernet II', color: 'var(--blue)', fields: [
+                ['Preamble', '10101010 (7 bytes)'],
+                ['SFD', '10101011 (1 byte)'],
+                ['Destination MAC', 'AA:BB:CC:DD:EE:02'],
+                ['Source MAC', 'AA:BB:CC:DD:EE:01'],
+                ['Type', 'IPv4 (0x0800)'],
+                ['Payload', '—'],
+                ['FCS', '—']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Payload',
+        explanation: 'The <strong>payload</strong> contains the actual data being transmitted — 46 to 1500 bytes.\n\nThis is typically an <strong>IP packet</strong>, but it could also be ARP, IPv6, or other protocols as indicated by the EtherType field.\n\nIf the data is smaller than 46 bytes, it\'s padded to meet the minimum Ethernet frame size (64 bytes total). The maximum of 1500 bytes is the <strong>MTU</strong> (Maximum Transmission Unit).',
+        highlights: ['payload'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          frame: {
+            layers: [
+              { name: 'Ethernet II', color: 'var(--blue)', fields: [
+                ['Preamble', '10101010 (7 bytes)'],
+                ['SFD', '10101011 (1 byte)'],
+                ['Destination MAC', 'AA:BB:CC:DD:EE:02'],
+                ['Source MAC', 'AA:BB:CC:DD:EE:01'],
+                ['Type', 'IPv4 (0x0800)'],
+                ['Payload', '46-1500 bytes of data'],
+                ['FCS', '—']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Frame Check Sequence',
+        explanation: 'The <strong>FCS (Frame Check Sequence)</strong> is a 4-byte CRC (Cyclic Redundancy Check) used for error detection.\n\nThe sender calculates a CRC value over the entire frame (excluding preamble and SFD) and appends it. The receiver recalculates the CRC and compares — if they don\'t match, the frame is <strong>silently discarded</strong>.\n\nFCS detects:\n• Bit flips from electrical noise\n• Truncated frames\n• Corrupted data in transit\n\nFCS does <strong>not</strong> detect or correct all errors — it\'s a best-effort check.',
+        highlights: ['fcs'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          frame: {
+            layers: [
+              { name: 'Ethernet II', color: 'var(--blue)', fields: [
+                ['Preamble', '10101010 (7 bytes)'],
+                ['SFD', '10101011 (1 byte)'],
+                ['Destination MAC', 'AA:BB:CC:DD:EE:02'],
+                ['Source MAC', 'AA:BB:CC:DD:EE:01'],
+                ['Type', 'IPv4 (0x0800)'],
+                ['Payload', '46-1500 bytes'],
+                ['FCS', 'CRC-32 (4 bytes)']
+              ]}
+            ]
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'ttl',
+    name: 'TTL & Hop Limit',
+    icon: '⏳',
+    description: 'Why packets die — prevents infinite loops in the network',
+    category: 'Components',
+    order: 9,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'src', type: 'box', name: 'Sender', sub: 'TTL=64', x: 100, y: 100 },
+        { id: 'r1', type: 'box', name: 'Router 1', sub: 'TTL=63', color: 'var(--green)', x: 280, y: 100 },
+        { id: 'r2', type: 'box', name: 'Router 2', sub: 'TTL=62', color: 'var(--green)', x: 430, y: 100 },
+        { id: 'r3', type: 'box', name: 'Router 3', sub: 'TTL=61', color: 'var(--amber)', x: 580, y: 100 },
+        { id: 'dead', type: 'box', name: 'TTL=0', sub: 'Packet DROPPED', color: 'var(--red)', x: 700, y: 100 },
+        { id: 'icmp', type: 'box', name: 'ICMP Time Exceeded', sub: 'Type 11', color: 'var(--red)', x: 700, y: 200 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'What is TTL?',
+        explanation: '<strong>TTL (Time To Live)</strong> is an 8-bit field in the IPv4 header (called <strong>Hop Limit</strong> in IPv6).\n\nIt\'s a counter that prevents packets from circulating forever in a network loop. Every time a packet passes through a router, the TTL is decremented by 1. When it reaches 0, the packet is dropped.\n\nWithout TTL, a misconfigured routing loop could cause packets to circulate indefinitely, consuming bandwidth and CPU until the network collapses.',
+        highlights: ['src'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          ip: {
+            layers: [
+              { name: 'IPv4', color: 'var(--cyan)', fields: [
+                ['Version', '4'],
+                ['IHL', '5 (20 bytes)'],
+                ['TTL', '64'],
+                ['Protocol', 'ICMP (1)'],
+                ['Source IP', '192.168.1.10'],
+                ['Destination', '10.0.0.1']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Initial Value',
+        explanation: 'When a host sends a packet, it sets the <strong>initial TTL value</strong>. Common defaults:\n\n• <strong>Linux:</strong> 64\n• <strong>Windows:</strong> 128\n• <strong>Cisco IOS:</strong> 255\n• <strong>macOS:</strong> 64\n\nThe choice is somewhat arbitrary — the important thing is that it\'s large enough to reach any destination in the internet, but small enough to catch loops.',
+        highlights: ['src'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          ip: {
+            layers: [
+              { name: 'IPv4', color: 'var(--cyan)', fields: [
+                ['TTL', '64 (Linux default)'],
+                ['Purpose', 'Hop counter'],
+                ['Size', '8 bits (0-255)'],
+                ['Max hops', '255']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Decrement at Each Hop',
+        explanation: 'Each router <strong>decrements the TTL by 1</strong> before forwarding the packet.\n\nThe packet starts with TTL=64 and passes through:\n• Router 1: TTL becomes 63\n• Router 2: TTL becomes 62\n• Router 3: TTL becomes 61\n\nIf the path has many hops, TTL continues to decrease. This is the core mechanism that prevents infinite loops.',
+        highlights: ['r1', 'r2', 'r3'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'TTL Field in IP Header',
+        explanation: 'The TTL field is located in the <strong>IPv4 header</strong> at byte offset 8:\n\n<code>0                   1                   2</code>\n<code>0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3</code>\n<code>+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</code>\n<code>|  Ver  |  IHL  |     TTL     |  Protocol  |</code>\n\nIn IPv6, this field is called <strong>Hop Limit</strong> and works identically — decremented by each router, dropped at 0.',
+        highlights: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          ip: {
+            layers: [
+              { name: 'IPv4 Header', color: 'var(--cyan)', fields: [
+                ['Byte 8', 'TTL (8 bits)'],
+                ['Current Value', '64'],
+                ['Operation', 'Decrement by 1 at each hop'],
+                ['At 0', 'Packet dropped, ICMP sent']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'TTL Reaches Zero',
+        explanation: 'When a router receives a packet with <strong>TTL=1</strong>, it decrements to 0 and <strong>drops the packet</strong>.\n\nThe router then sends an <strong>ICMP Time Exceeded</strong> message (Type 11, Code 0) back to the sender, informing them the packet was discarded.\n\nThis is how <strong>traceroute</strong> works — it intentionally sends packets with low TTL values to map the path to a destination.',
+        highlights: ['dead', 'icmp'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          icmp: {
+            layers: [
+              { name: 'ICMP', color: 'var(--red)', fields: [
+                ['Type', '11 (Time Exceeded)'],
+                ['Code', '0 (TTL expired in transit)'],
+                ['Description', 'Packet dropped — TTL=0'],
+                ['Original Packet', 'Included in ICMP message']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Traceroute Uses TTL',
+        explanation: '<strong>traceroute</strong> maps the path to a destination by exploiting TTL:\n\n1. Send packet with <strong>TTL=1</strong> → Router 1 drops it, sends ICMP Time Exceeded\n2. Send packet with <strong>TTL=2</strong> → Router 1 decrements, Router 2 drops it\n3. Send packet with <strong>TTL=3</strong> → Router 1→2, Router 3 drops it\n4. Continue until you reach the destination\n\nEach ICMP reply reveals a router on the path. This is one of the most fundamental network diagnostic tools.\n\n<code>traceroute example.com</code>',
+        highlights: ['r1', 'r2', 'r3', 'dead', 'icmp'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'mtu',
+    name: 'MTU',
+    icon: '📏',
+    description: 'Maximum Transmission Unit — the largest packet the network allows',
+    category: 'Components',
+    order: 10,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'pkt', type: 'box', name: 'Packet', sub: '4000 bytes', x: 100, y: 100 },
+        { id: 'mtu', type: 'box', name: 'MTU: 1500', sub: 'Ethernet limit', color: 'var(--amber)', x: 300, y: 100 },
+        { id: 'frag', type: 'box', name: 'Fragment 1', sub: '1500 bytes', color: 'var(--cyan)', x: 500, y: 60 },
+        { id: 'frag2', type: 'box', name: 'Fragment 2', sub: '1500 bytes', color: 'var(--cyan)', x: 500, y: 140 },
+        { id: 'frag3', type: 'box', name: 'Fragment 3', sub: '1000 bytes', color: 'var(--cyan)', x: 500, y: 220 },
+        { id: 'pmtud', type: 'box', name: 'Path MTU Discovery', sub: 'DF bit set', color: 'var(--green)', x: 300, y: 250 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'What is MTU?',
+        explanation: '<strong>MTU (Maximum Transmission Unit)</strong> is the largest Layer 2 payload size that can be transmitted without fragmentation.\n\nCommon MTU values:\n• <strong>Ethernet:</strong> 1500 bytes (standard)\n• <strong>Jumbo frames:</strong> 9000 bytes (data centers)\n• <strong>Loopback:</strong> 65535 bytes (Linux)\n• <strong>PPP over Ethernet (PPPoE):</strong> 1492 bytes (2 bytes reserved)\n\nIf a packet exceeds the MTU, it must be fragmented or dropped.',
+        highlights: ['pkt'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Common MTUs',
+        explanation: 'Different network technologies have different MTU limits:\n\n<code>Ethernet:     1500 bytes</code>\n<code>Jumbo Frame:  9000 bytes</code>\n<code>PPPoE:        1492 bytes</code>\n<code>Wi-Fi:        2304 bytes (802.11)</code>\n<code>Loopback:     65535 bytes (Linux)</code>\n\nThe standard Ethernet MTU of 1500 bytes is the most common limit you\'ll encounter. Jumbo frames are used in data centers for high-throughput storage and clustering traffic.',
+        highlights: ['mtu'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Fragmentation',
+        explanation: 'When a packet exceeds the MTU, it must be <strong>fragmented</strong> into smaller pieces.\n\nA 4000-byte packet must be split to fit the 1500-byte Ethernet MTU:\n• <strong>Fragment 1:</strong> 1500 bytes (offset 0)\n• <strong>Fragment 2:</strong> 1500 bytes (offset 1500)\n• <strong>Fragment 3:</strong> 1000 bytes (offset 3000)\n\nEach fragment is an independent packet with its own IP header. The receiver reassembles them using the <strong>Identification</strong>, <strong>Fragment Offset</strong>, and <strong>More Fragments (MF)</strong> flags.\n\nFragmentation adds overhead and can cause performance issues.',
+        highlights: ['frag', 'frag2', 'frag3'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          frag1: {
+            layers: [
+              { name: 'IPv4 (Fragment 1)', color: 'var(--cyan)', fields: [
+                ['Identification', '0x1234'],
+                ['Fragment Offset', '0'],
+                ['More Fragments', 'Yes (1)'],
+                ['Total Length', '1500 bytes']
+              ]}
+            ]
+          },
+          frag2: {
+            layers: [
+              { name: 'IPv4 (Fragment 2)', color: 'var(--cyan)', fields: [
+                ['Identification', '0x1234'],
+                ['Fragment Offset', '185 (1480 bytes)'],
+                ['More Fragments', 'Yes (1)'],
+                ['Total Length', '1500 bytes']
+              ]}
+            ]
+          },
+          frag3: {
+            layers: [
+              { name: 'IPv4 (Fragment 3)', color: 'var(--cyan)', fields: [
+                ['Identification', '0x1234'],
+                ['Fragment Offset', '370 (2960 bytes)'],
+                ['More Fragments', 'No (0)'],
+                ['Total Length', '1000 bytes']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Path MTU Discovery',
+        explanation: '<strong>Path MTU Discovery (PMTUD)</strong> finds the largest MTU along the entire path without fragmentation.\n\nHow it works:\n1. Sender sets the <strong>DF (Don\'t Fragment)</strong> bit in the IP header\n2. If a router can\'t forward the packet (too large, DF=1), it drops it and sends an <strong>ICMP Fragmentation Needed</strong> message (Type 3, Code 4)\n3. The sender reduces the packet size and retries\n4. This continues until the packet reaches the destination\n\nPMTUD avoids fragmentation entirely, improving performance. It\'s the preferred approach for TCP applications.',
+        highlights: ['pmtud'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          pmtud: {
+            layers: [
+              { name: 'IPv4', color: 'var(--cyan)', fields: [
+                ['DF Bit', '1 (Don\'t Fragment)'],
+                ['ICMP Reply', 'Type 3, Code 4'],
+                ['Action', 'Reduce packet size'],
+                ['Result', 'No fragmentation needed']
+              ]}
+            ]
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'dns-records',
+    name: 'DNS Records',
+    icon: '📖',
+    description: 'The phonebook entries — A, AAAA, CNAME, MX, TXT and more',
+    category: 'Networking Fundamentals',
+    order: 33,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'zone', type: 'box', name: 'example.com Zone', sub: 'DNS Zone File', x: 100, y: 80 },
+        { id: 'a', type: 'box', name: 'A Record', sub: 'example.com → 93.184.216.34', color: 'var(--green)', x: 350, y: 30 },
+        { id: 'aaaa', type: 'box', name: 'AAAA Record', sub: 'example.com → 2606:2800:220:1::248', color: 'var(--cyan)', x: 350, y: 90 },
+        { id: 'cname', type: 'box', name: 'CNAME Record', sub: 'www → example.com', color: 'var(--amber)', x: 350, y: 150 },
+        { id: 'mx', type: 'box', name: 'MX Record', sub: 'mail.example.com (priority 10)', color: 'var(--purple)', x: 350, y: 210 },
+        { id: 'txt', type: 'box', name: 'TXT Record', sub: 'SPF, DKIM, verification', color: 'var(--red)', x: 350, y: 270 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'A Record (IPv4)',
+        explanation: 'An <strong>A Record</strong> maps a hostname to an <strong>IPv4 address</strong>.\n\n<code>example.com → 93.184.216.34</code>\n\nThis is the most fundamental DNS record. When you type a URL in your browser, the first step is resolving the domain name to an IP address via A records.\n\n<strong>Key facts:</strong>\n• Returns a 32-bit IPv4 address\n• Multiple A records can exist for load balancing\n• TTL (Time To Live) controls caching duration\n\n<strong>Query:</strong> <code>dig example.com A</code>',
+        highlights: ['a'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'AAAA Record (IPv6)',
+        explanation: 'An <strong>AAAA Record</strong> (quad-A) maps a hostname to an <strong>IPv6 address</strong>.\n\n<code>example.com → 2606:2800:220:1::248</code>\n\nAs IPv4 addresses run out, AAAA records become essential for modern websites. A domain can have both A and AAAA records — clients try IPv6 first if available.\n\n<strong>Key facts:</strong>\n• Returns a 128-bit IPv6 address\n• Named "AAAA" because IPv6 addresses are 4x longer than IPv4\n• Dual-stack: most sites run both A and AAAA\n\n<strong>Query:</strong> <code>dig example.com AAAA</code>',
+        highlights: ['aaaa'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'CNAME (Alias)',
+        explanation: 'A <strong>CNAME Record</strong> (Canonical Name) points one hostname to another hostname.\n\n<code>www.example.com → example.com</code>\n\nCNAMEs are used for aliases. Instead of duplicating IP addresses, you point an alias to the canonical domain. The resolver then looks up the A/AAAA record of the target.\n\n<strong>Key facts:</strong>\n• Must point to a hostname, not an IP\n• Cannot coexist with other records on the same name\n• Common use: www → naked domain\n• chain lookups add latency\n\n<strong>Query:</strong> <code>dig www.example.com CNAME</code>',
+        highlights: ['cname'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'MX (Mail Exchange)',
+        explanation: 'An <strong>MX Record</strong> specifies the mail server responsible for receiving email.\n\n<code>example.com → mail.example.com (priority 10)</code>\n\nMX records include a <strong>priority number</strong> — lower values are tried first. If the primary server is down, mail is routed to the next priority.\n\n<strong>Key facts:</strong>\n• Must point to a hostname (not IP)\n• Priority determines delivery order\n• Multiple MX records for redundancy\n• Required for receiving email\n\n<strong>Query:</strong> <code>dig example.com MX</code>',
+        highlights: ['mx'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'TXT (Text)',
+        explanation: '<strong>TXT Records</strong> store arbitrary text. Originally for human-readable notes, they now serve critical security and verification purposes.\n\n<strong>Common uses:</strong>\n• <strong>SPF</strong> — Authorizes mail servers to send on behalf of your domain\n• <strong>DKIM</strong> — Cryptographic email signing\n• <strong>DMARC</strong> — Email authentication policy\n• <strong>Domain verification</strong> — Prove ownership to services (Google, Cloudflare)\n• <strong>SSL verification</strong> — Let\'s Encrypt DNS-01 challenge\n\n<strong>Example SPF:</strong>\n<code>v=spf1 include:_spf.google.com ~all</code>\n\n<strong>Query:</strong> <code>dig example.com TXT</code>',
+        highlights: ['txt'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'DNS Records Summary',
+        explanation: '<strong>DNS Record Types Overview:</strong>\n\n• <strong>A</strong> — Maps hostname to IPv4 address\n• <strong>AAAA</strong> — Maps hostname to IPv6 address\n• <strong>CNAME</strong> — Alias pointing to another hostname\n• <strong>MX</strong> — Mail server with priority\n• <strong>TXT</strong> — Text data (SPF, DKIM, verification)\n• <strong>NS</strong> — Authoritative name servers for the zone\n• <strong>SOA</strong> — Start of Authority — zone metadata (serial, refresh, retry, expire)\n• <strong>PTR</strong> — Reverse DNS — maps IP to hostname\n\n<strong>Commands:</strong>\n<code>dig example.com</code> — Full query\n<code>dig +short example.com</code> — IP only\n<code>nslookup example.com</code> — Simple lookup\n<code>host example.com</code> — Quick check',
+        highlights: ['zone', 'a', 'aaaa', 'cname', 'mx', 'txt'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'troubleshooting',
+    name: 'Network Troubleshooting',
+    icon: '🔧',
+    description: 'The diagnostic toolkit — ping, traceroute, ss, tcpdump, dig',
+    category: 'Networking Fundamentals',
+    order: 34,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'problem', type: 'box', name: 'Problem', sub: 'No connectivity?', x: 100, y: 80 },
+        { id: 'ping', type: 'box', name: 'ping', sub: 'Reachable?', color: 'var(--green)', x: 300, y: 30 },
+        { id: 'traceroute', type: 'box', name: 'traceroute', sub: 'Path?', color: 'var(--cyan)', x: 300, y: 100 },
+        { id: 'ss', type: 'box', name: 'ss / netstat', sub: 'Ports open?', color: 'var(--amber)', x: 300, y: 170 },
+        { id: 'dig', type: 'box', name: 'dig', sub: 'DNS resolving?', color: 'var(--purple)', x: 300, y: 240 },
+        { id: 'tcpdump', type: 'box', name: 'tcpdump', sub: 'Traffic flowing?', color: 'var(--red)', x: 300, y: 310 },
+        { id: 'fix', type: 'box', name: 'Fix!', sub: 'Found the issue', color: 'var(--green)', x: 550, y: 150 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'ping — Is it alive?',
+        explanation: '<strong>ping</strong> sends ICMP Echo Request packets to test basic connectivity.\n\n<code>ping google.com</code>\n\nIf you get replies, the destination is reachable at the network layer. If not, the problem is between you and the destination — could be DNS, routing, firewall, or the host itself.\n\n<strong>Key flags:</strong>\n• <code>-c 4</code> — Send 4 packets\n• <code>-i 0.2</code> — Interval between packets\n• <code>-s 1400</code> — Packet size (test MTU)\n• <code>-W 2</code> — Timeout in seconds\n\n<strong>What it tells you:</strong> Layer 3 connectivity is working.',
+        highlights: ['ping'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'traceroute — Where is it?',
+        explanation: '<strong>traceroute</strong> (Linux) or <strong>tracert</strong> (Windows) shows the hop-by-hop path packets take.\n\n<code>traceroute google.com</code>\n\nIt works by sending packets with incrementing TTL (Time To Live). Each router along the path decrements TTL and sends back an ICMP "Time Exceeded" message.\n\n<strong>What it tells you:</strong>\n• Which routers the traffic passes through\n• Where latency occurs (high RTT at a hop)\n• Where packets are dropped (*** timeouts)\n• If there\'s a routing loop\n\n<strong>Key flags:</strong>\n• <code>-n</code> — Don\'t resolve hostnames\n• <code>-I</code> — Use ICMP (not UDP)\n• <code>-m 30</code> — Max hops',
+        highlights: ['traceroute'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'ss / netstat — What\'s listening?',
+        explanation: '<strong>ss</strong> (socket statistics) shows open ports and established connections.\n\n<code>ss -tlnp</code> — TCP listening ports\n<code>ss -ulnp</code> — UDP listening ports\n<code>ss -tunap</code> — All connections\n\n<strong>Legacy:</strong> <code>netstat -tlnp</code> does the same thing.\n\n<strong>What it tells you:</strong>\n• Is the service listening on the expected port?\n• Is it bound to 0.0.0.0 (all interfaces) or 127.0.0.1 (localhost only)?\n• Are there established connections?\n• Which process owns the socket?\n\n<strong>Common issue:</strong> Service bound to localhost when it should be accessible remotely.',
+        highlights: ['ss'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'dig — DNS working?',
+        explanation: '<strong>dig</strong> (Domain Information Groper) queries DNS servers directly.\n\n<code>dig example.com</code>\n<code>dig @8.8.8.8 example.com</code> — Use specific DNS server\n<code>dig +trace example.com</code> — Full resolution path\n\n<strong>What it tells you:</strong>\n• Is DNS resolving correctly?\n• What\'s the TTL?\n• Are there the right record types?\n• Is your DNS server returning stale data?\n\n<strong>Common issues:</strong>\n• Wrong DNS server configured\n• DNS cache poisoning\n• Missing records (A vs CNAME)\n• TTL too high (stale cache)\n\n<strong>Quick check:</strong> <code>dig +short example.com</code>',
+        highlights: ['dig'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'tcpdump — What\'s on the wire?',
+        explanation: '<strong>tcpdump</strong> captures raw network packets for deep analysis.\n\n<code>tcpdump -i eth0 port 80</code>\n<code>tcpdump -i eth0 host 192.168.1.20</code>\n<code>tcpdump -w capture.pcap</code> — Save to file\n\n<strong>What it tells you:</strong>\n• Are packets actually arriving?\n• Are they going to the right destination?\n• What\'s in the packet headers?\n• Are there retransmissions (sign of packet loss)?\n• Is the TCP handshake completing?\n\n<strong>Key flags:</strong>\n• <code>-n</code> — Don\'t resolve names\n• <code>-A</code> — Show payload as ASCII\n• <code>-X</code> — Show payload as hex+ASCII\n• <code>-c 100</code> — Capture 100 packets\n\n<strong>Pro tip:</strong> Pipe to Wireshark: <code>tcpdump -w - | wireshark -k -i -</code>',
+        highlights: ['tcpdump'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Troubleshooting Flow',
+        explanation: '<strong>Systematic network troubleshooting approach:</strong>\n\n<strong>1. ping</strong> — Is the destination reachable?\n<strong>2. traceroute</strong> — Where does the path break?\n<strong>3. ss / netstat</strong> — Is the service listening?\n<strong>4. dig</strong> — Is DNS resolving correctly?\n<strong>5. tcpdump</strong> — What\'s actually on the wire?\n\n<strong>The golden rule:</strong> Start broad (ping) and narrow down (tcpdump). Each tool answers a specific question, and the order matters.\n\n<strong>Common flow:</strong>\n• ping fails → traceroute to find the broken hop\n• ping works but app fails → ss to check ports\n• DNS issues → dig to verify resolution\n• Intermittent issues → tcpdump to capture evidence',
+        highlights: ['problem', 'ping', 'traceroute', 'ss', 'dig', 'tcpdump', 'fix'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'http',
+    name: 'HTTP & HTTPS',
+    icon: '🌐',
+    description: 'The web protocol — requests, responses, status codes, TLS',
+    category: 'Networking Fundamentals',
+    order: 35,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'client', type: 'computer', name: 'Browser', sub: 'Client', x: 100, y: 100 },
+        { id: 'server', type: 'server', name: 'Web Server', sub: 'nginx/Apache', x: 600, y: 100 },
+        { id: 'req', type: 'box', name: 'HTTP Request', sub: 'GET /index.html HTTP/1.1', color: 'var(--cyan)', x: 350, y: 50 },
+        { id: 'resp', type: 'box', name: 'HTTP Response', sub: '200 OK + HTML', color: 'var(--green)', x: 350, y: 150 },
+        { id: 'tls', type: 'box', name: 'TLS Handshake', sub: 'Certificate exchange', color: 'var(--amber)', x: 350, y: 240 },
+        { id: 'codes', type: 'box', name: 'Status Codes', sub: '200=OK, 404=Not Found, 500=Error', x: 350, y: 320 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'HTTP Request',
+        explanation: 'An <strong>HTTP Request</strong> is sent by the client to the server.\n\n<code>GET /index.html HTTP/1.1</code>\n<code>Host: example.com</code>\n<code>User-Agent: Mozilla/5.0</code>\n<code>Accept: text/html</code>\n\n<strong>Request components:</strong>\n• <strong>Method</strong> — What action to perform (GET, POST, etc.)\n• <strong>Path</strong> — The resource URL (/index.html)\n• <strong>Version</strong> — HTTP version (HTTP/1.1, HTTP/2)\n• <strong>Headers</strong> — Metadata (Host, Accept, Authorization)\n• <strong>Body</strong> — Data payload (for POST/PUT)\n\n<strong>Example with curl:</strong>\n<code>curl -v https://example.com/index.html</code>',
+        highlights: ['client', 'req', 'server'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'HTTP Methods',
+        explanation: '<strong>HTTP Methods</strong> define the action to perform on a resource:\n\n<strong>GET</strong> — Read a resource (idempotent)\n<strong>POST</strong> — Create a new resource\n<strong>PUT</strong> — Replace/update a resource (idempotent)\n<strong>PATCH</strong> — Partially update a resource\n<strong>DELETE</strong> — Remove a resource (idempotent)\n<strong>HEAD</strong> — Same as GET but no body (headers only)\n<strong>OPTIONS</strong> — What methods are allowed (CORS preflight)\n\n<strong>Idempotent</strong> means calling it multiple times has the same effect as calling it once.\n\n<strong>REST API example:</strong>\n<code>GET /api/users</code> — List users\n<code>POST /api/users</code> — Create user\n<code>PUT /api/users/1</code> — Update user 1\n<code>DELETE /api/users/1</code> — Delete user 1',
+        highlights: ['req'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'HTTP Response',
+        explanation: 'The server sends back an <strong>HTTP Response</strong>:\n\n<code>HTTP/1.1 200 OK</code>\n<code>Content-Type: text/html</code>\n<code>Content-Length: 1234</code>\n\n<code>&lt;!DOCTYPE html&gt;</code>\n<code>&lt;html&gt;...&lt;/html&gt;</code>\n\n<strong>Response components:</strong>\n• <strong>Status Line</strong> — Version + status code + reason phrase\n• <strong>Headers</strong> — Metadata (Content-Type, Cache-Control, Set-Cookie)\n• <strong>Body</strong> — The actual content (HTML, JSON, images)\n\n<strong>Common headers:</strong>\n• <code>Content-Type</code> — MIME type of the body\n• <code>Cache-Control</code> — Caching directives\n• <code>Set-Cookie</code> — Set browser cookies\n• <code>Location</code> — Redirect URL (3xx)',
+        highlights: ['resp', 'server', 'client'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'HTTPS & TLS',
+        explanation: '<strong>HTTPS</strong> is HTTP wrapped in <strong>TLS (Transport Layer Security)</strong> encryption.\n\n<strong>TLS Handshake:</strong>\n1. Client sends <strong>ClientHello</strong> (supported ciphers, TLS version)\n2. Server sends <strong>ServerHello</strong> (chosen cipher, certificate)\n3. Client verifies certificate against trusted CAs\n4. Key exchange — both sides generate shared secret\n5. Encrypted communication begins\n\n<strong>What TLS protects:</strong>\n• <strong>Confidentiality</strong> — Encryption prevents eavesdropping\n• <strong>Integrity</strong> — MAC prevents tampering\n• <strong>Authentication</strong> — Certificates verify server identity\n\n<strong>Check TLS:</strong>\n<code>openssl s_client -connect example.com:443</code>\n<code>curl -vI https://example.com</code>',
+        highlights: ['tls', 'client', 'server'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Status Codes',
+        explanation: '<strong>HTTP Status Codes</strong> indicate the result of the request:\n\n<strong>2xx Success:</strong>\n• <code>200 OK</code> — Request succeeded\n• <code>201 Created</code> — Resource created (POST)\n• <code>204 No Content</code> — Success, no body (DELETE)\n\n<strong>3xx Redirection:</strong>\n• <code>301 Moved Permanently</code> — Permanent redirect\n• <code>302 Found</code> — Temporary redirect\n• <code>304 Not Modified</code> — Use cached version\n\n<strong>4xx Client Error:</strong>\n• <code>400 Bad Request</code> — Malformed syntax\n• <code>401 Unauthorized</code> — Authentication required\n• <code>403 Forbidden</code> — No permission\n• <code>404 Not Found</code> — Resource doesn\'t exist\n\n<strong>5xx Server Error:</strong>\n• <code>500 Internal Server Error</code> — Generic server failure\n• <code>502 Bad Gateway</code> — Upstream server error\n• <code>503 Service Unavailable</code> — Server overloaded\n• <code>504 Gateway Timeout</code> — Upstream timeout',
+        highlights: ['codes'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'osi-model',
+    name: 'OSI & TCP-IP Model',
+    icon: '\uD83D\uDCDA',
+    description: 'The layered architecture \u2014 why networking is split into layers',
+    category: 'Networking Fundamentals',
+    order: 28,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'osi7', type: 'box', name: '7. Application', sub: 'HTTP, DNS, SMTP', color: 'var(--purple)', x: 100, y: 30, w: 120, h: 35 },
+        { id: 'osi6', type: 'box', name: '6. Presentation', sub: 'Encryption, Compression', color: 'var(--purple)', x: 100, y: 80, w: 120, h: 35 },
+        { id: 'osi5', type: 'box', name: '5. Session', sub: 'Sessions, Auth', color: 'var(--purple)', x: 100, y: 130, w: 120, h: 35 },
+        { id: 'osi4', type: 'box', name: '4. Transport', sub: 'TCP, UDP', color: 'var(--cyan)', x: 100, y: 180, w: 120, h: 35 },
+        { id: 'osi3', type: 'box', name: '3. Network', sub: 'IP, Routing', color: 'var(--green)', x: 100, y: 230, w: 120, h: 35 },
+        { id: 'osi2', type: 'box', name: '2. Data Link', sub: 'Ethernet, MAC', color: 'var(--amber)', x: 100, y: 280, w: 120, h: 35 },
+        { id: 'osi1', type: 'box', name: '1. Physical', sub: 'Cables, Signals', color: 'var(--red)', x: 100, y: 330, w: 120, h: 35 },
+        { id: 'tcpip', type: 'box', name: 'TCP/IP Model', sub: '4 Layers', color: 'var(--cyan)', x: 350, y: 130, w: 160, h: 160 },
+        { id: 'app', type: 'box', name: 'Application', sub: 'HTTP, DNS, SMTP', x: 350, y: 330, w: 140, h: 35 },
+        { id: 'trans', type: 'box', name: 'Transport', sub: 'TCP, UDP', x: 350, y: 280, w: 140, h: 35 },
+        { id: 'net', type: 'box', name: 'Internet', sub: 'IP, ICMP', x: 350, y: 230, w: 140, h: 35 },
+        { id: 'link', type: 'box', name: 'Network Access', sub: 'Ethernet, WiFi', x: 350, y: 180, w: 140, h: 35 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'Why Layers?',
+        explanation: 'Networking is complex \u2014 from physical cables to application protocols. To manage this complexity, the industry split networking into <strong>layers</strong>.\n\nEach layer has <strong>one specific job</strong> and communicates with the layers directly above and below it. This is called <strong>modularity</strong>.\n\nBenefits:\n\u2022 <strong>Simpler design</strong> \u2014 each layer only handles its own concerns\n\u2022 <strong>Easier troubleshooting</strong> \u2014 isolate problems to a specific layer\n\u2022 <strong>Interoperability</strong> \u2014 vendors can build products for one layer without worrying about others\n\u2022 <strong>Flexibility</strong> \u2014 swap one layer without changing the others',
+        highlights: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Physical Layer (Layer 1)',
+        explanation: 'The <strong>Physical Layer</strong> deals with the raw transmission of <strong>bits</strong> over a physical medium.\n\nThis includes:\n\u2022 <strong>Cables</strong> \u2014 copper (Cat5e/Cat6), fiber optic, coaxial\n\u2022 <strong>Signals</strong> \u2014 electrical voltage, light pulses, radio waves\n\u2022 <strong>Connectors</strong> \u2014 RJ-45, LC, SC\n\u2022 <strong>Data rate</strong> \u2014 100 Mbps, 1 Gbps, 10 Gbps\n\nAt this layer, there are no addresses, no frames \u2014 just <strong>1s and 0s</strong> on the wire.',
+        highlights: ['osi1'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Data Link Layer (Layer 2)',
+        explanation: 'The <strong>Data Link Layer</strong> provides <strong>reliable node-to-node</strong> delivery on the same network.\n\nKey concepts:\n\u2022 <strong>MAC addresses</strong> \u2014 physical hardware identifiers (AA:BB:CC:DD:EE:FF)\n\u2022 <strong>Ethernet frames</strong> \u2014 the data unit at this layer\n\u2022 <strong>Switches</strong> \u2014 forward frames using MAC address tables\n\u2022 <strong>Error detection</strong> \u2014 CRC/FCS checks\n\nLayer 2 handles communication within a <strong>single local network</strong>. To reach a different network, you need Layer 3.',
+        highlights: ['osi2'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Network Layer (Layer 3)',
+        explanation: 'The <strong>Network Layer</strong> handles <strong>routing across different networks</strong>.\n\nKey concepts:\n\u2022 <strong>IP addresses</strong> \u2014 logical addresses (192.168.1.10)\n\u2022 <strong>Routers</strong> \u2014 forward packets between networks\n\u2022 <strong>Packets</strong> \u2014 the data unit at this layer\n\u2022 <strong>Routing tables</strong> \u2014 determine the best path\n\nLayer 3 enables communication across the internet by finding the best path from source to destination.',
+        highlights: ['osi3'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Transport Layer (Layer 4)',
+        explanation: 'The <strong>Transport Layer</strong> provides <strong>end-to-end communication</strong> between applications.\n\nTwo main protocols:\n\u2022 <strong>TCP</strong> \u2014 reliable, ordered delivery with acknowledgments\n\u2022 <strong>UDP</strong> \u2014 fast, connectionless, no guarantees\n\nKey concepts:\n\u2022 <strong>Port numbers</strong> \u2014 identify specific services (80 = HTTP, 443 = HTTPS)\n\u2022 <strong>Segments</strong> \u2014 the data unit at this layer\n\u2022 <strong>Flow control</strong> \u2014 prevent overwhelming the receiver',
+        highlights: ['osi4'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Session/Presentation/Application (Layers 5-7)',
+        explanation: 'The upper three layers handle <strong>application-level concerns</strong>:\n\n<strong>Layer 5 \u2014 Session:</strong>\n\u2022 Manages sessions between applications\n\u2022 Authentication and reconnection\n\n<strong>Layer 6 \u2014 Presentation:</strong>\n\u2022 Data formatting, encryption, compression\n\u2022 SSL/TLS encryption happens here\n\n<strong>Layer 7 \u2014 Application:</strong>\n\u2022 The protocols users interact with directly\n\u2022 HTTP, DNS, SMTP, FTP, SSH\n\nIn practice, the TCP/IP model merges these three into a single <strong>Application layer</strong>.',
+        highlights: ['osi5', 'osi6', 'osi7'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'TCP/IP Model (4 Layers)',
+        explanation: 'The <strong>TCP/IP model</strong> is the practical, real-world model used on the internet today. It simplifies the OSI model into <strong>4 layers</strong>:\n\n\u2022 <strong>Application</strong> \u2014 HTTP, DNS, SMTP (combines OSI layers 5-7)\n\u2022 <strong>Transport</strong> \u2014 TCP, UDP (same as OSI layer 4)\n\u2022 <strong>Internet</strong> \u2014 IP, ICMP (same as OSI layer 3)\n\u2022 <strong>Network Access</strong> \u2014 Ethernet, WiFi (combines OSI layers 1-2)\n\n<strong>Key takeaway:</strong> Both models describe the same concepts \u2014 TCP/IP is just more practical. When people refer to "layers" in networking, they usually mean the TCP/IP model.',
+        highlights: ['tcpip', 'app', 'trans', 'net', 'link'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'icmp',
+    name: 'ICMP',
+    icon: '\uD83D\uDCE1',
+    description: 'The network messenger \u2014 ping, traceroute, error reporting',
+    category: 'Networking Fundamentals',
+    order: 29,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'src', type: 'box', name: 'Source', sub: '192.168.1.10', x: 100, y: 100 },
+        { id: 'dst', type: 'box', name: 'Destination', sub: '8.8.8.8', x: 600, y: 100 },
+        { id: 'echo', type: 'box', name: 'Echo Request', sub: 'Type 8, Code 0', color: 'var(--cyan)', x: 350, y: 60 },
+        { id: 'reply', type: 'box', name: 'Echo Reply', sub: 'Type 0, Code 0', color: 'var(--green)', x: 350, y: 160 },
+        { id: 'err', type: 'box', name: 'Unreachable', sub: 'Type 3, Code *', color: 'var(--red)', x: 350, y: 250 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'What is ICMP?',
+        explanation: '<strong>ICMP (Internet Control Message Protocol)</strong> is a network-layer protocol used for <strong>error reporting</strong> and <strong>diagnostics</strong>.\n\nUnlike TCP or UDP, ICMP is not used to transport application data. Instead, it provides feedback about network conditions:\n\u2022 Is the destination reachable?\n\u2022 Did a packet get dropped?\n\u2022 Is the network congested?\n\nICMP operates at <strong>Layer 3</strong> (encapsulated directly in IP) and uses IP for delivery \u2014 but it\'s not a transport protocol.',
+        highlights: ['src', 'dst'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'ICMP Header',
+        explanation: 'An ICMP message has a simple header structure:\n\n<code>Type (8 bits)</code> \u2014 identifies the message type (e.g., 8 = Echo Request)\n<code>Code (8 bits)</code> \u2014 provides additional detail for the type\n<code>Checksum (16 bits)</code> \u2014 error detection\n<code>Data</code> \u2014 variable payload (often the original packet header)\n\nThe Type and Code fields together define the ICMP message purpose.',
+        highlights: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          icmp: {
+            layers: [
+              { name: 'ICMP Header', color: 'var(--cyan)', fields: [
+                ['Type', '8 (Echo Request)'],
+                ['Code', '0'],
+                ['Checksum', '0x1234'],
+                ['Identifier', '0x0001'],
+                ['Sequence', '1']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Echo Request (ping)',
+        explanation: 'The <strong>ping</strong> command sends ICMP <strong>Echo Request</strong> messages (Type 8, Code 0) to test connectivity.\n\nWhen you type <code>ping 8.8.8.8</code>:\n\u2022 Your host sends an ICMP Echo Request to the destination\n\u2022 The destination replies with an ICMP Echo Reply (Type 0)\n\u2022 Round-trip time is measured\n\nPing is the most common ICMP use case \u2014 it\'s the network equivalent of "are you there?"',
+        highlights: ['echo'],
+        packets: [
+          { id: 'icmp1', type: 'data', from: 'src', to: 'dst', color: 'var(--cyan)', label: 'Echo Request (Type 8)', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Echo Reply',
+        explanation: 'The destination receives the Echo Request and responds with an <strong>Echo Reply</strong> (Type 0, Code 0).\n\nThe reply contains the same data that was sent in the request, allowing the source to verify that the data was received intact.\n\n<strong>Traceroute</strong> builds on this by sending packets with incrementing TTL values. Each router that decrements TTL to 0 sends back an ICMP <strong>Time Exceeded</strong> message (Type 11), revealing the path.',
+        highlights: ['reply'],
+        packets: [
+          { id: 'icmp2', type: 'data', from: 'dst', to: 'src', color: 'var(--green)', label: 'Echo Reply (Type 0)', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Error Messages',
+        explanation: 'ICMP generates <strong>error messages</strong> when packets can\'t be delivered:\n\n<strong>Type 3 \u2014 Destination Unreachable:</strong>\n\u2022 Code 0: Network unreachable\n\u2022 Code 1: Host unreachable\n\u2022 Code 2: Protocol unreachable\n\u2022 Code 3: Port unreachable\n\n<strong>Type 11 \u2014 Time Exceeded:</strong>\n\u2022 Code 0: TTL expired in transit (used by traceroute)\n\u2022 Code 1: Fragment reassembly timeout\n\nThese messages help <strong>diagnose network problems</strong> without needing access to the destination.',
+        highlights: ['err'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'ICMP Summary',
+        explanation: '<strong>Key ICMP message types:</strong>\n\n<code>Type 0</code> \u2014 Echo Reply (response to ping)\n<code>Type 8</code> \u2014 Echo Request (ping)\n<code>Type 3</code> \u2014 Destination Unreachable\n<code>Type 5</code> \u2014 Redirect (use a better route)\n<code>Type 11</code> \u2014 Time Exceeded (TTL expired)\n<code>Type 13</code> \u2014 Timestamp Request\n\n<strong>Common tools using ICMP:</strong>\n\u2022 <strong>ping</strong> \u2014 Echo Request/Reply (Types 8/0)\n\u2022 <strong>traceroute</strong> \u2014 Time Exceeded (Type 11) + Echo Reply (Type 0)\n\u2022 <strong>path MTU discovery</strong> \u2014 Unreachable with "DF set" (Type 3, Code 4)',
+        highlights: ['src', 'echo', 'reply', 'err', 'dst'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'udp',
+    name: 'UDP',
+    icon: '\u26A1',
+    description: 'Fast and simple \u2014 connectionless transport for speed',
+    category: 'Networking Fundamentals',
+    order: 30,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'src', type: 'box', name: 'Client', x: 100, y: 100 },
+        { id: 'dst', type: 'box', name: 'Server', x: 600, y: 100 },
+        { id: 'seg', type: 'box', name: 'UDP Segment', sub: '8-byte header', color: 'var(--amber)', x: 350, y: 60 },
+        { id: 'app', type: 'box', name: 'DNS Query', sub: 'Port 53', color: 'var(--purple)', x: 350, y: 160 },
+        { id: 'game', type: 'box', name: 'Game Packet', sub: 'Port 7777', color: 'var(--cyan)', x: 350, y: 240 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'What is UDP?',
+        explanation: '<strong>UDP (User Datagram Protocol)</strong> is a <strong>connectionless</strong> transport protocol defined in RFC 768.\n\nUnlike TCP, UDP:\n\u2022 Does <strong>not establish a connection</strong> (no handshake)\n\u2022 Does <strong>not guarantee delivery</strong> (packets may be lost)\n\u2022 Does <strong>not guarantee ordering</strong> (packets may arrive out of order)\n\u2022 Has <strong>no retransmission</strong> mechanism\n\nUDP is the "send and forget" protocol \u2014 it sends data and hopes for the best. This makes it <strong>extremely fast</strong> with minimal overhead.',
+        highlights: ['src', 'dst'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'UDP Header',
+        explanation: 'The UDP header is incredibly simple \u2014 only <strong>8 bytes</strong> (compared to TCP\'s 20+ bytes):\n\n<code>Source Port (16 bits)</code> \u2014 sender\'s port\n<code>Destination Port (16 bits)</code> \u2014 receiver\'s port\n<code>Length (16 bits)</code> \u2014 total segment size (header + data)\n<code>Checksum (16 bits)</code> \u2014 error detection (optional in IPv4)\n\nThat\'s it \u2014 no sequence numbers, no acknowledgments, no flow control. Just ports and a length.',
+        highlights: ['seg'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          udp: {
+            layers: [
+              { name: 'UDP Header (8 bytes)', color: 'var(--amber)', fields: [
+                ['Source Port', '54321'],
+                ['Destination', '53 (DNS)'],
+                ['Length', '40 bytes'],
+                ['Checksum', '0xABCD']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'When UDP is Used',
+        explanation: 'UDP is the protocol of choice when <strong>speed matters more than reliability</strong>:\n\n<strong>DNS queries:</strong>\n\u2022 Small request/response \u2014 no need for TCP overhead\n\u2022 If the query fails, just send another one\n\n<strong>DHCP:</strong>\n\u2022 Client has no IP yet \u2014 can\'t establish TCP connection\n\u2022 Broadcast discovery works better with UDP\n\n<strong>SNMP (monitoring):</strong>\n\u2022 Small, frequent status updates\n\u2022 Losing one update isn\'t critical',
+        highlights: ['seg', 'app'],
+        packets: [
+          { id: 'udp1', type: 'data', from: 'src', to: 'dst', color: 'var(--purple)', label: 'DNS Query (Port 53)', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'Real-time Applications',
+        explanation: 'UDP dominates <strong>real-time applications</strong> where latency is critical:\n\n<strong>Online Gaming:</strong>\n\u2022 Player positions update 60+ times per second\n\u2022 A lost packet is meaningless \u2014 the next one has newer data\n\u2022 TCP retransmission would cause lag spikes\n\n<strong>Video Streaming:</strong>\n\u2022 Buffering handles occasional losses\n\u2022 Live streams can\'t wait for retransmissions\n\n<strong>VoIP (Voice over IP):</strong>\n\u2022 Real-time voice can\'t tolerate delays\n\u2022 Brief audio glitches are acceptable, lag is not',
+        highlights: ['app', 'game'],
+        packets: [
+          { id: 'udp2', type: 'data', from: 'src', to: 'dst', color: 'var(--cyan)', label: 'Game Packet (Port 7777)', duration: 1200 }
+        ],
+        tables: {}
+      },
+      {
+        title: 'UDP Summary',
+        explanation: '<strong>Key takeaway:</strong> UDP trades reliability for speed.\n\n\u2022 <strong>No handshake</strong> \u2014 just send immediately\n\u2022 <strong>No ordering</strong> \u2014 packets may arrive out of order\n\u2022 <strong>No retransmission</strong> \u2014 lost packets are gone\n\u2022 <strong>8-byte header</strong> \u2014 minimal overhead\n\u2022 <strong>Best for:</strong> DNS, DHCP, gaming, streaming, VoIP\n\n<strong>When to use UDP:</strong>\nIf your application can handle occasional lost packets and needs low latency, UDP is the right choice. If every byte must arrive, use TCP instead.',
+        highlights: ['src', 'seg', 'app', 'game', 'dst'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'tcp-vs-udp',
+    name: 'TCP vs UDP',
+    icon: '\u2696\uFE0F',
+    description: 'The tradeoff \u2014 reliability vs speed',
+    category: 'Networking Fundamentals',
+    order: 31,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'tcp', type: 'box', name: 'TCP', sub: 'Reliable', color: 'var(--cyan)', x: 100, y: 80 },
+        { id: 'udp', type: 'box', name: 'UDP', sub: 'Fast', color: 'var(--amber)', x: 100, y: 200 },
+        { id: 'tcpH', type: 'box', name: '20-byte Header', sub: 'Seq, Ack, Window', color: 'var(--cyan)', x: 350, y: 40 },
+        { id: 'tcpF', type: 'box', name: 'Features', sub: 'Ordered, Retransmit, Flow Control', color: 'var(--cyan)', x: 350, y: 100 },
+        { id: 'udpH', type: 'box', name: '8-byte Header', sub: 'Port, Length, Checksum', color: 'var(--amber)', x: 350, y: 180 },
+        { id: 'udpU', type: 'box', name: 'Use Cases', sub: 'DNS, Gaming, Video', color: 'var(--amber)', x: 350, y: 240 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'TCP \u2014 Reliable',
+        explanation: '<strong>TCP (Transmission Control Protocol)</strong> provides <strong>reliable, ordered</strong> delivery.\n\nKey features:\n\u2022 <strong>Connection-oriented</strong> \u2014 3-way handshake before data transfer\n\u2022 <strong>Ordered delivery</strong> \u2014 sequence numbers ensure data arrives in order\n\u2022 <strong>Retransmission</strong> \u2014 lost packets are automatically resent\n\u2022 <strong>Flow control</strong> \u2014 prevents overwhelming the receiver\n\u2022 <strong>Congestion control</strong> \u2014 adapts to network conditions\n\nTCP guarantees that every byte arrives intact and in order \u2014 but this comes with overhead.',
+        highlights: ['tcp', 'tcpH', 'tcpF'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'TCP Use Cases',
+        explanation: 'TCP is used when <strong>data integrity is critical</strong>:\n\n<strong>HTTP/HTTPS (Web):</strong>\n\u2022 Web pages must load completely \u2014 no missing images or broken HTML\n\n<strong>Email (SMTP/IMAP):</strong>\n\u2022 An email can\'t arrive with missing words\n\n<strong>File Transfer (FTP/SFTP):</strong>\n\u2022 A corrupted file could be catastrophic\n\n<strong>SSH:</strong>\n\u2022 Remote commands must execute exactly as typed\n\nIn short: if losing even one byte would break the application, use TCP.',
+        highlights: ['tcpF'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'UDP \u2014 Fast',
+        explanation: '<strong>UDP (User Datagram Protocol)</strong> provides <strong>fast, connectionless</strong> delivery.\n\nKey characteristics:\n\u2022 <strong>Connectionless</strong> \u2014 no handshake, just send\n\u2022 <strong>No ordering</strong> \u2014 packets may arrive out of order\n\u2022 <strong>No retransmission</strong> \u2014 lost packets are gone\n\u2022 <strong>8-byte header</strong> \u2014 minimal overhead\n\u2022 <strong>No flow/congestion control</strong> \u2014 sends at full speed\n\nUDP is the "fire and forget" protocol \u2014 ideal when speed matters more than perfection.',
+        highlights: ['udp', 'udpH', 'udpU'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'When to Use Which',
+        explanation: '<strong>Decision guide:</strong>\n\n<code>Protocol    | Use TCP?  | Use UDP?</code>\n<code>HTTP/HTTPS  | YES       | No</code>\n<code>DNS         | Rarely    | YES (default)</code>\n<code>Gaming      | No        | YES</code>\n<code>Email       | YES       | No</code>\n<code>Video       | Streaming | Live YES</code>\n<code>VoIP        | No        | YES</code>\n<code>File Trans  | YES       | No</code>\n<code>DHCP        | No        | YES</code>\n\n<strong>Rule of thumb:</strong>\n\u2022 Every byte must arrive? \u2192 <strong>TCP</strong>\n\u2022 Speed matters more? \u2192 <strong>UDP</strong>\n\u2022 Small query/response? \u2192 <strong>UDP</strong>\n\u2022 Large data transfer? \u2192 <strong>TCP</strong>',
+        highlights: ['tcp', 'udp'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'ipv6',
+    name: 'IPv6',
+    icon: '\uD83C\uDF0D',
+    description: 'The next generation \u2014 128-bit addresses for the future',
+    category: 'Networking Fundamentals',
+    order: 32,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'v4', type: 'box', name: 'IPv4', sub: '32-bit (4.3B addresses)', color: 'var(--amber)', x: 100, y: 80 },
+        { id: 'v6', type: 'box', name: 'IPv6', sub: '128-bit (3.4\u00D710^38)', color: 'var(--green)', x: 100, y: 200 },
+        { id: 'format', type: 'box', name: 'Format', sub: '2001:0db8:85a3::8a2e:0370:7334', x: 400, y: 40 },
+        { id: 'feat', type: 'box', name: 'Features', sub: 'No NAT, Auto-config, IPSec', x: 400, y: 140 },
+        { id: 'dual', type: 'box', name: 'Dual Stack', sub: 'IPv4 + IPv6 running together', color: 'var(--cyan)', x: 400, y: 240 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'Why IPv6?',
+        explanation: 'IPv4 provides only <strong>4.3 billion</strong> addresses (2^32). With the explosion of devices \u2014 smartphones, IoT, servers \u2014 the world is <strong>running out of IPv4 addresses</strong>.\n\nWorkarounds like <strong>NAT</strong> and <strong>private IP ranges</strong> have extended IPv4\'s life, but they add complexity and break the end-to-end principle.\n\n<strong>IPv6</strong> solves this with <strong>128-bit addresses</strong> \u2014 providing 3.4\u00D710^38 addresses. That\'s enough to give every atom on Earth its own IP address.',
+        highlights: ['v4'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'IPv4 vs IPv6',
+        explanation: '<strong>IPv4:</strong>\n\u2022 32-bit address (4 octets)\n\u2022 Dotted decimal: <code>192.168.1.10</code>\n\u2022 ~4.3 billion addresses\n\u2022 Header: 20-60 bytes (variable)\n\u2022 Checksum required\n\n<strong>IPv6:</strong>\n\u2022 128-bit address (8 groups of 16 bits)\n\u2022 Colon-hex: <code>2001:0db8:85a3::8a2e:0370:7334</code>\n\u2022 3.4\u00D710^38 addresses\n\u2022 Header: fixed 40 bytes\n\u2022 No checksum (relying on link-layer CRC)',
+        highlights: ['v4', 'v6'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'IPv6 Address Format',
+        explanation: 'An IPv6 address is written as <strong>8 groups of 4 hexadecimal digits</strong>, separated by colons:\n\n<code>2001:0db8:85a3:0000:0000:8a2e:0370:7334</code>\n\n<strong>Compression rules:</strong>\n\u2022 Leading zeros in a group can be omitted: <code>0db8</code> \u2192 <code>db8</code>\n\u2022 One consecutive group of all zeros can be replaced with <code>::</code>\n\u2022 <code>2001:0db8:85a3::8a2e:0370:7334</code>\n\n<strong>Special addresses:</strong>\n\u2022 <code>::1</code> \u2014 loopback (like 127.0.0.1)\n\u2022 <code>::</code> \u2014 unspecified (like 0.0.0.0)\n\u2022 <code>fe80::/10</code> \u2014 link-local range',
+        highlights: ['format'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          ipv6: {
+            layers: [
+              { name: 'IPv6 Address', color: 'var(--green)', fields: [
+                ['Full', '2001:0db8:85a3:0000:0000:8a2e:0370:7334'],
+                ['Compressed', '2001:db8:85a3::8a2e:370:7334'],
+                ['Bit Length', '128 bits (8 groups of 16)'],
+                ['Format', 'Colon-Hexadecimal']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'IPv6 Features',
+        explanation: 'IPv6 introduces several improvements over IPv4:\n\n<strong>No NAT needed:</strong>\n\u2022 Every device can have a globally unique address\n\u2022 Restores end-to-end connectivity\n\n<strong>SLAAC (Stateless Address Auto-configuration):</strong>\n\u2022 Devices automatically configure their own IPv6 address\n\u2022 No DHCP server required (though DHCPv6 exists)\n\n<strong>Built-in IPSec:</strong>\n\u2022 Originally mandatory in IPv6 (now recommended)\n\u2022 Provides authentication and encryption at the network layer\n\n<strong>Simplified header:</strong>\n\u2022 Fixed 40-byte header (faster processing)\n\u2022 No checksum (rely on link-layer and upper-layer checksums)',
+        highlights: ['feat'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Dual Stack',
+        explanation: 'The transition from IPv4 to IPv6 is happening <strong>gradually</strong> through <strong>dual stack</strong> operation.\n\nDuring the transition period:\n\u2022 Devices run <strong>both IPv4 and IPv6</strong> simultaneously\n\u2022 Applications try IPv6 first, fall back to IPv4\n\u2022 Networks carry both protocol types on the same infrastructure\n\n<strong>Transition mechanisms:</strong>\n\u2022 <strong>Dual Stack</strong> \u2014 run both protocols (most common)\n\u2022 <strong>Tunneling</strong> \u2014 encapsulate IPv6 in IPv4 packets (6to4, Teredo)\n\u2022 <strong>NAT64/DNS64</strong> \u2014 translate between IPv4 and IPv6\n\nIPv6 adoption is growing \u2014 over 40% of Google traffic now comes over IPv6.',
+        highlights: ['dual'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'load-balancing',
+    name: 'Load Balancing',
+    icon: '⚖️',
+    description: 'Distributing traffic — L4/L7 balancers, algorithms, health checks',
+    category: 'Advanced Networking',
+    order: 42,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'client', type: 'box', name: 'Clients', sub: 'Internet traffic', x: 100, y: 100 },
+        { id: 'lb', type: 'box', name: 'Load Balancer', sub: 'L4/L7', color: 'var(--cyan)', x: 350, y: 100 },
+        { id: 'b1', type: 'box', name: 'Backend 1', sub: '192.168.1.10', color: 'var(--green)', x: 600, y: 40 },
+        { id: 'b2', type: 'box', name: 'Backend 2', sub: '192.168.1.11', color: 'var(--green)', x: 600, y: 120 },
+        { id: 'b3', type: 'box', name: 'Backend 3', sub: '192.168.1.12', color: 'var(--green)', x: 600, y: 200 },
+        { id: 'health', type: 'box', name: 'Health Checks', sub: 'TCP/HTTP probes', color: 'var(--amber)', x: 350, y: 220 }
+      ],
+      links: [
+        { id: 'link-client-lb', from: 'client', to: 'lb' },
+        { id: 'link-lb-b1', from: 'lb', to: 'b1' },
+        { id: 'link-lb-b2', from: 'lb', to: 'b2' },
+        { id: 'link-lb-b3', from: 'lb', to: 'b3' },
+        { id: 'link-health-lb', from: 'health', to: 'lb' }
+      ]
+    },
+    steps: [
+      {
+        title: 'L4 Load Balancing',
+        explanation: '<strong>L4 (Layer 4) Load Balancing</strong> operates at the transport layer.\n\nIt routes traffic based on <strong>IP address and port number</strong> only — it does not inspect the payload.\n\n<strong>How it works:</strong>\n• Receives a TCP/UDP connection\n• Selects a backend based on the algorithm\n• Forwards the raw packet stream\n\n<strong>Advantages:</strong>\n• Very fast — minimal processing per packet\n• Low latency — no payload inspection\n• High throughput — handles millions of connections\n\nL4 is ideal for simple, high-volume traffic distribution where content inspection is not needed.',
+        highlights: ['lb'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'L7 Load Balancing',
+        explanation: '<strong>L7 (Layer 7) Load Balancing</strong> operates at the application layer.\n\nIt can inspect <strong>HTTP headers, URLs, cookies, and content</strong> to make intelligent routing decisions.\n\n<strong>How it works:</strong>\n• Terminates the client TCP connection\n• Inspects the HTTP request\n• Routes to the appropriate backend based on rules\n\n<strong>Example rules:</strong>\n• <code>/api/*</code> → Backend API servers\n• <code>/static/*</code> → CDN or file servers\n• <code>Host: shop.example.com</code> → Shopping cart servers\n\nL7 enables content-aware routing but adds latency due to deep packet inspection.',
+        highlights: ['lb'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Load Balancing Algorithms',
+        explanation: 'The load balancer uses an <strong>algorithm</strong> to decide which backend receives each connection:\n\n<strong>Round Robin:</strong>\n• Cycles through backends sequentially\n• Simple and fair for equal-capacity servers\n\n<strong>Least Connections:</strong>\n• Routes to the backend with fewest active connections\n• Good for variable request durations\n\n<strong>IP Hash:</strong>\n• Hashes the client IP to determine backend\n• Same client always hits the same server (session persistence)\n\n<strong>Weighted:</strong>\n• Backends have assigned weights (e.g., 3:1)\n• More powerful servers get more traffic',
+        highlights: ['lb'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Backend Pool Management',
+        explanation: 'Backends are organized into a <strong>server pool</strong> managed by the load balancer.\n\n<strong>Key concepts:</strong>\n• <strong>Weighting</strong> — assign traffic proportionally based on server capacity\n• <strong>Draining</strong> — gracefully remove a server from rotation without dropping active connections\n• <strong>Connection limits</strong> — cap concurrent connections per backend\n• <strong>Session persistence</strong> — sticky sessions ensure same client hits same backend\n\nWhen a backend is draining, new connections go elsewhere while existing ones complete. This enables zero-downtime maintenance.',
+        highlights: ['b1', 'b2', 'b3'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Health Checks',
+        explanation: 'The load balancer continuously monitors backend health using <strong>health checks</strong>.\n\n<strong>Active probes:</strong>\n• <strong>TCP check</strong> — can we establish a TCP connection?\n• <strong>HTTP check</strong> — does <code>GET /health</code> return 200 OK?\n• Custom checks — verify specific endpoints or responses\n\n<strong>Passive monitoring:</strong>\n• Track error rates from real traffic\n• Detect slow responses or timeouts\n\n<strong>Failover:</strong>\n• If a backend fails checks → <strong>removed from pool</strong>\n• Traffic redistributed to healthy backends\n• When health restores → <strong>automatically re-added</strong>\n\nHealth checks prevent the load balancer from sending traffic to failed or overloaded servers.',
+        highlights: ['health'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'cdn',
+    name: 'CDN',
+    icon: '🌍',
+    description: 'Content Delivery Networks — edge caching for global performance',
+    category: 'Advanced Networking',
+    order: 43,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'origin', type: 'box', name: 'Origin Server', sub: 'US-East', color: 'var(--amber)', x: 100, y: 100 },
+        { id: 'edge1', type: 'box', name: 'Edge: Europe', sub: 'London POP', color: 'var(--green)', x: 350, y: 30 },
+        { id: 'edge2', type: 'box', name: 'Edge: Asia', sub: 'Tokyo POP', color: 'var(--green)', x: 350, y: 120 },
+        { id: 'edge3', type: 'box', name: 'Edge: Americas', sub: 'São Paulo POP', color: 'var(--green)', x: 350, y: 210 },
+        { id: 'dns', type: 'box', name: 'DNS Routing', sub: 'GeoDNS / Anycast', color: 'var(--cyan)', x: 550, y: 100 },
+        { id: 'cache', type: 'box', name: 'Cache Hit', sub: 'TTL-based freshness', color: 'var(--purple)', x: 550, y: 200 }
+      ],
+      links: [
+        { id: 'link-origin-e1', from: 'origin', to: 'edge1' },
+        { id: 'link-origin-e2', from: 'origin', to: 'edge2' },
+        { id: 'link-origin-e3', from: 'origin', to: 'edge3' },
+        { id: 'link-dns-cache', from: 'dns', to: 'cache' }
+      ]
+    },
+    steps: [
+      {
+        title: 'Edge Locations — POPs Worldwide',
+        explanation: 'A <strong>CDN (Content Delivery Network)</strong> distributes content across <strong>Points of Presence (POPs)</strong> worldwide.\n\nEach POP contains <strong>edge servers</strong> that cache copies of the origin content.\n\n<strong>How it helps:</strong>\n• <strong>Reduced latency</strong> — content served from the nearest edge, not the origin\n• <strong>Reduced bandwidth</strong> — origin only serves cache misses\n• <strong>High availability</strong> — if one edge fails, others serve the content\n• <strong>DDoS protection</strong> — traffic is distributed across many edge servers\n\nPopular CDNs include Cloudflare, AWS CloudFront, Akamai, and Fastly.',
+        highlights: ['edge1', 'edge2', 'edge3'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'DNS-Based Routing',
+        explanation: 'The CDN uses <strong>DNS routing</strong> to direct users to the nearest edge server.\n\n<strong>GeoDNS:</strong>\n• DNS resolver returns the IP of the closest edge based on the user\'s geographic location\n• European users → London POP, Asian users → Tokyo POP\n\n<strong>Anycast:</strong>\n• Multiple edge servers announce the same IP address\n• BGP routing naturally directs traffic to the nearest server\n• Same IP, different physical locations\n\nThe user doesn\'t know which edge they\'re hitting — the CDN handles the routing transparently.',
+        highlights: ['dns'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Cache Strategy — HIT vs MISS',
+        explanation: 'When a user requests content, the edge server checks its <strong>cache</strong>:\n\n<strong>Cache HIT:</strong>\n• Content is in the edge cache and still fresh (within TTL)\n• Edge serves it immediately — fast!\n• No request to the origin server\n\n<strong>Cache MISS:</strong>\n• Content is not cached or has expired\n• Edge fetches from the origin server\n• Stores a copy for future requests\n• Serves the response to the user\n\n<strong>TTL (Time To Live):</strong>\n• Controls how long cached content stays fresh\n• Short TTL → more origin fetches, but fresher content\n• Long TTL → fewer origin fetches, but stale content risk',
+        highlights: ['cache'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'CDN Summary',
+        explanation: '<strong>CDN Models:</strong>\n\n<strong>Pull CDN:</strong>\n• Edge fetches from origin on first request (cache miss)\n• Content pulled automatically as needed\n• Good for: dynamic or frequently updated content\n\n<strong>Push CDN:</strong>\n• Content pushed to edges ahead of time\n• Origin controls when and what to distribute\n• Good for: static content with predictable access patterns\n\n<strong>Cache Invalidation:</strong>\n• Purge cached content before TTL expires\n• Purge by URL, tag, or entire cache\n• Essential for content updates or emergency fixes\n\n<strong>Protocols:</strong>\n• HTTP/HTTPS — web content, APIs\n• Video streaming — HLS, DASH segments\n• Software updates — OS patches, app downloads\n\nCDNs are critical infrastructure — they serve over 50% of all web traffic globally.',
+        highlights: ['origin', 'edge1', 'edge2', 'edge3', 'dns', 'cache'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'vxlan',
+    name: 'VXLAN',
+    icon: '📦',
+    description: 'Virtual Extensible LAN — overlay networking for data centers',
+    category: 'Advanced Networking',
+    order: 44,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'vtep1', type: 'box', name: 'VTEP 1', sub: '192.168.1.10', color: 'var(--cyan)', x: 100, y: 100 },
+        { id: 'vtep2', type: 'box', name: 'VTEP 2', sub: '192.168.1.20', color: 'var(--amber)', x: 600, y: 100 },
+        { id: 'under', type: 'box', name: 'Underlay Network', sub: 'Physical IP fabric', color: 'var(--green)', x: 350, y: 200 },
+        { id: 'vni', type: 'box', name: 'VNI 10000', sub: '24-bit segment ID (16M VLANs)', color: 'var(--purple)', x: 350, y: 80 },
+        { id: 'encap', type: 'box', name: 'Encapsulation', sub: 'UDP:4789 + VXLAN header', x: 350, y: 150 }
+      ],
+      links: [
+        { id: 'link-vtep1-under', from: 'vtep1', to: 'under' },
+        { id: 'link-vtep2-under', from: 'vtep2', to: 'under' },
+        { id: 'link-vni-encap', from: 'vni', to: 'encap' }
+      ]
+    },
+    steps: [
+      {
+        title: 'VTEPs — Tunnel Endpoints',
+        explanation: '<strong>VTEPs (VXLAN Tunnel Endpoints)</strong> are the devices that encapsulate and decapsulate VXLAN packets.\n\n<strong>What they do:</strong>\n• <strong>Encapsulate:</strong> Take an original Ethernet frame and wrap it in a VXLAN/UDP/IP header\n• <strong>Decapsulate:</strong> Strip the outer headers and deliver the original frame\n\nVTEPs can be:\n• Physical switches (hardware VTEPs)\n• Hypervisors (software VTEPs in VMware, KVM)\n• Linux hosts (using <code>ip link</code> or OVS)\n\nEach VTEP has both a <strong>VXLAN VTEP IP</strong> (outer) and connects to <strong>virtual networks</strong> (inner).',
+        highlights: ['vtep1', 'vtep2'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Underlay Network',
+        explanation: 'The <strong>underlay network</strong> is the physical IP fabric that carries VXLAN traffic.\n\n<strong>Key characteristics:</strong>\n• Standard IP routing — the underlay doesn\'t know about VXLAN\n• Could be a simple L3 network or a complex spine-leaf fabric\n• Each VTEP is reachable via its underlay IP\n\n<strong>Overlay vs Underlay:</strong>\n• <strong>Overlay</strong> — the virtual network (VXLAN segments)\n• <strong>Underlay</strong> — the physical network (IP fabric)\n\nThe underlay just routes outer IP packets between VTEPs. It doesn\'t care what\'s inside the VXLAN tunnel — it treats them as normal UDP packets.',
+        highlights: ['under'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'VNI — VXLAN Network Identifier',
+        explanation: 'The <strong>VNI (VXLAN Network Identifier)</strong> is a 24-bit segment ID that identifies the virtual network.\n\n<strong>Why VNI matters:</strong>\n• <strong>24-bit</strong> → supports up to <strong>16,777,216 segments</strong> (16 million)\n• Compare to VLANs: only <strong>4,096</strong> possible VLANs (12-bit)\n• VNI is the VLAN equivalent in the overlay world\n\n<strong>How it works:</strong>\n• Each VNI maps to a virtual network (like a VLAN)\n• VMs in the same VNI can communicate directly\n• VMs in different VNIs are isolated (need a router)\n\nVXLAN solves the VLAN scalability problem — large cloud providers need millions of network segments, not just 4,096.',
+        highlights: ['vni'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Encapsulation — The VXLAN Packet',
+        explanation: 'When VTEP 1 sends a frame to VTEP 2, it <strong>encapsulates</strong> the original frame:\n\n<strong>Encapsulation stack:</strong>\n<code>Original Ethernet Frame</code>\n<code>  → VXLAN Header (8 bytes, includes VNI)</code>\n<code>    → UDP Header (src port, dst port 4789)</code>\n<code>      → Outer IP Header (VTEP IPs)</code>\n<code>        → Outer Ethernet Header</code>\n\n<strong>Port 4789</strong> is the IANA-assigned UDP port for VXLAN.\n\nThe underlay network only sees a normal UDP packet. The VXLAN header is invisible to physical switches and routers.\n\nAt the receiving VTEP, the outer headers are stripped and the original frame is delivered to the destination VM.',
+        highlights: ['encap'],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          vxlan: {
+            layers: [
+              { name: 'Outer Ethernet', color: 'var(--blue)', fields: [
+                ['Destination', 'VTEP 2 MAC'],
+                ['Source', 'VTEP 1 MAC'],
+                ['Type', 'IPv4 (0x0800)']
+              ]},
+              { name: 'Outer IPv4', color: 'var(--cyan)', fields: [
+                ['Source IP', '192.168.1.10 (VTEP 1)'],
+                ['Destination', '192.168.1.20 (VTEP 2)'],
+                ['Protocol', 'UDP (17)']
+              ]},
+              { name: 'UDP', color: 'var(--green)', fields: [
+                ['Source Port', 'Random'],
+                ['Destination', '4789 (VXLAN)']
+              ]},
+              { name: 'VXLAN Header', color: 'var(--purple)', fields: [
+                ['Flags', '0x08 (I flag set)'],
+                ['VNI', '10000'],
+                ['Reserved', '24 bits']
+              ]},
+              { name: 'Original Frame', color: 'var(--amber)', fields: [
+                ['Ethernet', 'Inner src/dst MAC'],
+                ['Payload', 'Original data']
+              ]}
+            ]
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'sdn',
+    name: 'SDN',
+    icon: '🎛️',
+    description: 'Software Defined Networking — separating control and data planes',
+    category: 'Advanced Networking',
+    order: 45,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'app', type: 'box', name: 'Application Layer', sub: 'Network apps', color: 'var(--purple)', x: 100, y: 30 },
+        { id: 'ctrl', type: 'box', name: 'Control Plane', sub: 'SDN Controller (ONOS, ODL)', color: 'var(--cyan)', x: 100, y: 120 },
+        { id: 'data', type: 'box', name: 'Data Plane', sub: 'OpenFlow Switches', color: 'var(--green)', x: 100, y: 220 },
+        { id: 'api', type: 'box', name: 'Northbound API', sub: 'REST API', x: 350, y: 80 },
+        { id: 'south', type: 'box', name: 'Southbound API', sub: 'OpenFlow, NETCONF', color: 'var(--amber)', x: 350, y: 180 }
+      ],
+      links: [
+        { id: 'link-app-api', from: 'app', to: 'api' },
+        { id: 'link-api-ctrl', from: 'api', to: 'ctrl' },
+        { id: 'link-ctrl-south', from: 'ctrl', to: 'south' },
+        { id: 'link-south-data', from: 'south', to: 'data' }
+      ]
+    },
+    steps: [
+      {
+        title: 'Application Layer — Network Apps',
+        explanation: 'The <strong>Application Layer</strong> contains network applications that define <strong>what</strong> the network should do.\n\n<strong>Examples:</strong>\n• <strong>Routing apps</strong> — compute optimal paths for traffic\n• <strong>Monitoring apps</strong> — track traffic flows and anomalies\n• <strong>Security apps</strong> — detect and block threats\n• <strong>Load balancing apps</strong> — distribute traffic across servers\n\nThese applications communicate with the controller via the <strong>Northbound API</strong>. They don\'t directly configure switches — they express intent, and the controller translates that into forwarding rules.',
+        highlights: ['app'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Control Plane — The SDN Controller',
+        explanation: 'The <strong>SDN Controller</strong> is the centralized brain of the network.\n\n<strong>What it does:</strong>\n• Maintains a <strong>global view</strong> of the entire network topology\n• Makes <strong>forwarding decisions</strong> based on application requirements\n• Pushes <strong>flow rules</strong> to switches via the Southbound API\n• Responds to <strong>network events</strong> (link failures, new devices)\n\n<strong>Popular controllers:</strong>\n• <strong>ONOS</strong> — open-source, carrier-grade\n• <strong>OpenDaylight (ODL)</strong> — modular, extensible\n• <strong>Ryu</strong> — lightweight, Python-based\n\nThe controller is the single point of intelligence — it knows the entire network state and makes optimal decisions.',
+        highlights: ['ctrl'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Data Plane — OpenFlow Switches',
+        explanation: 'The <strong>Data Plane</strong> consists of <strong>programmable switches</strong> that follow controller instructions.\n\n<strong>How they work:</strong>\n• Switches have <strong>flow tables</strong> (not MAC tables)\n• Each flow table entry matches packets and defines actions\n• Switches forward packets based on these entries\n• If no match → send to controller (packet-in)\n\n<strong>Flow table entry structure:</strong>\n<code>Match fields → Priority → Counters → Actions</code>\n\n<strong>Match fields:</strong> src/dst IP, ports, VLAN, protocol\n<strong>Actions:</strong> forward, drop, modify headers, send to controller\n\nUnlike traditional switches, OpenFlow switches are <strong>dumb forwarding engines</strong> — the controller tells them exactly what to do.',
+        highlights: ['data'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Northbound API — Apps ↔ Controller',
+        explanation: 'The <strong>Northbound API</strong> enables applications to communicate with the SDN controller.\n\n<strong>Primary interface: REST API</strong>\n• Apps send HTTP requests to the controller\n• Query topology, push rules, get statistics\n• Language-agnostic — any app in any language can use it\n\n<strong>Example API calls:</strong>\n<code>GET /topology</code> — get network topology\n<code>POST /flows</code> — install new flow rules\n<code>GET /stats/flow</code> — get flow statistics\n\nThe Northbound API is what makes SDN <strong>programmable</strong> — developers can write network applications without understanding hardware-specific CLI commands.',
+        highlights: ['api'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Southbound API — Controller ↔ Switches',
+        explanation: 'The <strong>Southbound API</strong> enables the controller to communicate with network devices.\n\n<strong>Primary protocols:</strong>\n• <strong>OpenFlow</strong> — the standard SDN protocol for switch control\n• <strong>NETCONF/YANG</strong> — configuration management for routers/switches\n• <strong>gRPC/gNMI</strong> — modern, high-performance device management\n\n<strong>How it works:</strong>\n• Controller pushes flow entries to switches via OpenFlow\n• Switches report events (packet-in, link changes) back to controller\n• Controller maintains real-time view of all device states\n\n<strong>OpenFlow message types:</strong>\n• <code>FlowMod</code> — add/modify/delete flow entries\n• <code>PacketOut</code> — send a packet out a switch port\n• <code>PacketIn</code> — switch sends unknown packet to controller\n• <code>Barrier</code> — ensure ordering of operations\n\nThe Southbound API is what <strong>decouples</strong> the control plane from the data plane — the defining characteristic of SDN.',
+        highlights: ['south'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'zero-trust',
+    name: 'Zero Trust',
+    icon: '🛡️',
+    description: 'Never trust, always verify — identity-based network security',
+    category: 'Advanced Networking',
+    order: 46,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'identity', type: 'box', name: 'Identity', sub: 'Who are you?', x: 100, y: 40, color: 'var(--cyan)' },
+        { id: 'device', type: 'box', name: 'Device Posture', sub: 'Is it healthy?', x: 100, y: 130, color: 'var(--green)' },
+        { id: 'network', type: 'box', name: 'Network Access', sub: 'Micro-segmentation', x: 100, y: 220, color: 'var(--amber)' },
+        { id: 'app', type: 'box', name: 'Application', sub: 'Per-app access', x: 100, y: 310, color: 'var(--purple)' },
+        { id: 'policy', type: 'box', name: 'Policy Engine', sub: 'Context-aware decisions', x: 350, y: 150 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'Identity Verification',
+        explanation: '<strong>Identity</strong> is the first pillar of Zero Trust.\n\n<strong>Who are you?</strong>\n\nEvery access request begins with <strong>strong identity verification</strong>:\n• <strong>MFA (Multi-Factor Authentication)</strong> — something you know + something you have\n• <strong>SSO (Single Sign-On)</strong> — centralized authentication across all apps\n• <strong>Continuous authentication</strong> — re-verify throughout the session, not just at login\n\n<strong>Traditional model:</strong> "You logged in once, you\u2019re trusted."\n<strong>Zero Trust:</strong> "Prove who you are, every single time."',
+        highlights: ['identity'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Device Trust',
+        explanation: '<strong>Device Posture</strong> — the second pillar.\n\n<strong>Is it healthy?</strong>\n\nBefore granting access, Zero Trust verifies the <strong>device itself</strong>:\n• <strong>Device health checks</strong> — is the OS patched? Is antivirus running?\n• <strong>Compliance</strong> — does the device meet security baselines?\n• <strong>EDR (Endpoint Detection & Response)</strong> — is there malware or suspicious activity?\n\n<strong>Why it matters:</strong> Even a valid user on a compromised device is a risk. Zero Trust evaluates <strong>both</strong> user identity AND device health.',
+        highlights: ['device'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Micro-segmentation',
+        explanation: '<strong>Network Access</strong> — the third pillar.\n\n<strong>Micro-segmentation</strong> means:\n• <strong>Least-privilege access</strong> — only access what you need, nothing more\n• <strong>No implicit trust</strong> — being on the network doesn\u2019t mean you\u2019re trusted\n• <strong>Per-workload segmentation</strong> — each app/server is its own security zone\n\n<strong>Traditional:</strong> Flat network — once inside, you can reach everything.\n<strong>Zero Trust:</strong> Every connection is individually authorized and encrypted.',
+        highlights: ['network'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Per-Application Access',
+        explanation: '<strong>Application</strong> layer — the fourth pillar.\n\n<strong>ZTNA (Zero Trust Network Access)</strong> replaces traditional VPN:\n• <strong>No VPN</strong> — users connect directly to apps, not the network\n• <strong>Per-app access</strong> — each application requires separate authorization\n• <strong>Direct app access</strong> — no backhauling through corporate network\n\n<strong>Traditional VPN:</strong> Full network access once connected.\n<strong>ZTNA:</strong> Only access the specific app you\u2019re authorized for, nothing else.',
+        highlights: ['app'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Policy Engine',
+        explanation: '<strong>Policy Engine</strong> — the brain of Zero Trust.\n\n<strong>Context-aware decisions:</strong>\n\nThe policy engine evaluates multiple signals before granting access:\n• <strong>User identity</strong> — who is requesting?\n• <strong>Device posture</strong> — is the device compliant?\n• <strong>Location</strong> — where are they connecting from?\n• <strong>Time</strong> — is it during business hours?\n• <strong>Risk score</strong> — how likely is this a threat?\n\n<strong>Result:</strong> ALLOW or DENY — every request is individually evaluated.',
+        highlights: ['policy'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'tls13',
+    name: 'TLS 1.3',
+    icon: '🔐',
+    description: 'Modern encryption — faster, simpler, more secure handshake',
+    category: 'Advanced Networking',
+    order: 47,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'client', type: 'box', name: 'Client', sub: 'Browser', x: 100, y: 100 },
+        { id: 'server', type: 'box', name: 'Server', sub: 'nginx', x: 600, y: 100 },
+        { id: 'ch', type: 'box', name: 'ClientHello', sub: 'Key share, supported ciphers', x: 350, y: 40, color: 'var(--cyan)' },
+        { id: 'sh', type: 'box', name: 'ServerHello', sub: 'Selected cipher, key share', x: 350, y: 120, color: 'var(--green)' },
+        { id: 'fin', type: 'box', name: 'Finished', sub: 'Encrypted, 1-RTT', x: 350, y: 200, color: 'var(--amber)' },
+        { id: 'zero', type: 'box', name: '0-RTT', sub: 'Resumed session', x: 350, y: 280, color: 'var(--purple)' }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: '1-RTT Handshake',
+        explanation: '<strong>TLS 1.3</strong> completes the handshake in <strong>1 round trip (1-RTT)</strong>.\n\nCompare to TLS 1.2 which needed <strong>2 round trips</strong>:\n\n<strong>TLS 1.2:</strong>\n1. ClientHello → ServerHello\n2. Certificate + ServerKeyExchange → ClientKeyExchange\n3. ChangeCipherSpec + Finished (both sides)\n\n<strong>TLS 1.3:</strong>\n1. ClientHello (with key share) → ServerHello (with key share)\n2. Finished (encrypted)\n\n<strong>Result:</strong> Faster connection establishment, especially on high-latency networks.',
+        highlights: ['ch', 'sh'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Key Exchange',
+        explanation: '<strong>DH key shares</strong> are included in the <strong>first message</strong>.\n\nIn TLS 1.3, the client includes its <strong>Diffie-Hellman key share</strong> in the ClientHello. The server responds with its key share in ServerHello.\n\n<strong>Forward secrecy is mandatory</strong> — every connection uses ephemeral keys that are destroyed after use. Even if the server\u2019s private key is compromised later, past sessions cannot be decrypted.\n\n<strong>Removed:</strong> RSA key exchange (no forward secrecy) is no longer allowed.',
+        highlights: ['ch'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Cipher Suites',
+        explanation: 'TLS 1.3 <strong>drastically reduces</strong> the number of cipher suites.\n\n<strong>TLS 1.3 only allows 5 cipher suites:</strong>\n• <code>TLS_AES_256_GCM_SHA384</code>\n• <code>TLS_AES_128_GCM_SHA256</code>\n• <code>TLS_CHACHA20_POLY1305_SHA256</code>\n• <code>TLS_AES_128_CCM_SHA256</code>\n• <code>TLS_AES_128_CCM_8_SHA256</code>\n\n<strong>Removed insecure ciphers:</strong>\n• RSA key exchange\n• CBC mode ciphers\n• RC4, 3DES, DES\n• SHA-1\n\n<strong>Result:</strong> Smaller attack surface, fewer configuration mistakes.',
+        highlights: ['ch', 'sh'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: '0-RTT Resumption',
+        explanation: '<strong>0-RTT (Zero Round Trip)</strong> allows instant reconnection.\n\nWhen a client reconnects to a server it has visited before:\n• The server provides a <strong>Pre-Shared Key (PSK)</strong> during the first connection\n• On reconnect, the client sends the PSK + encrypted data <strong>immediately</strong>\n• No handshake needed — data flows instantly\n\n<strong>Trade-off:</strong> 0-RTT data is <strong>not replay-protected</strong>. An attacker could capture and replay the 0-RTT data. Use for idempotent requests only.',
+        highlights: ['fin', 'zero'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'TLS 1.3 vs 1.2',
+        explanation: '<strong>Key differences between TLS 1.3 and 1.2:</strong>\n\n<strong>Removed in TLS 1.3:</strong>\n• RSA key exchange (no forward secrecy)\n• CBC mode ciphers (BEAST, Lucky13 attacks)\n• SHA-1 (collision attacks)\n• RC4, 3DES, DES (weak encryption)\n• Compression (CRIME attack)\n• Renegotiation (security issues)\n\n<strong>Added in TLS 1.3:</strong>\n• 0-RTT resumption\n• 1-RTT handshake (vs 2-RTT)\n• Mandatory forward secrecy\n• Encrypted handshake (most of ServerHello is now encrypted)\n• Simplified cipher suites (5 vs dozens)\n\n<strong>Result:</strong> Faster, simpler, and significantly more secure.',
+        highlights: ['ch', 'sh', 'fin', 'zero'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'wireguard',
+    name: 'WireGuard',
+    icon: '🔑',
+    description: 'Modern VPN — fast, simple, secure tunnel protocol',
+    category: 'Advanced Networking',
+    order: 48,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'peer1', type: 'box', name: 'Peer A', sub: 'PublicKey: abc...', x: 100, y: 100, color: 'var(--cyan)' },
+        { id: 'peer2', type: 'box', name: 'Peer B', sub: 'PublicKey: xyz...', x: 600, y: 100, color: 'var(--green)' },
+        { id: 'tunnel', type: 'box', name: 'Encrypted Tunnel', sub: 'Noise Protocol, ChaCha20', x: 350, y: 80, color: 'var(--amber)' },
+        { id: 'keys', type: 'box', name: 'Key Exchange', sub: 'Static + ephemeral keys', x: 350, y: 180 },
+        { id: 'roam', type: 'box', name: 'Roaming', sub: 'Auto peer discovery', x: 350, y: 260, color: 'var(--purple)' }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'Peer-to-Peer',
+        explanation: '<strong>WireGuard</strong> operates as a <strong>mesh VPN</strong> — peers connect directly to each other.\n\n<strong>No central server needed</strong> (though one can be used for coordination):\n• Each peer has a pair of cryptographic keys\n• Peers communicate directly when possible\n• NAT traversal is handled automatically\n\n<strong>Traditional VPN:</strong> All traffic routes through a central server.\n<strong>WireGuard:</strong> Peers establish direct encrypted tunnels when they can reach each other.',
+        highlights: ['peer1', 'peer2'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Noise Protocol',
+        explanation: '<strong>Noise Protocol Framework</strong> — the foundation of WireGuard.\n\nThe <strong>IK (Init with known responder)</strong> handshake pattern:\n1. Initiator sends: ephemeral key + encrypted static key + encrypted payload\n2. Responder replies: ephemeral key + encrypted payload + MAC\n\n<strong>Encryption:</strong>\n• <strong>ChaCha20</strong> — stream cipher for data encryption\n• <strong>Poly1305</strong> — MAC for message authentication\n• <strong>Curve25519</strong> — elliptic curve for key exchange\n\n<strong>Result:</strong> Complete handshake in just <strong>1 round trip</strong> — 1-RTT.',
+        highlights: ['tunnel'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Key Management',
+        explanation: '<strong>Static + ephemeral keys</strong> provide both identity and forward secrecy.\n\n<strong>Static keys:</strong>\n• Long-term public/private key pair per peer\n• Used for peer identification\n• Distributed out-of-band (config files)\n\n<strong>Ephemeral keys:</strong>\n• Generated fresh for each session\n• Used for key derivation during handshake\n• Destroyed after use\n\n<strong>Result:</strong> Even if a static key is compromised, past sessions remain secure (forward secrecy).',
+        highlights: ['keys'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Roaming & Mobility',
+        explanation: '<strong>Auto peer discovery</strong> and seamless IP changes.\n\nWireGuard handles network changes automatically:\n• <strong>Auto peer discovery</strong> — peers find each other without static configuration\n• <strong>IP changes handled seamlessly</strong> — if a peer\u2019s IP changes (e.g., switching WiFi to cellular), the tunnel continues uninterrupted\n• <strong>NAT traversal</strong> — built-in hole punching for peers behind NAT\n\n<strong>Why it works:</strong> WireGuard identifies peers by their public key, not their IP address. As long as the key is the same, the peer can appear from any IP.',
+        highlights: ['roam'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'dnssec',
+    name: 'DNSSEC',
+    icon: '✅',
+    description: 'DNS Security Extensions — preventing cache poisoning and spoofing',
+    category: 'Advanced Networking',
+    order: 49,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'root', type: 'box', name: 'Root Zone', sub: '.', sub2: 'Signed', x: 350, y: 30, color: 'var(--purple)' },
+        { id: 'tld', type: 'box', name: '.com Zone', sub: 'DS record from root', x: 350, y: 120, color: 'var(--cyan)' },
+        { id: 'domain', type: 'box', name: 'example.com', sub: 'RRSIG + DNSKEY', x: 350, y: 210, color: 'var(--green)' },
+        { id: 'valid', type: 'box', name: 'Resolver Validates', sub: 'Chain of trust', x: 550, y: 150 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'Chain of Trust',
+        explanation: '<strong>DNSSEC</strong> builds a <strong>chain of trust</strong> from the root zone down.\n\n<strong>Root zone</strong> (.) — the anchor:\n• Signed with a well-known Key Signing Key (KSK)\n• Published in IANA root key signing ceremony\n• Resolvers trust this key as the starting point\n\n<strong>How it works:</strong>\n1. Root zone signs the TLD zones\n2. TLD zones sign the domains under them\n3. Domains sign their own records\n4. Resolver verifies each signature up to the root\n\n<strong>Result:</strong> If any record is tampered with, the signature chain breaks.',
+        highlights: ['root'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'DS Records',
+        explanation: '<strong>DS (Delegation Signer)</strong> records — parent signs child.\n\nThe parent zone (e.g., .com) contains a <strong>DS record</strong> that hashes the child zone\'s DNSKEY:\n\n<code>.com → DS: SHA-256 hash of example.com DNSKEY</code>\n\n<strong>How it works:</strong>\n1. Parent zone signs the DS record with its own key\n2. Resolver fetches the DS record from the parent\n3. Resolver verifies the hash matches the child\'s DNSKEY\n\n<strong>Result:</strong> The parent zone vouches for the child zone\'s key — extending the chain of trust.',
+        highlights: ['tld'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'RRSIG + DNSKEY',
+        explanation: '<strong>Resource records</strong> are signed with <strong>RRSIG</strong>.\n\nEach DNS record type has associated security records:\n\n<strong>DNSKEY:</strong>\n• Contains the public key used to verify signatures\n• Zone Signing Key (ZSK) — signs individual records\n• Key Signing Key (KSK) — signs the DNSKEY record itself\n\n<strong>RRSIG:</strong>\n• The cryptographic signature over the resource records\n• Contains: signature algorithm, expiration, original TTL\n• Generated using the zone\'s private key\n\n<strong>Query:</strong> <code>dig example.com +dnssec</code>',
+        highlights: ['domain'],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Validation',
+        explanation: '<strong>Resolver verifies</strong> the entire chain of trust.\n\n<strong>Validation process:</strong>\n1. Resolver receives a DNS response with RRSIG\n2. Fetches the zone\'s DNSKEY\n3. Verifies the RRSIG against the DNSKEY\n4. Checks the DS record from the parent zone\n5. Verifies the parent\'s DS matches the child\'s DNSKEY hash\n6. Continues up to the root zone (which it already trusts)\n\n<strong>If any step fails:</strong>\n• Signature mismatch → <strong>SERVFAIL</strong>\n• Expired signature → <strong>SERVFAIL</strong>\n• Missing signature → <strong>SERVFAIL</strong>\n\n<strong>Result:</strong> DNSSEC-validated responses are cryptographically proven authentic.',
+        highlights: ['valid'],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'quic',
+    name: 'QUIC',
+    icon: '⚡',
+    description: 'UDP-based transport — HTTP/3, 0-RTT, multiplexing',
+    category: 'Advanced Networking',
+    order: 50,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'tcp', type: 'box', name: 'TCP + TLS 1.3', sub: '2-3 RTTs', color: 'var(--amber)', x: 100, y: 60, highlighted: 's<=1' },
+        { id: 'quic', type: 'box', name: 'QUIC', sub: '0-1 RTT', color: 'var(--green)', x: 100, y: 180, highlighted: 's===2' },
+        { id: 'mux', type: 'box', name: 'Multiplexed Streams', sub: 'No head-of-line blocking', color: 'var(--cyan)', x: 350, y: 100, highlighted: 's===3' },
+        { id: 'loss', type: 'box', name: 'Per-Stream Recovery', sub: 'Independent loss handling', color: 'var(--purple)', x: 350, y: 200, highlighted: 's===4' }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'TCP + TLS Overhead',
+        explanation: 'Traditional <strong>TCP + TLS 1.3</strong> requires <strong>2-3 round trips</strong> before any application data can be sent:\n\n1. TCP SYN → SYN-ACK (1 RTT)\n2. TLS ClientHello → ServerHello + Finished (1 RTT)\n3. TLS Finished → ACK (1 RTT)\n\nOnly after these handshakes can the HTTP request begin. Each RTT adds latency — especially painful on high-latency connections.',
+        highlights: ['tcp'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          tcpHs: {
+            layers: [
+              { name: 'TCP + TLS 1.3 Handshake', color: 'var(--amber)', fields: [
+                ['Step 1', 'TCP SYN → SYN-ACK (1 RTT)'],
+                ['Step 2', 'TLS ClientHello → ServerHello (1 RTT)'],
+                ['Step 3', 'TLS Finished → ACK (1 RTT)'],
+                ['Total', '2-3 RTTs before data']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'QUIC Speed',
+        explanation: '<strong>QUIC</strong> runs over <strong>UDP</strong> and integrates TLS 1.3 directly into the protocol.\n\nFirst connection: <strong>1 RTT</strong> (QUIC combines transport + crypto handshake)\nResuming: <strong>0-RTT</strong> (client can send data immediately using cached crypto params)\n\nQUIC eliminates the TCP+TLS layering overhead by building both into a single protocol.',
+        highlights: ['quic'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          quicHs: {
+            layers: [
+              { name: 'QUIC Handshake', color: 'var(--green)', fields: [
+                ['First Connection', '1 RTT (combined transport + crypto)'],
+                ['Resumption', '0-RTT (cached parameters)'],
+                ['Transport', 'UDP (port 443)'],
+                ['Crypto', 'TLS 1.3 built-in']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Stream Multiplexing',
+        explanation: '<strong>QUIC</strong> supports <strong>multiple independent streams</strong> within a single connection.\n\nUnlike TCP (where one lost packet blocks all data), QUIC streams are <strong>independently multiplexed</strong>. A loss on one stream doesn\'t affect others.\n\nThis eliminates <strong>head-of-line blocking</strong> — a major performance problem in HTTP/2 over TCP.',
+        highlights: ['mux'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          muxStreams: {
+            layers: [
+              { name: 'Stream Multiplexing', color: 'var(--cyan)', fields: [
+                ['Stream 1', 'HTML document (independent)'],
+                ['Stream 2', 'CSS stylesheet (independent)'],
+                ['Stream 3', 'JavaScript file (independent)'],
+                ['Key Benefit', 'No head-of-line blocking']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Per-Stream Recovery',
+        explanation: 'Each QUIC stream has <strong>independent loss detection and recovery</strong>.\n\nIf a packet carrying Stream 1 data is lost, only Stream 1 waits for retransmission. Streams 2 and 3 continue uninterrupted.\n\nTCP, by contrast, treats all data as one byte stream — a single lost packet blocks delivery to the application for <em>all</em> data.',
+        highlights: ['loss'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          lossRecovery: {
+            layers: [
+              { name: 'Per-Stream Loss Recovery', color: 'var(--purple)', fields: [
+                ['Stream 1', 'Packet lost → only Stream 1 waits'],
+                ['Stream 2', 'Unaffected — continues delivering'],
+                ['Stream 3', 'Unaffected — continues delivering'],
+                ['TCP Comparison', 'One loss blocks ALL streams']
+              ]}
+            ]
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'qos',
+    name: 'QoS',
+    icon: '📊',
+    description: 'Quality of Service — traffic shaping, prioritization, DSCP',
+    category: 'Advanced Networking',
+    order: 51,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'traffic', type: 'box', name: 'Mixed Traffic', sub: 'All packets', x: 40, y: 100 },
+        { id: 'classify', type: 'box', name: 'Classifier', sub: 'DSCP / 802.1p', color: 'var(--cyan)', x: 250, y: 100, highlighted: 's===1' },
+        { id: 'voice', type: 'box', name: 'Voice Queue', sub: 'EF (DSCP 46)', color: 'var(--green)', x: 500, y: 30, highlighted: 's===2' },
+        { id: 'video', type: 'box', name: 'Video Queue', sub: 'AF41 (DSCP 34)', color: 'var(--amber)', x: 500, y: 110, highlighted: 's===2' },
+        { id: 'data', type: 'box', name: 'Data Queue', sub: 'BE (DSCP 0)', color: 'var(--text-muted)', x: 500, y: 190, highlighted: 's===2' },
+        { id: 'shape', type: 'box', name: 'Traffic Shaping', sub: 'Rate limiting, WRED', x: 500, y: 280, highlighted: 's===3' }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'Classification',
+        explanation: '<strong>Classification</strong> is the first step of QoS — identifying and marking traffic.\n\nPackets are classified using:\n• <strong>DSCP</strong> (Differentiated Services Code Point) — 6-bit field in the IP header\n• <strong>802.1p CoS</strong> (Class of Service) — 3-bit field in the VLAN tag\n\nThe classifier reads these bits and assigns each packet to a traffic class.',
+        highlights: ['classify'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          dscp: {
+            layers: [
+              { name: 'Classification Fields', color: 'var(--cyan)', fields: [
+                ['DSCP (IP Header)', '6 bits — 64 possible classes'],
+                ['802.1p (VLAN Tag)', '3 bits — 8 priority levels'],
+                ['ACLs', 'Access Control Lists match fields'],
+                ['NBAR', 'Network-Based Application Recognition']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Queuing',
+        explanation: 'After classification, packets are placed into <strong>priority queues</strong>:\n\n• <strong>Voice Queue (EF, DSCP 46)</strong> — strict priority, lowest latency\n• <strong>Video Queue (AF41, DSCP 34)</strong> — weighted fair queuing\n• <strong>Data Queue (BE, DSCP 0)</strong> — best effort, lowest priority\n\nQueuing algorithms include <strong>WFQ</strong> (Weighted Fair Queuing), <strong>CBWFQ</strong> (Class-Based WFQ), and <strong>LLQ</strong> (Low Latency Queuing).',
+        highlights: ['voice', 'video', 'data'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          queues: {
+            layers: [
+              { name: 'Priority Queues', color: 'var(--green)', fields: [
+                ['Voice (EF)', 'Strict Priority — always sent first'],
+                ['Video (AF41)', 'Weighted — guaranteed bandwidth'],
+                ['Data (BE)', 'Best Effort — send when available'],
+                ['Algorithms', 'WFQ, CBWFQ, LLQ']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Traffic Shaping',
+        explanation: '<strong>Traffic Shaping</strong> controls the rate of outgoing traffic to prevent congestion.\n\nKey mechanisms:\n• <strong>Token Bucket</strong> — allows bursts up to bucket size\n• <strong>Leaky Bucket</strong> — smooths traffic to a fixed rate\n• <strong>WRED</strong> (Weighted Random Early Detection) — proactively drops packets before queues fill up, preferring to drop low-priority traffic',
+        highlights: ['shape'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          shaping: {
+            layers: [
+              { name: 'Traffic Shaping Mechanisms', color: 'var(--amber)', fields: [
+                ['Token Bucket', 'Allows controlled bursts'],
+                ['Leaky Bucket', 'Enforces constant output rate'],
+                ['WRED', 'Proactive drop before queue overflow'],
+                ['Rate Limiting', 'Police/Shape to committed rates']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'QoS Summary',
+        explanation: '<strong>QoS</strong> ensures critical traffic gets priority during congestion.\n\n<strong>Key steps:</strong>\n1. <strong>Classify</strong> — mark packets with DSCP/CoS\n2. <strong>Queue</strong> — place into priority queues (EF, AF, BE)\n3. <strong>Shape</strong> — control rates, prevent congestion\n4. <strong>Schedule</strong> — strict priority for voice, weighted for others\n\nWithout QoS, all traffic is treated equally — voice calls would suffer during file transfers.',
+        highlights: ['classify', 'voice', 'video', 'data', 'shape'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          qosSummary: {
+            layers: [
+              { name: 'QoS Classes', color: 'var(--green)', fields: [
+                ['EF (Expedited Forwarding)', 'Voice — DSCP 46 — Strict Priority'],
+                ['AF (Assured Forwarding)', 'Video — DSCP 34 — Weighted'],
+                ['BE (Best Effort)', 'Data — DSCP 0 — Lowest Priority'],
+                ['Algorithms', 'WFQ, CBWFQ, LLQ, WRED']
+              ]}
+            ]
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'automation',
+    name: 'Network Automation',
+    icon: '🤖',
+    description: 'NetDevOps — Ansible, Terraform, programmable infrastructure',
+    category: 'Advanced Networking',
+    order: 52,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'git', type: 'box', name: 'Git Repo', sub: 'Config as Code', color: 'var(--cyan)', x: 100, y: 40, highlighted: 's===1' },
+        { id: 'cicd', type: 'box', name: 'CI/CD Pipeline', sub: 'GitHub Actions / GitLab CI', color: 'var(--green)', x: 100, y: 140, highlighted: 's===2' },
+        { id: 'ansible', type: 'box', name: 'Ansible', sub: 'Idempotent playbooks', color: 'var(--amber)', x: 350, y: 80, highlighted: 's===3' },
+        { id: 'terraform', type: 'box', name: 'Terraform', sub: 'Infrastructure as Code', color: 'var(--purple)', x: 350, y: 180, highlighted: 's===4' },
+        { id: 'devices', type: 'box', name: 'Network Devices', sub: 'Routers, Switches, Firewalls', x: 600, y: 120 }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'Config as Code',
+        explanation: '<strong>Configuration as Code</strong> stores all network device configs in a <strong>Git repository</strong>.\n\nInstead of manually logging into devices and typing commands:\n• Every config change is a <strong>Git commit</strong>\n• Changes are <strong>reviewed</strong> via pull requests\n• History is <strong>versioned</strong> — easy rollback\n• Configs are <strong>auditable</strong> — who changed what, when\n\nThis is the foundation of <strong>NetDevOps</strong>.',
+        highlights: ['git'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          gitConfig: {
+            layers: [
+              { name: 'Config as Code Benefits', color: 'var(--cyan)', fields: [
+                ['Version Control', 'Every change tracked in Git'],
+                ['Code Review', 'Pull requests for approval'],
+                ['Rollback', 'Revert to any previous version'],
+                ['Audit Trail', 'Full history of who changed what']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'CI/CD for Networks',
+        explanation: '<strong>CI/CD pipelines</strong> automate testing and deployment of network configs:\n\n1. Engineer pushes config change to Git\n2. <strong>CI pipeline</strong> runs:\n   - Syntax validation (linting)\n   - Compliance checks\n   - Dry-run against test environment\n3. <strong>CD pipeline</strong> deploys to production after approval\n\nThis catches errors <strong>before</strong> they reach production devices.',
+        highlights: ['cicd'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          cicd: {
+            layers: [
+              { name: 'CI/CD Pipeline Stages', color: 'var(--green)', fields: [
+                ['Commit', 'Push config change to Git'],
+                ['Lint', 'Syntax and best-practice validation'],
+                ['Test', 'Dry-run against lab/sandbox'],
+                ['Deploy', 'Push to production devices']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Ansible',
+        explanation: '<strong>Ansible</strong> is a push-based automation tool using <strong>YAML playbooks</strong>.\n\nKey characteristics:\n• <strong>Idempotent</strong> — running the same playbook twice produces the same result\n• <strong>Agentless</strong> — uses SSH/NETCONF, no software on devices\n• <strong>Push-based</strong> — controller pushes configs to devices\n• <strong>Declarative</strong> — describe the desired state, Ansible makes it happen\n\nAnsible is ideal for <strong>configuration management</strong> — ensuring devices stay in the desired state.',
+        highlights: ['ansible'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          ansible: {
+            layers: [
+              { name: 'Ansible Characteristics', color: 'var(--amber)', fields: [
+                ['Idempotent', 'Same result every run'],
+                ['Agentless', 'No software on managed devices'],
+                ['Push-Based', 'Controller pushes to devices'],
+                ['YAML Playbooks', 'Human-readable automation']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Terraform',
+        explanation: '<strong>Terraform</strong> is a declarative Infrastructure as Code (IaC) tool.\n\nKey differences from Ansible:\n• <strong>Declarative</strong> — describe what you want, not how to get there\n• <strong>State management</strong> — tracks what exists vs what\'s desired\n• <strong>Multi-vendor</strong> — works with AWS, Azure, VMware, and network devices\n• <strong>Plan/Apply</strong> — preview changes before applying\n\nTerraform excels at <strong>infrastructure provisioning</strong> — creating and destroying resources.',
+        highlights: ['terraform'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          terraform: {
+            layers: [
+              { name: 'Terraform Characteristics', color: 'var(--purple)', fields: [
+                ['Declarative', 'Describe desired state'],
+                ['State Management', 'Track resource state'],
+                ['Multi-Vendor', 'AWS, Azure, VMware, etc.'],
+                ['Plan/Apply', 'Preview before changes']
+              ]}
+            ]
+          }
+        }
+      }
+    ]
+  },
+
+  {
+    id: 'ebpf',
+    name: 'eBPF Networking',
+    icon: '🔧',
+    description: 'Programmable kernel — packet processing without kernel modules',
+    category: 'Advanced Networking',
+    order: 53,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'user', type: 'box', name: 'Userspace', sub: 'XDP/Cilium', color: 'var(--cyan)', x: 100, y: 40, highlighted: 's===0' },
+        { id: 'prog', type: 'box', name: 'eBPF Program', sub: 'Verified bytecode', color: 'var(--green)', x: 100, y: 140, highlighted: 's===1' },
+        { id: 'kernel', type: 'box', name: 'Kernel Hooks', sub: 'XDP, TC, Socket', color: 'var(--amber)', x: 100, y: 240, highlighted: 's===2' },
+        { id: 'map', type: 'box', name: 'eBPF Maps', sub: 'Shared state', x: 350, y: 140, highlighted: 's===3' },
+        { id: 'perf', type: 'box', name: 'Perf Events', sub: 'Observability', color: 'var(--purple)', x: 350, y: 240, highlighted: 's===4' }
+      ],
+      links: []
+    },
+    steps: [
+      {
+        title: 'eBPF Programs',
+        explanation: '<strong>eBPF</strong> (extended Berkeley Packet Filter) allows <strong>safe, verified programs</strong> to run inside the Linux kernel.\n\nHow it works:\n1. Write a program in C or restricted BPF\n2. <strong>Verifier</strong> checks it\'s safe (no crashes, no loops)\n3. <strong>JIT compiler</strong> converts to native machine code\n4. Program is attached to a kernel hook\n\neBPF programs run at <strong>kernel speed</strong> — no context switches to userspace.',
+        highlights: ['prog'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          ebpfProg: {
+            layers: [
+              { name: 'eBPF Program Lifecycle', color: 'var(--green)', fields: [
+                ['Write', 'C or restricted BPF code'],
+                ['Verify', 'Kernel verifier checks safety'],
+                ['JIT', 'Compile to native machine code'],
+                ['Attach', 'Hook into kernel data path']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Hook Points',
+        explanation: 'eBPF programs attach to specific <strong>kernel hook points</strong>:\n\n• <strong>XDP (eXpress Data Path)</strong> — earliest hook, runs before the kernel network stack. Maximum performance for filtering/routing.\n• <strong>TC (Traffic Control)</strong> — runs at the traffic control layer, after XDP but before the socket layer.\n• <strong>Socket hooks</strong> — run at the socket level for application-aware processing.\n\nThe earlier the hook, the less kernel code is traversed — XDP is the fastest.',
+        highlights: ['kernel'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          hooks: {
+            layers: [
+              { name: 'Kernel Hook Points', color: 'var(--amber)', fields: [
+                ['XDP', 'Earliest — before network stack'],
+                ['TC', 'Traffic control layer'],
+                ['Socket', 'Application socket layer'],
+                ['Tracepoints', 'Various kernel functions']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'eBPF Maps',
+        explanation: '<strong>eBPF Maps</strong> are <strong>key-value stores</strong> shared between eBPF programs and userspace.\n\nThey enable:\n• <strong>Stateful processing</strong> — track connections, counters, statistics\n• <strong>Communication</strong> — programs can share data with each other\n• <strong>Userspace access</strong> — read/update maps from userspace tools\n\nCommon map types: <strong>HashMap</strong>, <strong>ArrayMap</strong>, <strong>LPM Trie</strong> (longest prefix match), <strong>Ring Buffer</strong>.',
+        highlights: ['map'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          maps: {
+            layers: [
+              { name: 'eBPF Map Types', color: 'var(--cyan)', fields: [
+                ['HashMap', 'Generic key-value store'],
+                ['ArrayMap', 'Fixed-size array, fast lookup'],
+                ['LPM Trie', 'Longest prefix match (IP lookups)'],
+                ['Ring Buffer', 'Kernel → userspace streaming']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Use Cases',
+        explanation: 'eBPF powers several major networking projects:\n\n• <strong>Cilium</strong> — Kubernetes CNI (Container Network Interface) using eBPF for high-performance networking, load balancing, and security policies\n• <strong>Falco</strong> — runtime security threat detection using eBPF to monitor syscall activity\n• <strong>bcc</strong> — BPF Compiler Collection for tracing and observability (tcpdump, network statistics)\n\neBPF eliminates the need for kernel modules — programs are verified and sandboxed by the kernel.',
+        highlights: ['perf'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          useCases: {
+            layers: [
+              { name: 'eBPF Projects', color: 'var(--purple)', fields: [
+                ['Cilium', 'Kubernetes CNI — networking + security'],
+                ['Falco', 'Runtime security — syscall monitoring'],
+                ['bcc', 'Observability — tracing + statistics'],
+                ['Katran', 'Facebook L4 load balancer']
+              ]}
+            ]
+          }
+        }
+      }
+    ]
+  }
+,
+
+  {
+    id: 'bgp',
+    name: 'BGP',
+    icon: '\u{1F310}',
+    description: 'The internet\'s routing protocol \u2014 how autonomous systems exchange routes',
+    category: 'Advanced Networking',
+    order: 39,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'as100', type: 'box', name: 'AS 100', sub: 'ISP A', color: 'var(--cyan)', x: 100, y: 80 },
+        { id: 'as200', type: 'box', name: 'AS 200', sub: 'Enterprise', color: 'var(--green)', x: 100, y: 200 },
+        { id: 'as300', type: 'box', name: 'AS 300', sub: 'ISP B', color: 'var(--amber)', x: 600, y: 80 },
+        { id: 'as400', type: 'box', name: 'AS 400', sub: 'Cloud Provider', color: 'var(--purple)', x: 600, y: 200 },
+        { id: 'peer1', type: 'box', name: 'eBGP Peering', sub: 'External BGP', x: 350, y: 60 },
+        { id: 'peer2', type: 'box', name: 'iBGP', sub: 'Internal BGP', color: 'var(--cyan)', x: 350, y: 150 },
+        { id: 'path', type: 'box', name: 'AS_PATH', sub: 'Prevent loops', color: 'var(--green)', x: 350, y: 250 }
+      ],
+      links: [
+        { id: 'link-as100-peer1', from: 'as100', to: 'peer1' },
+        { id: 'link-as300-peer1', from: 'as300', to: 'peer1' },
+        { id: 'link-as100-peer2', from: 'as100', to: 'peer2' },
+        { id: 'link-as200-peer2', from: 'as200', to: 'peer2' },
+        { id: 'link-as300-path', from: 'as300', to: 'path' },
+        { id: 'link-as400-path', from: 'as400', to: 'path' }
+      ]
+    },
+    steps: [
+      {
+        title: 'eBGP \u2014 Between ASes',
+        explanation: '<strong>eBGP (External BGP)</strong> is the protocol used to exchange routing information <strong>between different Autonomous Systems</strong>.\n\nEach AS is a network under a single administrative domain (ISP, enterprise, cloud provider). eBGP peers sit on directly connected links and advertise their prefixes.\n\n<strong>Key points:</strong>\n\u2022 Different AS numbers on each side\n\u2022 Directly connected interfaces (TTL=1 by default)\n\u2022 Used to share routes across ISP boundaries',
+        highlights: ['peer1'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'iBGP \u2014 Within AS',
+        explanation: '<strong>iBGP (Internal BGP)</strong> distributes routes learned via eBGP <strong>within a single Autonomous System</strong>.\n\nWhen AS 100 learns a route from AS 300 via eBGP, iBGP propagates that route to all routers inside AS 100 (including AS 200).\n\n<strong>Key points:</strong>\n\u2022 Same AS number on both sides\n\u2022 Route reflectors reduce full-mesh requirements\n\u2022 Ensures internal routers know external routes',
+        highlights: ['peer2'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'AS_PATH Attribute',
+        explanation: 'The <strong>AS_PATH</strong> is a mandatory BGP attribute that lists every AS a route has traversed.\n\n<code>AS_PATH: [AS300, AS100, AS200]</code>\n\nThis serves two purposes:\n<strong>1. Loop prevention</strong> \u2014 If a router sees its own AS in the path, it rejects the route.\n<strong>2. Path selection</strong> \u2014 Shorter AS_PATH is preferred (lower hop count).\n\nBGP is a <strong>path-vector</strong> protocol \u2014 it carries the entire AS path, not just a distance metric.',
+        highlights: ['path'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'BGP Path Selection',
+        explanation: 'BGP selects the best route using a <strong>decision process</strong> with multiple attributes, evaluated in order:\n\n<strong>1. Weight</strong> (Cisco) \u2014 local preference, highest wins\n<strong>2. Local Preference</strong> \u2014 highest wins\n<strong>3. AS_PATH length</strong> \u2014 shortest wins\n<strong>4. Origin</strong> \u2014 IGP < EGP < Incomplete\n<strong>5. MED (Multi-Exit Discriminator)</strong> \u2014 lowest wins\n\nOnly the <strong>best path</strong> is installed in the routing table and advertised to peers.',
+        highlights: ['peer1', 'peer2', 'path'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          bgpattrs: {
+            layers: [
+              { name: 'BGP Path Attributes', color: 'var(--cyan)', fields: [
+                ['Weight', 'Local (0-65535), highest wins'],
+                ['Local Pref', '100 (default), highest wins'],
+                ['AS_PATH', '[AS300, AS100] \u2014 2 hops'],
+                ['Origin', 'IGP (i)'],
+                ['MED', '0 (lowest wins)']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'BGP Summary',
+        explanation: '<strong>Key takeaway:</strong> BGP is the protocol that makes the internet work.\n\n<strong>Two types:</strong>\n\u2022 <strong>eBGP</strong> \u2014 between different ASes (ISP peering, customer/provider)\n\u2022 <strong>iBGP</strong> \u2014 within a single AS (route distribution)\n\n<strong>Path attributes:</strong>\n\u2022 AS_PATH \u2014 loop prevention and path length\n\u2022 Local Pref \u2014 outbound path selection\n\u2022 MED \u2014 inbound path suggestion\n\u2022 Weight \u2014 local-only preference\n\n<strong>Use cases:</strong>\n\u2022 ISP peering and transit\n\u2022 Enterprise multi-homing\n\u2022 Cloud provider connectivity\n\u2022 VPN and traffic engineering',
+        highlights: ['as100', 'as200', 'as300', 'as400', 'peer1', 'peer2', 'path'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'ospf',
+    name: 'OSPF',
+    icon: '\u{1F5FA}\u{FE0F}',
+    description: 'Link-state routing \u2014 fast convergence within an enterprise',
+    category: 'Advanced Networking',
+    order: 40,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'area0', type: 'box', name: 'Area 0 (Backbone)', sub: 'Core routers', color: 'var(--cyan)', x: 100, y: 80 },
+        { id: 'area1', type: 'box', name: 'Area 1', sub: 'Branch office', color: 'var(--green)', x: 100, y: 200 },
+        { id: 'area2', type: 'box', name: 'Area 2', sub: 'Data center', color: 'var(--amber)', x: 600, y: 80 },
+        { id: 'abr', type: 'box', name: 'ABR', sub: 'Area Border Router', x: 350, y: 100 },
+        { id: 'lsa', type: 'box', name: 'LSA Flooding', sub: 'Link-State Advertisements', color: 'var(--green)', x: 350, y: 220 },
+        { id: 'spf', type: 'box', name: 'SPF Algorithm', sub: 'Dijkstra shortest path', color: 'var(--purple)', x: 550, y: 220 }
+      ],
+      links: [
+        { id: 'link-area0-abr', from: 'area0', to: 'abr' },
+        { id: 'link-area2-abr', from: 'area2', to: 'abr' },
+        { id: 'link-area1-lsa', from: 'area1', to: 'lsa' },
+        { id: 'link-lsa-spf', from: 'lsa', to: 'spf' }
+      ]
+    },
+    steps: [
+      {
+        title: 'OSPF Areas',
+        explanation: 'OSPF divides the network into <strong>areas</strong> to limit the scope of routing updates.\n\n<strong>Area 0 (Backbone)</strong> is the core \u2014 all other areas must connect to it. This hierarchy reduces the size of link-state databases and speeds convergence.\n\n<strong>Key points:</strong>\n\u2022 Area 0 is mandatory (the backbone)\n\u2022 Each area maintains its own LSDB\n\u2022 Inter-area routing goes through the backbone',
+        highlights: ['area0', 'area1', 'area2'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Area Border Routers',
+        explanation: 'An <strong>ABR (Area Border Router)</strong> connects one or more areas to the backbone.\n\nThe ABR summarizes routes between areas, reducing the amount of LSA flooding. It maintains separate link-state databases for each area it connects.\n\n<strong>Key points:</strong>\n\u2022 Connects areas to the backbone\n\u2022 Summarizes routes between areas\n\u2022 Reduces LSA flooding scope',
+        highlights: ['abr'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'LSA Flooding',
+        explanation: 'OSPF routers exchange <strong>LSAs (Link-State Advertisements)</strong> to build a complete topology map.\n\nEach router advertises its directly connected links, costs, and neighbors. LSAs are flooded to all routers within an area, ensuring everyone has the same view of the network.\n\n<strong>LSA Types:</strong>\n\u2022 Type 1 (Router LSA) \u2014 each router generates\n\u2022 Type 2 (Network LSA) \u2014 broadcast networks\n\u2022 Type 3 (Summary LSA) \u2014 ABR summarizes routes',
+        highlights: ['lsa'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'SPF Calculation',
+        explanation: 'After receiving all LSAs, each router runs <strong>Dijkstra\'s SPF algorithm</strong> to compute the shortest path tree.\n\nThe algorithm considers link costs (bandwidth-based) to determine the best path to each destination. Each router builds its own routing table from the SPF tree.\n\n<strong>Key points:</strong>\n\u2022 Dijkstra algorithm finds shortest paths\n\u2022 Cost = reference bandwidth / interface bandwidth\n\u2022 Lowest cost = best path\n\u2022 Only direct neighbors are in the SPF tree',
+        highlights: ['spf'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'OSPF Summary',
+        explanation: '<strong>Key takeaway:</strong> OSPF is a fast-converging link-state routing protocol for enterprise networks.\n\n<strong>Structure:</strong>\n\u2022 <strong>Areas</strong> \u2014 hierarchical design, Area 0 is backbone\n\u2022 <strong>ABRs</strong> \u2014 connect areas, summarize routes\n\u2022 <strong>LSAs</strong> \u2014 link-state advertisements, full topology map\n\u2022 <strong>SPF</strong> \u2014 Dijkstra algorithm, shortest path tree\n\n<strong>Use cases:</strong>\n\u2022 Enterprise campus networks\n\u2022 Data center fabrics\n\u2022 ISP internal routing\n\u2022 Multi-area designs for scalability',
+        highlights: ['area0', 'area1', 'area2', 'abr', 'lsa', 'spf'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      }
+    ]
+  },
+
+  {
+    id: 'mpls',
+    name: 'MPLS',
+    icon: '\u{1F3F7}\u{FE0F}',
+    description: 'Label switching \u2014 fast forwarding without IP lookup',
+    category: 'Advanced Networking',
+    order: 41,
+    diagramStyle: 'schematic',
+    topology: {
+      devices: [
+        { id: 'ingress', type: 'box', name: 'Ingress LSR', sub: 'Push label', color: 'var(--cyan)', x: 40, y: 100 },
+        { id: 'label', type: 'box', name: 'MPLS Label', sub: '20-bit label + TC + TTL', color: 'var(--amber)', x: 250, y: 60 },
+        { id: 'mid', type: 'box', name: 'Mid LSR', sub: 'Swap label', color: 'var(--green)', x: 350, y: 100 },
+        { id: 'egress', type: 'box', name: 'Egress LSR', sub: 'Pop label', color: 'var(--purple)', x: 550, y: 100 },
+        { id: 'fec', type: 'box', name: 'FEC', sub: 'Forwarding Equivalence Class', x: 250, y: 200 }
+      ],
+      links: [
+        { id: 'link-ingress-label', from: 'ingress', to: 'label' },
+        { id: 'link-label-mid', from: 'label', to: 'mid' },
+        { id: 'link-mid-egress', from: 'mid', to: 'egress' },
+        { id: 'link-fec-ingress', from: 'fec', to: 'ingress' }
+      ]
+    },
+    steps: [
+      {
+        title: 'FEC \u2014 Forwarding Equivalence Class',
+        explanation: 'A <strong>FEC (Forwarding Equivalence Class)</strong> groups packets that are forwarded the same way \u2014 same path, same service, same QoS.\n\nAll packets in a FEC receive the <strong>same label</strong> at the ingress LSR. This groups traffic by destination prefix, VPN, or traffic engineering policy.\n\n<strong>Key points:</strong>\n\u2022 Packets with same FEC = same label = same path\n\u2022 FEC can be based on destination IP, QoS, or VPN\n\u2022 Simplifies forwarding decisions',
+        highlights: ['fec'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Label Push (Ingress)',
+        explanation: 'The <strong>Ingress LSR (Label Switch Router)</strong> receives an IP packet and performs a <strong>label push</strong> \u2014 it adds an MPLS label to the packet.\n\nThe label is a 20-bit value that identifies the FEC. The packet is now an MPLS frame and will be forwarded by label switching instead of IP lookup.\n\n<strong>MPLS Label format:</strong>\n\u2022 Label (20 bits) \u2014 identifies the FEC\n\u2022 TC (3 bits) \u2014 Traffic Class (QoS)\n\u2022 S (1 bit) \u2014 Bottom of stack\n\u2022 TTL (8 bits) \u2014 hop limit',
+        highlights: ['ingress', 'label'],
+        activeLinks: [],
+        packets: [],
+        tables: {},
+        packetDetails: {
+          mplshdr: {
+            layers: [
+              { name: 'MPLS Header (4 bytes)', color: 'var(--amber)', fields: [
+                ['Label', '20 bits \u2014 identifies FEC'],
+                ['TC', '3 bits \u2014 Traffic Class (QoS)'],
+                ['S', '1 bit \u2014 Bottom of Stack'],
+                ['TTL', '8 bits \u2014 Hop Limit']
+              ]}
+            ]
+          }
+        }
+      },
+      {
+        title: 'Label Swap (Transit)',
+        explanation: 'The <strong>Mid LSR</strong> receives the labeled packet and performs a <strong>label swap</strong> \u2014 it replaces the incoming label with the outgoing label for the next hop.\n\nThis is the core of MPLS switching: the LSR looks up the incoming label in its <strong>LFIB (Label Forwarding Information Base)</strong> and swaps to the next label.\n\n<strong>Key points:</strong>\n\u2022 LFIB lookup by incoming label\n\u2022 Swap label for next hop\n\u2022 No IP header inspection needed \u2014 fast!',
+        highlights: ['mid'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'Label Pop (Egress)',
+        explanation: 'The <strong>Egress LSR</strong> receives the labeled packet and performs a <strong>label pop</strong> \u2014 it removes the MPLS label and forwards the original IP packet.\n\nThis is called <strong>PHP (Penultimate Hop Popping)</strong> when the second-to-last LSR pops the label \u2014 the egress LSR then only needs to do a normal IP lookup.\n\n<strong>Key points:</strong>\n\u2022 Remove MPLS label\n\u2022 Forward by IP lookup (normal routing)\n\u2022 PHP optimizes the last hop',
+        highlights: ['egress'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
+      },
+      {
+        title: 'MPLS Summary',
+        explanation: '<strong>Key takeaway:</strong> MPLS provides fast label-based forwarding without IP header inspection at every hop.\n\n<strong>Label operations:</strong>\n\u2022 <strong>Push</strong> \u2014 Ingress adds label\n\u2022 <strong>Swap</strong> \u2014 Transit routers change label\n\u2022 <strong>Pop</strong> \u2014 Egress removes label\n\n<strong>LSR Types:</strong>\n\u2022 <strong>Ingress LER</strong> \u2014 pushes labels on IP packets\n\u2022 <strong>Transit LSR</strong> \u2014 swaps labels (fast switching)\n\u2022 <strong>Egress LER</strong> \u2014 pops labels, forwards by IP\n\n<strong>Use cases:</strong>\n\u2022 MPLS VPNs (L3VPN, L2VPN)\n\u2022 Traffic engineering\n\u2022 Fast reroute (FRR)\n\u2022 QoS differentiation',
+        highlights: ['ingress', 'label', 'mid', 'egress', 'fec'],
+        activeLinks: [],
+        packets: [],
+        tables: {}
       }
     ]
   }

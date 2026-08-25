@@ -1,24 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   BookOpen, Layers, Radio, Globe, Network, Search, Handshake,
   ArrowLeftRight, Building2, Cpu, Route, Shield, Box,
-  Link2, ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen
+  Link2, ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen,
+  DoorOpen, Target, Puzzle, Zap
 } from 'lucide-react';
 
 const categoryIcons = {
+  'Components': Puzzle,
   'Networking Fundamentals': Layers,
   'Linux Core Networking': Cpu,
-  'Advanced Topics': Shield
+  'Advanced Networking': Zap,
 };
+
+const categoryOrder = ['Components', 'Networking Fundamentals', 'Linux Core Networking', 'Advanced Networking'];
+
+const categoryDisplayOrder = { 'Components': 0, 'Networking Fundamentals': 1, 'Linux Core Networking': 2, 'Advanced Networking': 3 };
 
 const scenarioIcons = {
   layer2: Layers, arp: Radio, dhcp: Globe, layer3: Network,
   dns: Search, tcp: Handshake, nat: ArrowLeftRight, vlan: Building2,
+  gateway: DoorOpen, 'default-gateway': Target,
   nic: Cpu, stack: Route, route: Route, iptables: Shield,
-  namespace: Box, bridge: Link2
+  namespace: Box, bridge: Link2,
+  'linux-gateway': DoorOpen, 'linux-default-gw': Target,
+  'mac-address': Radio, 'ip-address': Network, subnetting: Route,
+  ports: DoorOpen, 'arp-table': Layers, 'mac-table': Shield,
+  'dhcp-table': Globe, 'routing-table': Route,
+  'osi-model': Layers, icmp: Radio, udp: Handshake, 'tcp-vs-udp': Handshake,
+  ipv6: Globe, vpn: Shield, wifi: Radio, nftables: Shield,
+  'ethernet-frame': Box, ttl: Target, mtu: Route,
+  'dns-records': Search, troubleshooting: Route, http: Globe,
+  bgp: Globe, ospf: Route, mpls: Layers, 'load-balancing': ArrowLeftRight,
+  cdn: Globe, vxlan: Box, sdn: Cpu, 'zero-trust': Shield,
+  tls13: Shield, wireguard: Shield, dnssec: Shield,
+  quic: Zap, qos: Layers, automation: Cpu, ebpf: Route
 };
 
 const Sidebar = ({ scenarios, activeId, onSelect, stepIndex, totalSteps, collapsed, onToggle }) => {
+  const listRef = useRef(null);
   const [expandedCategories, setExpandedCategories] = useState(() => {
     const cats = {};
     scenarios.forEach(s => {
@@ -32,12 +52,27 @@ const Sidebar = ({ scenarios, activeId, onSelect, stepIndex, totalSteps, collaps
     setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
   };
 
-  // Group scenarios by category
+  // Scroll active item into view on mount and when activeId changes
+  useEffect(() => {
+    if (!listRef.current) return;
+    const timer = setTimeout(() => {
+      const activeEl = listRef.current.querySelector('.sidebar-item.active');
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [activeId]);
+
+  // Group and SORT by order field
   const grouped = {};
   scenarios.forEach(s => {
     const cat = s.category || 'Other';
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(s);
+  });
+  Object.keys(grouped).forEach(cat => {
+    grouped[cat].sort((a, b) => (a.order || 999) - (b.order || 999));
   });
 
   let globalIndex = 0;
@@ -56,8 +91,10 @@ const Sidebar = ({ scenarios, activeId, onSelect, stepIndex, totalSteps, collaps
         </button>
       </div>
 
-      <div className="sidebar-list">
-        {Object.entries(grouped).map(([category, items]) => {
+      <div className="sidebar-list" ref={listRef}>
+        {Object.entries(grouped)
+          .sort(([a], [b]) => (categoryDisplayOrder[a] ?? 99) - (categoryDisplayOrder[b] ?? 99))
+          .map(([category, items]) => {
           const CatIcon = categoryIcons[category] || Layers;
           const isExpanded = expandedCategories[category] !== false;
 
@@ -93,7 +130,7 @@ const Sidebar = ({ scenarios, activeId, onSelect, stepIndex, totalSteps, collaps
                         className={`sidebar-item ${isActive ? 'active' : ''}`}
                         onClick={() => onSelect(s.id)}
                       >
-                        <div className="sidebar-item-num">{globalIndex}</div>
+                        <div className="sidebar-item-num">{s.order || globalIndex}</div>
                         <div className="sidebar-item-icon">
                           <Icon size={14} />
                         </div>
