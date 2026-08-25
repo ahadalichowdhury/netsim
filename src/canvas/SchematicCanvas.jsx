@@ -67,10 +67,13 @@ const SchematicCanvas = ({ scenario, step }) => {
   }, [zoom]);
 
   const onTouchEnd = useCallback(e => {
-    if (e.touches.length < 2) {
+    if (e.touches.length === 0) {
       interaction.current = null;
+    } else if (e.touches.length === 1 && interaction.current?.type === 'pinch') {
+      const t = e.touches[0];
+      interaction.current = { type: 'pan', sx: t.clientX, sy: t.clientY, px: pan.x, py: pan.y };
     }
-  }, []);
+  }, [pan]);
 
   const onMouseDown = useCallback(e => {
     if (e.target === svgRef.current || e.target.classList?.contains('bg')) {
@@ -282,9 +285,18 @@ const Element = ({ id, el, selected, onDrag, onResize, onSelect }) => {
 
   const isBox = ['box', 'container', 'nic', 'bridge', 'snat', 'namespace'].includes(type);
 
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      e.stopPropagation();
+      const t = e.touches[0];
+      onDrag(id, { clientX: t.clientX, clientY: t.clientY, stopPropagation: () => {} });
+    }
+  };
+
   return (
     <g>
       <g onMouseDown={isBox ? (e) => onDrag(id, e) : undefined}
+        onTouchStart={isBox ? handleTouchStart : undefined}
         style={{ cursor: isBox ? 'grab' : 'default' }}>
         {renderBody()}
       </g>

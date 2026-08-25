@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Sun, Moon, Menu, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Sun, Moon, Menu, X, ChevronUp, ChevronDown, Globe } from 'lucide-react';
 import NetworkCanvas from './canvas/NetworkCanvas';
 import SchematicCanvas from './canvas/SchematicCanvas';
 import ControlBar from './components/ControlBar';
 import InfoPanel from './components/InfoPanel';
 import Sidebar from './components/Sidebar';
 import { scenarios } from './simulations/scenarios';
+import { loadTopicMarkdown } from './utils/markdownLoader';
 import './App.css';
 
 function App() {
@@ -26,6 +27,8 @@ function App() {
     return saved ? parseInt(saved) : 380;
   });
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [lang, setLang] = useState(() => localStorage.getItem('netsim-lang') || 'en');
+  const [mdSteps, setMdSteps] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
@@ -55,17 +58,40 @@ function App() {
     localStorage.setItem('netsim-panel-width', panelWidth);
   }, [panelWidth]);
 
+  useEffect(() => {
+    localStorage.setItem('netsim-lang', lang);
+  }, [lang]);
+
   const toggleTheme = () => setTheme(t => t === 'light' ? 'dark' : 'light');
+  const toggleLang = () => setLang(l => l === 'en' ? 'bn' : 'en');
 
   const scenario = scenarios.find(s => s.id === activeScenario);
   const steps = scenario?.steps || [];
-  const currentStep = steps[stepIndex];
 
   useEffect(() => {
-    if (stepIndex >= steps.length) {
-      setStepIndex(Math.max(0, steps.length - 1));
+    setMdSteps([]);
+    if (!scenario) return;
+    loadTopicMarkdown(scenario.id, lang).then(parsed => {
+      setMdSteps(parsed);
+    });
+  }, [scenario?.id, lang]);
+
+  const mergedSteps = steps.map((s, i) => {
+    const md = mdSteps[i];
+    return {
+      ...s,
+      title: md?.title || s.title,
+      explanation: md?.explanation || s.explanation || ''
+    };
+  });
+
+  const currentStep = mergedSteps[stepIndex];
+
+  useEffect(() => {
+    if (stepIndex >= mergedSteps.length) {
+      setStepIndex(Math.max(0, mergedSteps.length - 1));
     }
-  }, [steps.length]);
+  }, [mergedSteps.length]);
 
   const handleScenarioChange = useCallback((id) => {
     setActiveScenario(id);
@@ -77,8 +103,8 @@ function App() {
   }, []);
 
   const handleNext = useCallback(() => {
-    setStepIndex(prev => Math.min(prev + 1, steps.length - 1));
-  }, [steps.length]);
+    setStepIndex(prev => Math.min(prev + 1, mergedSteps.length - 1));
+  }, [mergedSteps.length]);
 
   const handlePrev = useCallback(() => {
     setStepIndex(prev => Math.max(prev - 1, 0));
@@ -108,7 +134,7 @@ function App() {
       const interval = 3000 / speed;
       playTimerRef.current = setInterval(() => {
         setStepIndex(prev => {
-          if (prev >= steps.length - 1) {
+          if (prev >= mergedSteps.length - 1) {
             setIsPlaying(false);
             return prev;
           }
@@ -119,7 +145,7 @@ function App() {
     return () => {
       if (playTimerRef.current) clearInterval(playTimerRef.current);
     };
-  }, [isPlaying, speed, steps.length]);
+  }, [isPlaying, speed, mergedSteps.length]);
 
   const currentTables = currentStep?.tables || {};
   const currentPacketDetails = currentStep?.packetDetails || {};
@@ -144,6 +170,10 @@ function App() {
               Core Networking Concepts &mdash; Visualized
             </div>
           )}
+          <button className="lang-toggle" onClick={toggleLang} title={`Switch to ${lang === 'en' ? 'Bangla' : 'English'}`}>
+            <Globe size={16} />
+            <span>{lang === 'en' ? 'EN' : 'BN'}</span>
+          </button>
           <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
@@ -214,7 +244,7 @@ function App() {
 
       <ControlBar
         currentStep={stepIndex}
-        totalSteps={steps.length}
+        totalSteps={mergedSteps.length}
         isPlaying={isPlaying}
         speed={speed}
         onPrev={handlePrev}
