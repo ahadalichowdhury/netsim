@@ -38,35 +38,38 @@ const SchematicCanvas = ({ scenario, step }) => {
 
   const onTouchStart = useCallback(e => {
     if (e.touches.length === 2) {
+      e.preventDefault();
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       interaction.current = { type: 'pinch', dist: Math.hypot(dx, dy), zoom };
-    } else if (e.touches.length === 1) {
+    } else if (e.touches.length === 1 && !interaction.current?.type) {
       const t = e.touches[0];
-      if (t.target === svgRef.current || t.target.classList?.contains('bg')) {
-        interaction.current = { type: 'pan', sx: t.clientX, sy: t.clientY, px: pan.x, py: pan.y };
-      }
+      interaction.current = { type: 'pan', sx: t.clientX, sy: t.clientY, px: pan.x, py: pan.y };
     }
   }, [zoom, pan]);
 
   const onTouchMove = useCallback(e => {
-    const act = interaction.current;
-    if (!act) return;
-    if (act.type === 'pinch' && e.touches.length === 2) {
+    if (e.touches.length === 2) {
       e.preventDefault();
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const newDist = Math.hypot(dx, dy);
-      const scale = newDist / act.dist;
-      setZoom(Math.min(3, Math.max(0.25, act.zoom * scale)));
-    } else if (act.type === 'pan' && e.touches.length === 1) {
+      if (interaction.current?.type === 'pinch') {
+        const scale = newDist / interaction.current.dist;
+        setZoom(Math.min(3, Math.max(0.25, interaction.current.zoom * scale)));
+      } else {
+        interaction.current = { type: 'pinch', dist: newDist, zoom };
+      }
+    } else if (e.touches.length === 1 && interaction.current?.type === 'pan') {
       const t = e.touches[0];
-      setPan({ x: act.px + (t.clientX - act.sx) / zoom, y: act.py + (t.clientY - act.sy) / zoom });
+      setPan({ x: interaction.current.px + (t.clientX - interaction.current.sx) / zoom, y: interaction.current.py + (t.clientY - interaction.current.sy) / zoom });
     }
   }, [zoom]);
 
-  const onTouchEnd = useCallback(() => {
-    interaction.current = null;
+  const onTouchEnd = useCallback(e => {
+    if (e.touches.length < 2) {
+      interaction.current = null;
+    }
   }, []);
 
   const onMouseDown = useCallback(e => {

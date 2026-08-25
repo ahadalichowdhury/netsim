@@ -57,7 +57,7 @@
 
 /* Schematic Canvas */
 .schematic-canvas{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg-primary);overflow:hidden;position:relative}
-.schematic-svg{width:100%;height:100%;max-width:960px;max-height:480px;user-select:none;-webkit-user-select:none}
+.schematic-svg{width:100%;height:100%;max-width:960px;max-height:480px;user-select:none;-webkit-user-select:none;touch-action:none}
 .schematic-svg text{pointer-events:none}
 .schematic-zoom-controls{position:absolute;bottom:12px;right:12px;display:flex;align-items:center;gap:6px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:4px 8px;z-index:10;box-shadow:var(--shadow-sm)}
 .schematic-zoom-controls button{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
