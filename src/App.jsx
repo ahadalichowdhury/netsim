@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Menu, X, ChevronUp, ChevronDown } from 'lucide-react';
 import NetworkCanvas from './canvas/NetworkCanvas';
 import SchematicCanvas from './canvas/SchematicCanvas';
 import ControlBar from './components/ControlBar';
@@ -26,7 +26,17 @@ function App() {
     return saved ? parseInt(saved) : 380;
   });
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const playTimerRef = useRef(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 900);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -62,6 +72,7 @@ function App() {
     setStepIndex(0);
     setIsPlaying(false);
     setLayoutKey(k => k + 1);
+    setMobileSidebarOpen(false);
     if (playTimerRef.current) clearInterval(playTimerRef.current);
   }, []);
 
@@ -114,18 +125,25 @@ function App() {
   const currentPacketDetails = currentStep?.packetDetails || {};
 
   return (
-    <div className="app">
+    <div className={`app ${isMobile ? 'is-mobile' : ''}`}>
       <header className="header">
         <div className="header-left">
+          {isMobile && (
+            <button className="mobile-menu-btn" onClick={() => setMobileSidebarOpen(o => !o)}>
+              {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          )}
           <div className="header-logo">
             <span>Net</span>Sim
           </div>
-          <div className="header-badge">Interactive</div>
+          {!isMobile && <div className="header-badge">Interactive</div>}
         </div>
         <div className="header-right">
-          <div className="header-subtitle">
-            Core Networking Concepts &mdash; Visualized
-          </div>
+          {!isMobile && (
+            <div className="header-subtitle">
+              Core Networking Concepts &mdash; Visualized
+            </div>
+          )}
           <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
@@ -133,15 +151,20 @@ function App() {
       </header>
 
       <div className="main">
-        <Sidebar
-          scenarios={scenarios}
-          activeId={activeScenario}
-          onSelect={handleScenarioChange}
-          stepIndex={stepIndex}
-          totalSteps={steps.length}
-          collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed(c => !c)}
-        />
+        {isMobile && mobileSidebarOpen && (
+          <div className="mobile-overlay" onClick={() => setMobileSidebarOpen(false)} />
+        )}
+        <div className={`sidebar-drawer${isMobile ? ' mobile' : ''}${mobileSidebarOpen ? ' open' : ''}`}>
+          <Sidebar
+            scenarios={scenarios}
+            activeId={activeScenario}
+            onSelect={handleScenarioChange}
+            stepIndex={stepIndex}
+            totalSteps={steps.length}
+            collapsed={isMobile ? false : sidebarCollapsed}
+            onToggle={() => isMobile ? setMobileSidebarOpen(false) : setSidebarCollapsed(c => !c)}
+          />
+        </div>
 
         <div className="canvas-area">
           {scenario.diagramStyle === 'schematic' ? (
@@ -153,17 +176,40 @@ function App() {
               layoutKey={layoutKey}
             />
           )}
+
+          {isMobile && (
+            <button className="mobile-panel-toggle" onClick={() => setMobilePanelOpen(o => !o)}>
+              {mobilePanelOpen ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+              <span>{currentStep?.title || 'Details'}</span>
+            </button>
+          )}
         </div>
 
-        <InfoPanel
-          scenario={scenario}
-          currentStep={currentStep}
-          stepIndex={stepIndex}
-          tables={currentTables}
-          packetDetails={currentPacketDetails}
-          width={panelWidth}
-          onWidthChange={setPanelWidth}
-        />
+        {isMobile ? (
+          <div className={`bottom-sheet ${mobilePanelOpen ? 'open' : ''}`}>
+            <InfoPanel
+              scenario={scenario}
+              currentStep={currentStep}
+              stepIndex={stepIndex}
+              tables={currentTables}
+              packetDetails={currentPacketDetails}
+              width={panelWidth}
+              onWidthChange={setPanelWidth}
+              isMobile={isMobile}
+            />
+          </div>
+        ) : (
+          <InfoPanel
+            scenario={scenario}
+            currentStep={currentStep}
+            stepIndex={stepIndex}
+            tables={currentTables}
+            packetDetails={currentPacketDetails}
+            width={panelWidth}
+            onWidthChange={setPanelWidth}
+            isMobile={isMobile}
+          />
+        )}
       </div>
 
       <ControlBar
@@ -178,6 +224,7 @@ function App() {
         onReset={handleReset}
         onResetLayout={handleResetLayout}
         onSpeedChange={setSpeed}
+        isMobile={isMobile}
       />
     </div>
   );
