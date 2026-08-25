@@ -36,6 +36,39 @@ const SchematicCanvas = ({ scenario, step }) => {
     setZoom(z => Math.min(3, Math.max(0.25, z + (e.deltaY > 0 ? -0.1 : 0.1))));
   }, []);
 
+  const onTouchStart = useCallback(e => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      interaction.current = { type: 'pinch', dist: Math.hypot(dx, dy), zoom };
+    } else if (e.touches.length === 1) {
+      const t = e.touches[0];
+      if (t.target === svgRef.current || t.target.classList?.contains('bg')) {
+        interaction.current = { type: 'pan', sx: t.clientX, sy: t.clientY, px: pan.x, py: pan.y };
+      }
+    }
+  }, [zoom, pan]);
+
+  const onTouchMove = useCallback(e => {
+    const act = interaction.current;
+    if (!act) return;
+    if (act.type === 'pinch' && e.touches.length === 2) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const newDist = Math.hypot(dx, dy);
+      const scale = newDist / act.dist;
+      setZoom(Math.min(3, Math.max(0.25, act.zoom * scale)));
+    } else if (act.type === 'pan' && e.touches.length === 1) {
+      const t = e.touches[0];
+      setPan({ x: act.px + (t.clientX - act.sx) / zoom, y: act.py + (t.clientY - act.sy) / zoom });
+    }
+  }, [zoom]);
+
+  const onTouchEnd = useCallback(() => {
+    interaction.current = null;
+  }, []);
+
   const onMouseDown = useCallback(e => {
     if (e.target === svgRef.current || e.target.classList?.contains('bg')) {
       setSelected(null);
@@ -111,7 +144,11 @@ const SchematicCanvas = ({ scenario, step }) => {
         <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}>⟲</button>
       </div>
       <svg ref={svgRef} viewBox="0 0 960 480" className="schematic-svg"
-        style={{ cursor: interaction.current?.type === 'pan' ? 'grabbing' : 'default' }} onMouseDown={onMouseDown}>
+        style={{ cursor: interaction.current?.type === 'pan' ? 'grabbing' : 'default' }}
+        onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}>
         <rect className="bg" x="-5000" y="-5000" width="15000" height="15000" fill="transparent"/>
         <g transform={`scale(${zoom}) translate(${pan.x},${pan.y})`}>
           {arrows.map((a, i) => {
