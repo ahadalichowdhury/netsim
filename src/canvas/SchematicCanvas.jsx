@@ -49,22 +49,28 @@ const SchematicCanvas = ({ scenario, step }) => {
   }, [zoom, pan]);
 
   const onTouchMove = useCallback(e => {
+    const act = interaction.current;
     if (e.touches.length === 2) {
       e.preventDefault();
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const newDist = Math.hypot(dx, dy);
-      if (interaction.current?.type === 'pinch') {
-        const scale = newDist / interaction.current.dist;
-        setZoom(Math.min(3, Math.max(0.25, interaction.current.zoom * scale)));
+      if (act?.type === 'pinch') {
+        const scale = newDist / act.dist;
+        setZoom(Math.min(3, Math.max(0.25, act.zoom * scale)));
       } else {
         interaction.current = { type: 'pinch', dist: newDist, zoom };
       }
-    } else if (e.touches.length === 1 && interaction.current?.type === 'pan') {
+    } else if (e.touches.length === 1 && act) {
       const t = e.touches[0];
-      setPan({ x: interaction.current.px + (t.clientX - interaction.current.sx) / zoom, y: interaction.current.py + (t.clientY - interaction.current.sy) / zoom });
+      if (act.type === 'pan') {
+        setPan({ x: act.px + (t.clientX - act.sx) / zoom, y: act.py + (t.clientY - act.sy) / zoom });
+      } else if (act.type === 'drag') {
+        const pt = toSVG(t.clientX, t.clientY);
+        updateEl(act.id, { x: pt.x - act.ox, y: pt.y - act.oy });
+      }
     }
-  }, [zoom]);
+  }, [zoom, toSVG, updateEl]);
 
   const onTouchEnd = useCallback(e => {
     if (e.touches.length === 0) {
