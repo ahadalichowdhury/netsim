@@ -146,8 +146,7 @@ const SchematicCanvas = ({ scenario, step }) => {
         <button onClick={() => setZoom(z => Math.max(0.25, z - 0.15))}>−</button>
         <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}>⟲</button>
       </div>
-      <svg ref={svgRef} viewBox="0 0 960 480" className="schematic-svg"
-        style={{ cursor: interaction.current?.type === 'pan' ? 'grabbing' : 'default' }}
+      <svg ref={svgRef} viewBox="0 0 960 480" className="schematic-svg" style={{ cursor: interaction.current?.type === 'pan' ? 'grabbing' : 'default', overflow: 'visible' }}
         onMouseDown={onMouseDown}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
