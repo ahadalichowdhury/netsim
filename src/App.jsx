@@ -198,7 +198,7 @@ function App() {
 
         <div className="canvas-area">
           {scenario.diagramStyle === 'schematic' ? (
-            <SchematicCanvas scenario={scenario} step={currentStep} />
+            <SchematicCanvas scenario={scenario} step={currentStep} stepIndex={stepIndex} />
           ) : (
             <NetworkCanvas
               topology={scenario.topology}

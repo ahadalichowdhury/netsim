@@ -1,13 +1,17 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 
-const SchematicCanvas = ({ scenario, step }) => {
+const SchematicCanvas = ({ scenario, step, stepIndex = 0 }) => {
   const svgRef = useRef(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [elements, setElements] = useState({});
   const [arrows, setArrows] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [animatedPackets, setAnimatedPackets] = useState([]);
+  const [pulse, setPulse] = useState(0);
   const interaction = useRef(null);
+  const animRef = useRef(null);
+  const pulseRef = useRef(null);
 
   const toSVG = useCallback((cx, cy) => {
     const svg = svgRef.current;
@@ -26,10 +30,124 @@ const SchematicCanvas = ({ scenario, step }) => {
     setSelected(null);
   }, []);
 
+  const prevScenarioRef = useRef(scenario.id);
+
   useEffect(() => {
-    const scene = buildScene(scenario.id, step?.stepIndex ?? 0);
-    initScene(scene.elements, scene.arrows);
-  }, [scenario.id, step?.stepIndex, initScene]);
+    const scene = buildScene(scenario.id, stepIndex);
+    setArrows(scene.arrows);
+    setSelected(null);
+
+    if (prevScenarioRef.current !== scenario.id) {
+      // New scenario — reset everything
+      setElements(scene.elements);
+      prevScenarioRef.current = scenario.id;
+    } else {
+      // Same scenario, new step — preserve dragged positions
+      setElements(prev => {
+        const next = {};
+        Object.entries(scene.elements).forEach(([id, el]) => {
+          if (prev[id]) {
+            next[id] = { ...el, x: prev[id].x, y: prev[id].y };
+          } else {
+            next[id] = el;
+          }
+        });
+        return next;
+      });
+    }
+  }, [scenario.id, stepIndex]);
+
+  // Pulse animation for highlighted elements
+  useEffect(() => {
+    let frame;
+    const tick = () => {
+      setPulse(Date.now());
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  // Easing functions
+  const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const easeOutBack = (t) => { const c1 = 1.70158; const c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+  const easeInOutQuad = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+  // Packet animation — plays once per step, resets on step change
+  useEffect(() => {
+    setAnimatedPackets([]);
+    if (animRef.current) cancelAnimationFrame(animRef.current);
+
+    const highlightedArrows = arrows.filter(a => a.highlighted);
+    if (highlightedArrows.length === 0) return;
+
+    const DURATION = 1500;
+    const TRAIL_COUNT = 4;
+    const TRAIL_SPACING = 0.08;
+    const start = Date.now();
+    let running = true;
+
+    const getAnchor = (el, side) => {
+      if (!el) return { x: 0, y: 0 };
+      const cx = el.x + el.w / 2, cy = el.y + el.h / 2;
+      if (side === 'right') return { x: el.x + el.w, y: cy };
+      if (side === 'left') return { x: el.x, y: cy };
+      if (side === 'top') return { x: cx, y: el.y };
+      if (side === 'bottom') return { x: cx, y: el.y + el.h };
+      return { x: cx, y: cy };
+    };
+
+    const animate = () => {
+      if (!running) return;
+      const elapsed = Date.now() - start;
+      const raw = Math.min(elapsed / DURATION, 1);
+      const t = easeInOutQuad(raw);
+
+      const updated = [];
+      highlightedArrows.forEach((a) => {
+        const fromEl = elements[a.from];
+        const toEl = elements[a.to];
+        if (!fromEl || !toEl) return;
+        const from = getAnchor(fromEl, a.fromSide);
+        const to = getAnchor(toEl, a.toSide);
+        const color = a.color || 'var(--cyan)';
+
+        // Trail dots
+        for (let i = TRAIL_COUNT; i >= 1; i--) {
+          const trailT = Math.max(0, t - i * TRAIL_SPACING);
+          const trailEase = easeInOutQuad(trailT);
+          updated.push({
+            id: `${a.id}-trail-${i}`,
+            x: from.x + (to.x - from.x) * trailEase,
+            y: from.y + (to.y - from.y) * trailEase,
+            color,
+            opacity: 0.15 + (0.15 * (TRAIL_COUNT - i) / TRAIL_COUNT),
+            r: 3 + (2 * (TRAIL_COUNT - i) / TRAIL_COUNT),
+            isTrail: true
+          });
+        }
+
+        // Main packet
+        updated.push({
+          id: a.id,
+          x: from.x + (to.x - from.x) * t,
+          y: from.y + (to.y - from.y) * t,
+          color,
+          label: a.label,
+          opacity: 1,
+          r: 5,
+          isTrail: false
+        });
+      });
+
+      setAnimatedPackets(updated);
+      if (raw < 1) {
+        animRef.current = requestAnimationFrame(animate);
+      }
+    };
+    animRef.current = requestAnimationFrame(animate);
+    return () => { running = false; if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, [stepIndex, arrows, elements]);
 
   const onWheel = useCallback(e => {
     e.preventDefault();
@@ -161,6 +279,26 @@ const SchematicCanvas = ({ scenario, step }) => {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}>
         <rect className="bg" x="-5000" y="-5000" width="15000" height="15000" fill="transparent"/>
+        <defs>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feFlood floodColor="var(--cyan)" floodOpacity="0.5" result="color"/>
+            <feComposite in="color" in2="blur" operator="in" result="glow"/>
+            <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-amber" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feFlood floodColor="var(--amber)" floodOpacity="0.5" result="color"/>
+            <feComposite in="color" in2="blur" operator="in" result="glow"/>
+            <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-green" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feFlood floodColor="var(--green)" floodOpacity="0.5" result="color"/>
+            <feComposite in="color" in2="blur" operator="in" result="glow"/>
+            <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
         <g transform={`scale(${zoom}) translate(${pan.x},${pan.y})`}>
           {arrows.map((a, i) => {
             const from = getAnchor(a.from, a.fromSide || 'right');
@@ -170,6 +308,25 @@ const SchematicCanvas = ({ scenario, step }) => {
           {Object.entries(elements).map(([id, el]) => (
             <Element key={id} id={id} el={el} selected={selected === id}
               onDrag={startDrag} onResize={startResize} onSelect={() => setSelected(id)}/>
+          ))}
+          {animatedPackets.map(pkt => (
+            <g key={pkt.id}>
+              {!pkt.isTrail && (
+                <>
+                  <circle cx={pkt.x} cy={pkt.y} r={pkt.r + 8} fill={pkt.color} opacity="0.12">
+                    <animate attributeName="r" values={`${pkt.r + 6};${pkt.r + 12};${pkt.r + 6}`} dur="1.2s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.12;0.06;0.12" dur="1.2s" repeatCount="indefinite"/>
+                  </circle>
+                  <circle cx={pkt.x} cy={pkt.y} r={pkt.r + 3} fill={pkt.color} opacity="0.25"/>
+                </>
+              )}
+              <circle cx={pkt.x} cy={pkt.y} r={pkt.r} fill={pkt.color} opacity={pkt.opacity}/>
+              {!pkt.isTrail && pkt.label && (
+                <text x={pkt.x} y={pkt.y - 14} textAnchor="middle" fill={pkt.color}
+                  fontSize="10" fontWeight="700" fontFamily="var(--font-sans)"
+                  style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}>{pkt.label}</text>
+              )}
+            </g>
           ))}
         </g>
       </svg>
@@ -301,6 +458,14 @@ const Element = ({ id, el, selected, onDrag, onResize, onSelect }) => {
 
   return (
     <g>
+      {highlighted && (
+        <rect x={x - 4} y={y - 4} width={w + 8} height={h + 8} rx="10"
+          fill="none" stroke={sColor || 'var(--cyan)'} strokeWidth="2" opacity="0.4"
+          filter="url(#glow)">
+          <animate attributeName="opacity" values="0.4;0.15;0.4" dur="1.5s" repeatCount="indefinite"/>
+          <animate attributeName="stroke-width" values="2;3.5;2" dur="1.5s" repeatCount="indefinite"/>
+        </rect>
+      )}
       <g onMouseDown={isBox ? (e) => onDrag(id, e) : undefined}
         onTouchStart={isBox ? handleTouchStart : undefined}
         style={{ cursor: isBox ? 'grab' : 'default' }}>
@@ -336,38 +501,69 @@ const Arrow = ({ x1, y1, x2, y2, label, color = 'var(--green)', highlighted, das
           <polygon points="0 0, 10 3.5, 0 7" fill={c}/>
         </marker>
       </defs>
+      {highlighted && (
+        <line x1={x1 + ux * 12} y1={y1 + uy * 12} x2={x2 - ux * 16} y2={y2 - uy * 16}
+          stroke={c} strokeWidth={sw + 4} strokeLinecap="round" opacity="0.15" filter="url(#glow)"
+          strokeDasharray={dashed ? '8,5' : 'none'}/>
+      )}
       <line x1={x1 + ux * 12} y1={y1 + uy * 12} x2={x2 - ux * 16} y2={y2 - uy * 16}
         stroke={c} strokeWidth={sw} strokeLinecap="round"
         strokeDasharray={dashed ? '8,5' : 'none'} markerEnd={`url(#${id})`}
-        opacity={highlighted ? 1 : 0.7}/>
+        opacity={highlighted ? 1 : 0.7}>
+        {highlighted && <animate attributeName="opacity" values="1;0.6;1" dur="1.5s" repeatCount="indefinite"/>}
+      </line>
       {label && <text x={mx + nx} y={my + ny} textAnchor="middle" fill="var(--text-secondary)"
-        fontSize="11" fontWeight="600" fontFamily="var(--font-sans)">{label}</text>}
+        fontSize="11" fontWeight="600" fontFamily="var(--font-sans)"
+        style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>{label}</text>}
     </g>
   );
 };
 
+function autoAnchorSide(fromEl, toEl) {
+  const fcx = fromEl.x + (fromEl.w || 0) / 2, fcy = fromEl.y + (fromEl.h || 0) / 2;
+  const tcx = toEl.x + (toEl.w || 0) / 2, tcy = toEl.y + (toEl.h || 0) / 2;
+  const dx = tcx - fcx, dy = tcy - fcy;
+  let fs, ts;
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    fs = dx > 0 ? 'right' : 'left';
+    ts = dx > 0 ? 'left' : 'right';
+  } else {
+    fs = dy > 0 ? 'bottom' : 'top';
+    ts = dy > 0 ? 'top' : 'bottom';
+  }
+  return [fs, ts];
+}
+
 function buildScene(scenarioId, stepIdx) {
   const s = stepIdx;
   const scenes = { nic: nicScene, stack: stackScene, route: routeScene, iptables: iptablesScene, namespace: namespaceScene, bridge: bridgeScene, 'linux-gateway': linuxGatewayScene, 'linux-default-gw': linuxDefaultGwScene, 'network-basics': networkBasicsScene, 'mac-address': macAddressScene, 'ip-address': ipAddressScene, subnetting: subnettingScene, ports: portsScene, 'arp-table': arpTableScene, 'mac-table': macTableScene, 'dhcp-table': dhcpTableScene, 'routing-table': routingTableScene, 'dns-records': dnsRecordsScene, troubleshooting: troubleshootingScene, http: httpScene, 'osi-model': osiModelScene, icmp: icmpScene, udp: udpScene, 'tcp-vs-udp': tcpVsUdpScene, ipv6: ipv6Scene, vpn: vpnScene, wifi: wifiScene, nftables: nftablesScene, 'ethernet-frame': ethernetFrameScene, ttl: ttlScene, mtu: mtuScene, bgp: bgpScene, ospf: ospfScene, mpls: mplsScene, 'load-balancing': loadBalancingScene, cdn: cdnScene, vxlan: vxlanScene, sdn: sdnScene, 'zero-trust': zeroTrustScene, tls13: tls13Scene, wireguard: wireGuardScene, dnssec: dnssecScene, quic: quicScene, qos: qosScene, automation: automationScene, ebpf: ebpfScene };
-  return (scenes[scenarioId] || (() => ({ elements: {}, arrows: [] })))(s);
+  const result = (scenes[scenarioId] || (() => ({ elements: {}, arrows: [] })))(s);
+  // Auto-fill fromSide/toSide for any arrows missing them
+  result.arrows.forEach(a => {
+    if (!a.fromSide || !a.toSide) {
+      const fe = result.elements[a.from], te = result.elements[a.to];
+      if (fe && te) {
+        const [fs, ts] = autoAnchorSide(fe, te);
+        if (!a.fromSide) a.fromSide = fs;
+        if (!a.toSide) a.toSide = ts;
+      }
+    }
+  });
+  return result;
 }
 
 function nicScene(s) {
   return {
     elements: {
-      host:   { x: 60, y: 60, w: 440, h: 280, type: 'container', label: 'Linux Host' },
-      kernel: { x: 100, y: 140, w: 140, h: 70, type: 'box', label: 'Kernel', sub: 'Network Stack', highlighted: s >= 5 && s <= 8 },
-      eth0:   { x: 320, y: 140, w: 120, h: 70, type: 'nic', label: 'eth0', subnet: 'AA:BB:CC:DD:EE:01', highlighted: s === 1 || s === 4 || s === 9 },
-      sw:     { x: 600, y: 140, w: 100, h: 70, type: 'box', label: 'Switch', highlighted: s >= 2 && s <= 3 || s === 8 },
-      srv:    { x: 780, y: 140, w: 120, h: 70, type: 'box', label: 'Web Server', sub: '192.168.1.20', highlighted: s === 0 || s === 9 },
-      ...(s === 1 ? { d1: { x: 660, y: 175, type: 'dot', color: 'var(--cyan)', label: 'Incoming Frame' } } : {}),
-      ...(s === 2 ? { d1: { x: 380, y: 175, type: 'dot', color: 'var(--cyan)', label: 'MAC check' } } : {}),
-      ...(s === 8 ? { d1: { x: 380, y: 175, type: 'dot', color: 'var(--green)', label: 'TX' } } : {}),
-      ...(s === 9 ? { d1: { x: 660, y: 175, type: 'dot', color: 'var(--green)', label: 'Outgoing Frame' } } : {}),
+      host:   { x: 40, y: 100, w: 380, h: 200, type: 'container', label: 'Linux Host' },
+      kernel: { x: 70, y: 160, w: 130, h: 60, type: 'box', label: 'Kernel', sub: 'Network Stack', highlighted: s >= 5 && s <= 8 },
+      eth0:   { x: 260, y: 160, w: 130, h: 60, type: 'nic', label: 'eth0', subnet: 'AA:BB:CC:DD:EE:01', highlighted: s === 1 || s === 4 || s === 9 },
+      sw:     { x: 520, y: 160, w: 110, h: 60, type: 'box', label: 'Switch', highlighted: s >= 2 && s <= 3 || s === 8 },
+      srv:    { x: 700, y: 160, w: 120, h: 60, type: 'box', label: 'Web Server', sub: '192.168.1.20', highlighted: s === 0 || s === 9 },
     },
     arrows: [
-      { id: 'a1', from: 'eth0', to: 'sw', label: 'cable', highlighted: s >= 2 && s <= 3 || s === 8 },
-      { id: 'a2', from: 'sw', to: 'srv', highlighted: s >= 2 && s <= 3 },
+      { id: 'a1', from: 'eth0', to: 'sw', label: 'cable', highlighted: s >= 2 && s <= 3 || s === 8, fromSide: 'right', toSide: 'left' },
+      { id: 'a2', from: 'sw', to: 'srv', highlighted: s >= 2 && s <= 3, fromSide: 'right', toSide: 'left' },
     ]
   };
 }
@@ -399,25 +595,21 @@ function stackScene(s) {
 function routeScene(s) {
   return {
     elements: {
-      box:  { x: 160, y: 40, w: 640, h: 280, type: 'container', label: 'Linux Box' },
-      eth0: { x: 190, y: 120, w: 100, h: 50, type: 'nic', label: 'eth0', subnet: '192.168.1.1', highlighted: s >= 2 && s <= 4 },
-      rt:   { x: 360, y: 100, w: 200, h: 90, type: 'box', label: 'Routing Table', sub: 'ip route', highlighted: s >= 4 && s <= 6 },
-      eth1: { x: 630, y: 120, w: 100, h: 50, type: 'nic', label: 'eth1', subnet: '10.0.0.1', highlighted: s >= 6 && s <= 8 },
+      box:  { x: 120, y: 40, w: 720, h: 240, type: 'container', label: 'Linux Box' },
+      eth0: { x: 160, y: 120, w: 110, h: 50, type: 'nic', label: 'eth0', subnet: '192.168.1.1', highlighted: s >= 2 && s <= 4 },
+      rt:   { x: 340, y: 110, w: 180, h: 70, type: 'box', label: 'Routing Table', sub: 'ip route', highlighted: s >= 4 && s <= 6 },
+      eth1: { x: 590, y: 120, w: 110, h: 50, type: 'nic', label: 'eth1', subnet: '10.0.0.1', highlighted: s >= 6 && s <= 8 },
       pca:  { x: 80, y: 360, w: 100, h: 50, type: 'box', label: 'PC-A', sub: '192.168.1.10' },
-      swa:  { x: 360, y: 360, w: 100, h: 50, type: 'box', label: 'Switch A', highlighted: s >= 2 && s <= 3 },
-      swb:  { x: 630, y: 360, w: 100, h: 50, type: 'box', label: 'Switch B', highlighted: s >= 7 && s <= 8 },
-      srv:  { x: 800, y: 360, w: 100, h: 50, type: 'box', label: 'Server', sub: '8.8.8.8' },
-      ...(s === 2 ? { d1: { x: 270, y: 385, type: 'dot', color: 'var(--cyan)', label: 'from PC-A' } } : {}),
-      ...(s === 3 ? { d1: { x: 240, y: 260, type: 'dot', color: 'var(--cyan)' } } : {}),
-      ...(s === 5 ? { d1: { x: 460, y: 145, type: 'dot', color: 'var(--green)', label: 'lookup' } } : {}),
-      ...(s === 7 ? { d1: { x: 660, y: 260, type: 'dot', color: 'var(--green)' } } : {}),
+      swa:  { x: 260, y: 360, w: 100, h: 50, type: 'box', label: 'Switch A', highlighted: s >= 2 && s <= 3 },
+      swb:  { x: 590, y: 360, w: 100, h: 50, type: 'box', label: 'Switch B', highlighted: s >= 7 && s <= 8 },
+      srv:  { x: 770, y: 360, w: 100, h: 50, type: 'box', label: 'Server', sub: '8.8.8.8' },
     },
     arrows: [
-      { id: 'a1', from: 'eth0', to: 'rt', highlighted: s === 3 || s === 4 },
-      { id: 'a2', from: 'rt', to: 'eth1', highlighted: s === 6 },
-      { id: 'a3', from: 'pca', to: 'swa', color: 'var(--cyan)', highlighted: s === 2 },
+      { id: 'a1', from: 'eth0', to: 'rt', highlighted: s === 3 || s === 4, fromSide: 'right', toSide: 'left' },
+      { id: 'a2', from: 'rt', to: 'eth1', highlighted: s === 6, fromSide: 'right', toSide: 'left' },
+      { id: 'a3', from: 'pca', to: 'swa', color: 'var(--cyan)', highlighted: s === 2, fromSide: 'right', toSide: 'left' },
       { id: 'a4', from: 'swa', to: 'eth0', color: 'var(--cyan)', highlighted: s === 3, fromSide: 'top', toSide: 'bottom' },
-      { id: 'a5', from: 'swb', to: 'srv', color: 'var(--green)', highlighted: s === 8 },
+      { id: 'a5', from: 'swb', to: 'srv', color: 'var(--green)', highlighted: s === 8, fromSide: 'right', toSide: 'left' },
     ]
   };
 }
@@ -425,23 +617,20 @@ function routeScene(s) {
 function iptablesScene(s) {
   return {
     elements: {
-      inet: { x: 40, y: 140, w: 120, h: 70, type: 'box', label: 'Internet', highlighted: s <= 1 || s === 9 },
-      fw:   { x: 200, y: 80, w: 320, h: 240, type: 'container', label: 'Linux Firewall' },
-      pre:  { x: 240, y: 110, w: 0, h: 0, type: 'text', label: 'PREROUTING', fontSize: 11, fontWeight: '600', fontFamily: 'var(--font-mono)' },
-      inp:  { x: 230, y: 125, w: 80, h: 40, type: 'box', label: 'INPUT', color: 'var(--green)', highlighted: s === 4 || s === 5 },
-      fwd:  { x: 340, y: 125, w: 80, h: 40, type: 'box', label: 'FORWARD', color: 'var(--amber)', highlighted: s >= 3 && s <= 7 },
-      out:  { x: 450, y: 125, w: 80, h: 40, type: 'box', label: 'OUTPUT', color: 'var(--cyan)' },
-      post: { x: 240, y: 200, w: 0, h: 0, type: 'text', label: 'POSTROUTING', fontSize: 11, fontWeight: '600', fontFamily: 'var(--font-mono)' },
-      sw:   { x: 580, y: 140, w: 100, h: 70, type: 'box', label: 'Switch', highlighted: s === 7 || s === 8 },
-      srv:  { x: 740, y: 140, w: 120, h: 70, type: 'box', label: 'Server', sub: 'Web App', highlighted: s === 8 },
-      ...(s === 1 ? { d1: { x: 180, y: 175, type: 'dot', color: 'var(--red)', label: 'HTTP Request' } } : {}),
-      ...(s === 10 ? { d1: { x: 180, y: 175, type: 'dot', color: 'var(--red)', label: 'SSH Attack' } } : {}),
-      ...(s === 11 ? { d1: { x: 360, y: 340, type: 'text', label: 'DROPPED', fontSize: 13, fontWeight: '700', color: 'var(--red)' } } : {}),
+      inet: { x: 40, y: 140, w: 110, h: 60, type: 'box', label: 'Internet', highlighted: s <= 1 || s === 9 },
+      fw:   { x: 200, y: 80, w: 340, h: 220, type: 'container', label: 'Linux Firewall' },
+      pre:  { x: 225, y: 110, w: 0, h: 0, type: 'text', label: 'PREROUTING', fontSize: 11, fontWeight: '600', fontFamily: 'var(--font-mono)' },
+      inp:  { x: 225, y: 130, w: 85, h: 40, type: 'box', label: 'INPUT', color: 'var(--green)', highlighted: s === 4 || s === 5 },
+      fwd:  { x: 340, y: 130, w: 85, h: 40, type: 'box', label: 'FORWARD', color: 'var(--amber)', highlighted: s >= 3 && s <= 7 },
+      out:  { x: 455, y: 130, w: 85, h: 40, type: 'box', label: 'OUTPUT', color: 'var(--cyan)' },
+      post: { x: 225, y: 210, w: 0, h: 0, type: 'text', label: 'POSTROUTING', fontSize: 11, fontWeight: '600', fontFamily: 'var(--font-mono)' },
+      sw:   { x: 600, y: 140, w: 100, h: 60, type: 'box', label: 'Switch', highlighted: s === 7 || s === 8 },
+      srv:  { x: 760, y: 140, w: 110, h: 60, type: 'box', label: 'Server', sub: 'Web App', highlighted: s === 8 },
     },
     arrows: [
-      { id: 'a1', from: 'inet', to: 'fw', color: s === 10 ? 'var(--red)' : 'var(--cyan)', highlighted: s === 1 || s === 10 },
-      { id: 'a2', from: 'fw', to: 'sw', color: s === 11 ? 'var(--red)' : 'var(--green)', highlighted: s === 7 || s === 8 || s === 11 },
-      { id: 'a3', from: 'sw', to: 'srv', color: 'var(--green)', highlighted: s === 8 },
+      { id: 'a1', from: 'inet', to: 'fw', color: s === 10 ? 'var(--red)' : 'var(--cyan)', highlighted: s === 1 || s === 10, fromSide: 'right', toSide: 'left' },
+      { id: 'a2', from: 'fw', to: 'sw', color: s === 11 ? 'var(--red)' : 'var(--green)', highlighted: s === 7 || s === 8 || s === 11, fromSide: 'right', toSide: 'left' },
+      { id: 'a3', from: 'sw', to: 'srv', color: 'var(--green)', highlighted: s === 8, fromSide: 'right', toSide: 'left' },
     ]
   };
 }
@@ -449,27 +638,23 @@ function iptablesScene(s) {
 function namespaceScene(s) {
   return {
     elements: {
-      ns1:  { x: 40, y: 60, w: 200, h: 160, type: 'container', label: 'Namespace: app1' },
-      n1:   { x: 60, y: 100, w: 160, h: 80, type: 'namespace', label: 'ns-app1', cmds: ['ping 8.8.8.8', 'ip addr'], ip: '192.168.1.10', highlighted: s === 0 || s === 4 },
-      ns2:  { x: 40, y: 280, w: 200, h: 160, type: 'container', label: 'Namespace: app2' },
-      n2:   { x: 60, y: 320, w: 160, h: 80, type: 'namespace', label: 'ns-app2', cmds: ['curl google.com'], ip: '192.168.2.10', highlighted: s === 7 },
-      va:   { x: 300, y: 100, w: 80, h: 50, type: 'nic', label: 'veth-a', highlighted: s >= 4 && s <= 5 },
-      vb:   { x: 300, y: 320, w: 80, h: 50, type: 'nic', label: 'veth-b', highlighted: s === 7 },
-      br:   { x: 440, y: 160, w: 160, h: 60, type: 'bridge', label: 'br0', subnet: '192.168.1.1/24', highlighted: s >= 5 && s <= 9 },
-      snat: { x: 660, y: 120, w: 30, h: 200, type: 'snat', highlighted: s === 6 || s === 9 },
-      inet: { x: 780, y: 175, type: 'text', label: 'Internet', sub: '8.8.8.8', fontSize: 15, fontWeight: '600' },
-      ...(s === 4 ? { d1: { x: 260, y: 130, type: 'dot', color: 'var(--cyan)' } } : {}),
-      ...(s === 5 ? { d1: { x: 410, y: 150, type: 'dot', color: 'var(--cyan)' } } : {}),
-      ...(s === 7 ? { d1: { x: 260, y: 350, type: 'dot', color: 'var(--amber)' } } : {}),
-      ...(s === 8 ? { d1: { x: 410, y: 270, type: 'dot', color: 'var(--amber)' } } : {}),
+      ns1:  { x: 40, y: 60, w: 180, h: 150, type: 'container', label: 'Namespace: app1' },
+      n1:   { x: 55, y: 95, w: 150, h: 70, type: 'namespace', label: 'ns-app1', cmds: ['ping 8.8.8.8', 'ip addr'], ip: '192.168.1.10', highlighted: s === 0 || s === 4 },
+      ns2:  { x: 40, y: 290, w: 180, h: 150, type: 'container', label: 'Namespace: app2' },
+      n2:   { x: 55, y: 325, w: 150, h: 70, type: 'namespace', label: 'ns-app2', cmds: ['curl google.com'], ip: '192.168.2.10', highlighted: s === 7 },
+      va:   { x: 290, y: 115, w: 80, h: 45, type: 'nic', label: 'veth-a', highlighted: s >= 4 && s <= 5 },
+      vb:   { x: 290, y: 340, w: 80, h: 45, type: 'nic', label: 'veth-b', highlighted: s === 7 },
+      br:   { x: 430, y: 175, w: 150, h: 55, type: 'bridge', label: 'br0', subnet: '192.168.1.1/24', highlighted: s >= 5 && s <= 9 },
+      snat: { x: 640, y: 130, w: 35, h: 140, type: 'snat', highlighted: s === 6 || s === 9 },
+      inet: { x: 730, y: 180, type: 'text', label: 'Internet', sub: '8.8.8.8', fontSize: 15, fontWeight: '600' },
     },
     arrows: [
       { id: 'a1', from: 'ns1', to: 'va', color: 'var(--cyan)', highlighted: s === 4, fromSide: 'right', toSide: 'left' },
       { id: 'a2', from: 'ns2', to: 'vb', color: 'var(--amber)', highlighted: s === 7, fromSide: 'right', toSide: 'left' },
-      { id: 'a3', from: 'va', to: 'br', color: 'var(--cyan)', highlighted: s === 5 },
-      { id: 'a4', from: 'vb', to: 'br', color: 'var(--amber)', highlighted: s === 8 },
-      { id: 'a5', from: 'br', to: 'snat', color: 'var(--green)', highlighted: s === 6 || s === 9 },
-      { id: 'a6', from: 'snat', to: 'inet', color: 'var(--green)', highlighted: s === 6 || s === 9 },
+      { id: 'a3', from: 'va', to: 'br', color: 'var(--cyan)', highlighted: s === 5, fromSide: 'right', toSide: 'left' },
+      { id: 'a4', from: 'vb', to: 'br', color: 'var(--amber)', highlighted: s === 8, fromSide: 'right', toSide: 'left' },
+      { id: 'a5', from: 'br', to: 'snat', color: 'var(--green)', highlighted: s === 6 || s === 9, fromSide: 'right', toSide: 'left' },
+      { id: 'a6', from: 'snat', to: 'inet', color: 'var(--green)', highlighted: s === 6 || s === 9, fromSide: 'right', toSide: 'left' },
     ]
   };
 }
@@ -477,24 +662,20 @@ function namespaceScene(s) {
 function bridgeScene(s) {
   return {
     elements: {
-      vm1:  { x: 60, y: 100, w: 120, h: 60, type: 'box', label: 'VM-1', sub: '192.168.1.10', highlighted: s >= 2 && s <= 4 || s === 7 },
-      vm2:  { x: 60, y: 300, w: 120, h: 60, type: 'box', label: 'VM-2', sub: '192.168.1.20', highlighted: s === 4 || s === 5 || s === 8 },
-      br:   { x: 280, y: 160, w: 200, h: 70, type: 'bridge', label: 'br0 (Linux Bridge)', ports: 6, highlighted: s >= 5 && s <= 8 },
-      rt:   { x: 580, y: 180, w: 100, h: 60, type: 'box', label: 'Router', sub: 'Gateway', highlighted: s === 9 || s === 10 },
-      inet: { x: 760, y: 180, w: 100, h: 60, type: 'box', label: 'Internet' },
-      ...(s === 2 ? { d1: { x: 230, y: 155, type: 'dot', color: 'var(--amber)' } } : {}),
-      ...(s === 3 ? { d1: { x: 230, y: 270, type: 'dot', color: 'var(--amber)' } } : {}),
-      ...(s === 5 ? { d1: { x: 230, y: 155, type: 'dot', color: 'var(--green)' } } : {}),
-      ...(s === 7 ? { d1: { x: 230, y: 155, type: 'dot', color: 'var(--cyan)' } } : {}),
+      vm1:  { x: 60, y: 60, w: 130, h: 55, type: 'box', label: 'VM-1', sub: '192.168.1.10', highlighted: s >= 2 && s <= 4 || s === 7 },
+      vm2:  { x: 60, y: 185, w: 130, h: 55, type: 'box', label: 'VM-2', sub: '192.168.1.20', highlighted: s === 4 || s === 5 || s === 8 },
+      br:   { x: 300, y: 110, w: 200, h: 70, type: 'bridge', label: 'br0 (Linux Bridge)', ports: 6, highlighted: s >= 5 && s <= 8 },
+      rt:   { x: 590, y: 120, w: 110, h: 55, type: 'box', label: 'Router', sub: 'Gateway', highlighted: s === 9 || s === 10 },
+      inet: { x: 770, y: 120, w: 100, h: 55, type: 'box', label: 'Internet' },
     },
     arrows: [
-      { id: 'a1', from: 'vm1', to: 'br', color: 'var(--amber)', highlighted: s === 2 || s === 3, label: s === 2 ? 'ARP Broadcast' : '' },
-      { id: 'a2', from: 'vm2', to: 'br', color: 'var(--amber)', highlighted: s === 3 },
-      { id: 'a3', from: 'br', to: 'vm1', color: 'var(--green)', highlighted: s === 5, label: 'ARP Reply' },
-      { id: 'a4', from: 'vm1', to: 'br', color: 'var(--cyan)', highlighted: s === 7, label: 'Unicast' },
-      { id: 'a5', from: 'br', to: 'vm2', color: 'var(--green)', highlighted: s === 8 },
-      { id: 'a6', from: 'br', to: 'rt', color: 'var(--green)', highlighted: s === 9 || s === 10 },
-      { id: 'a7', from: 'rt', to: 'inet', color: 'var(--green)', highlighted: s === 10 },
+      { id: 'a1', from: 'vm1', to: 'br', color: 'var(--amber)', highlighted: s === 2 || s === 3, label: s === 2 ? 'ARP Broadcast' : '', fromSide: 'right', toSide: 'left' },
+      { id: 'a2', from: 'vm2', to: 'br', color: 'var(--amber)', highlighted: s === 3, fromSide: 'right', toSide: 'left' },
+      { id: 'a3', from: 'br', to: 'vm1', color: 'var(--green)', highlighted: s === 5, label: 'ARP Reply', fromSide: 'left', toSide: 'right' },
+      { id: 'a4', from: 'vm1', to: 'br', color: 'var(--cyan)', highlighted: s === 7, label: 'Unicast', fromSide: 'right', toSide: 'top' },
+      { id: 'a5', from: 'br', to: 'vm2', color: 'var(--green)', highlighted: s === 8, fromSide: 'left', toSide: 'right' },
+      { id: 'a6', from: 'br', to: 'rt', color: 'var(--green)', highlighted: s === 9 || s === 10, fromSide: 'right', toSide: 'left' },
+      { id: 'a7', from: 'rt', to: 'inet', color: 'var(--green)', highlighted: s === 10, fromSide: 'right', toSide: 'left' },
     ]
   };
 }
@@ -502,29 +683,23 @@ function bridgeScene(s) {
 function linuxGatewayScene(s) {
   return {
     elements: {
-      ns1:   { x: 40, y: 60, w: 180, h: 140, type: 'container', label: 'Namespace: web' },
-      n1:    { x: 60, y: 100, w: 140, h: 60, type: 'namespace', label: 'ns-web', cmds: ['curl 10.0.0.20'], ip: '192.168.1.10', highlighted: s === 2 },
-      veth1: { x: 260, y: 100, w: 80, h: 50, type: 'nic', label: 'veth1', highlighted: s === 2 || s === 3 },
-      br0:   { x: 380, y: 80, w: 140, h: 60, type: 'bridge', label: 'br0', subnet: '192.168.1.1/24', highlighted: s === 3 || s === 4 },
-      fwd:   { x: 480, y: 180, w: 120, h: 50, type: 'box', label: 'ip_forward=1', color: 'var(--green)', highlighted: s === 1 || s === 5 || s === 6 },
-      br1:   { x: 580, y: 280, w: 140, h: 60, type: 'bridge', label: 'br1', subnet: '10.0.0.1/24', highlighted: s === 5 || s === 6 || s === 7 },
-      veth2: { x: 750, y: 280, w: 80, h: 50, type: 'nic', label: 'veth2', highlighted: s === 7 || s === 8 },
-      ns2:   { x: 860, y: 240, w: 180, h: 140, type: 'container', label: 'Namespace: db' },
-      n2:    { x: 880, y: 280, w: 140, h: 60, type: 'namespace', label: 'ns-db', cmds: ['10.0.0.20'], ip: '10.0.0.20', highlighted: s === 8 },
-      ...(s === 2 ? { d1: { x: 200, y: 120, type: 'dot', color: 'var(--cyan)', label: '192.168.1.10→10.0.0.20' } } : {}),
-      ...(s === 3 ? { d1: { x: 330, y: 120, type: 'dot', color: 'var(--cyan)' } } : {}),
-      ...(s === 6 ? { d1: { x: 530, y: 200, type: 'dot', color: 'var(--green)', label: 'Forwarded' } } : {}),
-      ...(s === 7 ? { d1: { x: 660, y: 300, type: 'dot', color: 'var(--green)' } } : {}),
-      ...(s === 9 ? { d1: { x: 400, y: 200, type: 'dot', color: 'var(--amber)', label: 'Reply' } } : {}),
+      ns1:   { x: 30, y: 100, w: 140, h: 120, type: 'container', label: 'Namespace: web' },
+      n1:    { x: 45, y: 130, w: 110, h: 55, type: 'namespace', label: 'ns-web', cmds: ['curl 10.0.0.20'], ip: '192.168.1.10', highlighted: s === 2 },
+      veth1: { x: 220, y: 145, w: 70, h: 40, type: 'nic', label: 'veth1', highlighted: s === 2 || s === 3 },
+      br0:   { x: 340, y: 130, w: 110, h: 50, type: 'bridge', label: 'br0', subnet: '192.168.1.1/24', highlighted: s === 3 || s === 4 },
+      fwd:   { x: 340, y: 230, w: 110, h: 40, type: 'box', label: 'ip_forward=1', color: 'var(--green)', highlighted: s === 1 || s === 5 || s === 6 },
+      br1:   { x: 500, y: 230, w: 110, h: 50, type: 'bridge', label: 'br1', subnet: '10.0.0.1/24', highlighted: s === 5 || s === 6 || s === 7 },
+      veth2: { x: 660, y: 240, w: 70, h: 40, type: 'nic', label: 'veth2', highlighted: s === 7 || s === 8 },
+      ns2:   { x: 780, y: 200, w: 140, h: 120, type: 'container', label: 'Namespace: db' },
+      n2:    { x: 795, y: 230, w: 110, h: 55, type: 'namespace', label: 'ns-db', cmds: ['10.0.0.20'], ip: '10.0.0.20', highlighted: s === 8 },
     },
     arrows: [
       { id: 'a1', from: 'ns1', to: 'veth1', color: 'var(--cyan)', highlighted: s === 2, fromSide: 'right', toSide: 'left' },
-      { id: 'a2', from: 'veth1', to: 'br0', color: 'var(--cyan)', highlighted: s === 3 },
+      { id: 'a2', from: 'veth1', to: 'br0', color: 'var(--cyan)', highlighted: s === 3, fromSide: 'right', toSide: 'left' },
       { id: 'a3', from: 'br0', to: 'fwd', color: 'var(--cyan)', highlighted: s === 4, fromSide: 'bottom', toSide: 'top' },
-      { id: 'a4', from: 'fwd', to: 'br1', color: 'var(--green)', highlighted: s === 5 || s === 6, fromSide: 'bottom', toSide: 'top' },
-      { id: 'a5', from: 'br1', to: 'veth2', color: 'var(--green)', highlighted: s === 7 },
+      { id: 'a4', from: 'fwd', to: 'br1', color: 'var(--green)', highlighted: s === 5 || s === 6, fromSide: 'right', toSide: 'left' },
+      { id: 'a5', from: 'br1', to: 'veth2', color: 'var(--green)', highlighted: s === 7, fromSide: 'right', toSide: 'left' },
       { id: 'a6', from: 'veth2', to: 'ns2', color: 'var(--green)', highlighted: s === 8, fromSide: 'right', toSide: 'left' },
-      { id: 'a7', from: 'ns2', to: 'ns1', color: 'var(--amber)', highlighted: s === 9, label: 'Reply' },
     ]
   };
 }
@@ -532,25 +707,19 @@ function linuxGatewayScene(s) {
 function linuxDefaultGwScene(s) {
   return {
     elements: {
-      host:  { x: 40, y: 80, w: 180, h: 140, type: 'container', label: 'Linux Host' },
-      hcmd:  { x: 60, y: 120, w: 140, h: 60, type: 'namespace', label: 'host', cmds: ['ping 8.8.8.8'], ip: '192.168.1.10', highlighted: s === 0 },
-      eth0:  { x: 260, y: 120, w: 80, h: 50, type: 'nic', label: 'eth0', highlighted: s === 4 || s === 5 },
-      route: { x: 380, y: 80, w: 160, h: 70, type: 'box', label: 'ip route', sub: 'default via 192.168.1.1', highlighted: s >= 1 && s <= 3 },
-      router:{ x: 580, y: 100, w: 100, h: 60, type: 'box', label: 'Router', sub: '192.168.1.1', color: 'var(--amber)', highlighted: s === 5 || s === 6 || s === 9 },
-      inet:  { x: 750, y: 100, w: 100, h: 60, type: 'box', label: 'Internet', sub: '8.8.8.8', highlighted: s === 7 },
-      ...(s === 1 ? { d1: { x: 460, y: 60, type: 'dot', color: 'var(--cyan)', label: 'ip route' } } : {}),
-      ...(s === 4 ? { d1: { x: 200, y: 140, type: 'dot', color: 'var(--cyan)', label: 'ICMP Echo' } } : {}),
-      ...(s === 5 ? { d1: { x: 320, y: 140, type: 'dot', color: 'var(--cyan)', label: 'To Gateway' } } : {}),
-      ...(s === 7 ? { d1: { x: 660, y: 120, type: 'dot', color: 'var(--green)', label: 'NAT + Forward' } } : {}),
-      ...(s === 8 ? { d1: { x: 660, y: 120, type: 'dot', color: 'var(--amber)', label: 'Reply' } } : {}),
-      ...(s === 9 ? { d1: { x: 400, y: 140, type: 'dot', color: 'var(--green)', label: 'Reply → Host' } } : {}),
+      host:  { x: 30, y: 120, w: 150, h: 110, type: 'container', label: 'Linux Host' },
+      hcmd:  { x: 45, y: 148, w: 120, h: 55, type: 'namespace', label: 'host', cmds: ['ping 8.8.8.8'], ip: '192.168.1.10', highlighted: s === 0 },
+      eth0:  { x: 250, y: 155, w: 85, h: 45, type: 'nic', label: 'eth0', highlighted: s === 4 || s === 5 || s === 9 },
+      route: { x: 250, y: 55, w: 190, h: 42, type: 'box', label: 'ip route', sub: 'default via 192.168.1.1', highlighted: s >= 1 && s <= 3 },
+      router:{ x: 420, y: 140, w: 120, h: 65, type: 'box', label: 'Router', sub: '192.168.1.1', color: 'var(--amber)', highlighted: s === 5 || s === 6 || s === 9 },
+      inet:  { x: 620, y: 140, w: 110, h: 65, type: 'box', label: 'Internet', sub: '8.8.8.8', highlighted: s === 7 },
     },
     arrows: [
       { id: 'a1', from: 'host', to: 'eth0', color: 'var(--cyan)', highlighted: s === 4, fromSide: 'right', toSide: 'left' },
-      { id: 'a2', from: 'eth0', to: 'router', color: 'var(--cyan)', highlighted: s === 5, label: 'To Gateway' },
-      { id: 'a3', from: 'router', to: 'inet', color: 'var(--green)', highlighted: s === 6 || s === 7 },
-      { id: 'a4', from: 'inet', to: 'router', color: 'var(--amber)', highlighted: s === 8, label: 'Reply' },
-      { id: 'a5', from: 'router', to: 'eth0', color: 'var(--green)', highlighted: s === 9, label: 'NAT Reply' },
+      { id: 'a2', from: 'eth0', to: 'router', color: 'var(--cyan)', highlighted: s === 5, label: 'To Gateway', fromSide: 'right', toSide: 'left' },
+      { id: 'a3', from: 'router', to: 'inet', color: 'var(--green)', highlighted: s === 6 || s === 7, fromSide: 'right', toSide: 'left' },
+      { id: 'a4', from: 'inet', to: 'router', color: 'var(--amber)', highlighted: s === 8, label: 'Reply', fromSide: 'right', toSide: 'right' },
+      { id: 'a5', from: 'router', to: 'eth0', color: 'var(--green)', highlighted: s === 9, label: 'NAT Reply', fromSide: 'left', toSide: 'right' },
     ]
   };
 }
@@ -558,33 +727,27 @@ function linuxDefaultGwScene(s) {
 function networkBasicsScene(s) {
   return {
     elements: {
-      user:  { x: 40, y: 100, w: 120, h: 100, type: 'container', label: 'User' },
-      ucmd:  { x: 55, y: 130, w: 90, h: 40, type: 'namespace', label: 'user', cmds: ['ping google.com'], highlighted: s === 0 },
-      app:   { x: 200, y: 100, w: 120, h: 100, type: 'container', label: 'Application' },
-      areq:  { x: 215, y: 130, w: 90, h: 40, type: 'box', label: 'Needs IP?', color: 'var(--amber)', highlighted: s === 1 },
-      dns:   { x: 370, y: 40, w: 120, h: 60, type: 'box', label: 'DNS Server', sub: '8.8.8.8', highlighted: s === 2 },
-      arp:   { x: 370, y: 200, w: 120, h: 60, type: 'box', label: 'ARP Cache', sub: 'Empty → Query', highlighted: s === 5 },
-      route: { x: 370, y: 120, w: 120, h: 50, type: 'box', label: 'Routing Table', sub: 'Same or diff network?', highlighted: s === 4 },
-      frame: { x: 530, y: 100, w: 120, h: 80, type: 'box', label: 'Build Frame', sub: 'MAC + IP headers', highlighted: s === 6 },
-      nic:   { x: 690, y: 100, w: 100, h: 60, type: 'nic', label: 'eth0', subnet: 'NIC', highlighted: s === 7 },
-      sw:    { x: 830, y: 100, w: 90, h: 60, type: 'box', label: 'Switch', highlighted: s === 7 || s === 8 },
-      ...(s === 0 ? { d1: { x: 100, y: 80, type: 'dot', color: 'var(--cyan)', label: 'ping google.com' } } : {}),
-      ...(s === 2 ? { d1: { x: 310, y: 70, type: 'dot', color: 'var(--purple)', label: 'DNS Query' } } : {}),
-      ...(s === 2 ? { d2: { x: 310, y: 90, type: 'dot', color: 'var(--green)', label: '142.250.80.46' } } : {}),
-      ...(s === 5 ? { d1: { x: 310, y: 220, type: 'dot', color: 'var(--amber)', label: 'ARP Broadcast' } } : {}),
-      ...(s === 5 ? { d2: { x: 310, y: 240, type: 'dot', color: 'var(--green)', label: 'MAC Found' } } : {}),
-      ...(s === 7 ? { d1: { x: 780, y: 120, type: 'dot', color: 'var(--green)', label: 'Frame on wire' } } : {}),
+      user:  { x: 30, y: 140, w: 110, h: 90, type: 'container', label: 'User' },
+      ucmd:  { x: 42, y: 165, w: 86, h: 40, type: 'namespace', label: 'user', cmds: ['ping google.com'], highlighted: s === 0 },
+      app:   { x: 200, y: 140, w: 110, h: 90, type: 'container', label: 'Application' },
+      areq:  { x: 212, y: 165, w: 86, h: 40, type: 'box', label: 'Needs IP?', color: 'var(--amber)', highlighted: s === 1 },
+      dns:   { x: 200, y: 30, w: 110, h: 50, type: 'box', label: 'DNS Server', sub: '8.8.8.8', highlighted: s === 2 },
+      arp:   { x: 200, y: 290, w: 110, h: 50, type: 'box', label: 'ARP Cache', sub: 'Empty → Query', highlighted: s === 5 },
+      route: { x: 380, y: 150, w: 120, h: 50, type: 'box', label: 'Routing Table', sub: 'Same or diff network?', highlighted: s === 4 },
+      frame: { x: 560, y: 140, w: 110, h: 70, type: 'box', label: 'Build Frame', sub: 'MAC + IP headers', highlighted: s === 6 },
+      nic:   { x: 720, y: 145, w: 90, h: 55, type: 'nic', label: 'eth0', subnet: 'NIC', highlighted: s === 7 },
+      sw:    { x: 860, y: 145, w: 80, h: 55, type: 'box', label: 'Switch', highlighted: s === 7 || s === 8 },
     },
     arrows: [
-      { id: 'a1', from: 'user', to: 'app', color: 'var(--cyan)', highlighted: s === 0, label: 'Command' },
-      { id: 'a2', from: 'app', to: 'dns', color: 'var(--purple)', highlighted: s === 2, label: 'DNS Query' },
-      { id: 'a3', from: 'dns', to: 'app', color: 'var(--green)', highlighted: s === 2, label: 'IP Reply' },
-      { id: 'a4', from: 'app', to: 'route', color: 'var(--amber)', highlighted: s === 4 },
-      { id: 'a5', from: 'app', to: 'arp', color: 'var(--amber)', highlighted: s === 5, label: 'ARP Query' },
-      { id: 'a6', from: 'arp', to: 'app', color: 'var(--green)', highlighted: s === 5, label: 'MAC Reply' },
-      { id: 'a7', from: 'app', to: 'frame', color: 'var(--cyan)', highlighted: s === 6 },
-      { id: 'a8', from: 'frame', to: 'nic', color: 'var(--cyan)', highlighted: s === 7 },
-      { id: 'a9', from: 'nic', to: 'sw', color: 'var(--green)', highlighted: s === 7 || s === 8, label: 'On the wire' },
+      { id: 'a1', from: 'user', to: 'app', color: 'var(--cyan)', highlighted: s === 0, label: 'Command', fromSide: 'right', toSide: 'left' },
+      { id: 'a2', from: 'app', to: 'dns', color: 'var(--purple)', highlighted: s === 2, label: 'DNS Query', fromSide: 'top', toSide: 'bottom' },
+      { id: 'a3', from: 'dns', to: 'app', color: 'var(--green)', highlighted: s === 2, label: 'IP Reply', fromSide: 'bottom', toSide: 'top' },
+      { id: 'a4', from: 'app', to: 'route', color: 'var(--amber)', highlighted: s === 4, fromSide: 'right', toSide: 'left' },
+      { id: 'a5', from: 'app', to: 'arp', color: 'var(--amber)', highlighted: s === 5, label: 'ARP Query', fromSide: 'bottom', toSide: 'top' },
+      { id: 'a6', from: 'arp', to: 'app', color: 'var(--green)', highlighted: s === 5, label: 'MAC Reply', fromSide: 'top', toSide: 'bottom' },
+      { id: 'a7', from: 'route', to: 'frame', color: 'var(--cyan)', highlighted: s === 6, fromSide: 'right', toSide: 'left' },
+      { id: 'a8', from: 'frame', to: 'nic', color: 'var(--cyan)', highlighted: s === 7, fromSide: 'right', toSide: 'left' },
+      { id: 'a9', from: 'nic', to: 'sw', color: 'var(--green)', highlighted: s === 7 || s === 8, label: 'On the wire', fromSide: 'right', toSide: 'left' },
     ]
   };
 }
