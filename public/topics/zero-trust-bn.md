@@ -1,72 +1,51 @@
 ---
-name: Zero Trust
-description: Never trust, always verify — identity-based network security
-category: Advanced Networking
-order: 46
+name: জিরো ট্রাস্ট
+description: কখনো বিশ্বাস করো না, সব সময় যাচাই করো — আধুনিক নিরাপত্তা মডেল
 ---
 
-## Step 1: Identity Verification [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: আইডেন্টিটি ভেরিফিকেশন
 
-**Identity** is the first pillar of Zero Trust.
+জিরো ট্রাস্টের প্রথম সূত্র: **প্রতিটা অনুরোধের আইডেন্টিটি যাচাই করো।**
 
-**Who are you?**
+আগের মডেলে ধরা হতো — অফিসের ভিতরে ঢুকলেই বিশ্বাসযোগ্য। কিন্তু জিরো ট্রাস্টে এটা নেই। তুমি অফিসে বসেও প্রতিটা অ্যাক্সেসের জন্য লগইন করতে হবে, MFA দিতে হবে।
 
-Every access request begins with **strong identity verification**:
-• **MFA (Multi-Factor Authentication)** — something you know + something you have
-• **SSO (Single Sign-On)** — centralized authentication across all apps
-• **Continuous authentication** — re-verify throughout the session, not just at login
+Identity Provider (যেমন Azure AD, Okta) প্রতিটা অনুরোধের আইডেন্টিটি ভেরিফাই করে।
 
-**Traditional model:** "You logged in once, you’re trusted."
-**Zero Trust:** "Prove who you are, every single time."
+## Step 2: ডিভাইস ট্রাস্ট
 
-## Step 2: Device Trust [বাংলা অনুবাদ প্রয়োজন]
+শুধু মানুষের আইডেন্টিটি যাচাই হলে চলবে না — **ডিভাইসের ট্রাস্টও** যাচাই করতে হবে।
 
-**Device Posture** — the second pillar.
+- ডিভাইস কি আপডেটেড?
+- ফায়ারওয়াল চালু আছে?
+- এন্টিভাইরাস আছে?
+- রুট/জেইলব্রোকেন না?
 
-**Is it healthy?**
+ডিভাইস যদি সিকিউরিটি পলিসি ফলো না করে, অ্যাক্সেস দেওয়া হবে না — ভিতরে থাকলেও।
 
-Before granting access, Zero Trust verifies the **device itself**:
-• **Device health checks** — is the OS patched? Is antivirus running?
-• **Compliance** — does the device meet security baselines?
-• **EDR (Endpoint Detection & Response)** — is there malware or suspicious activity?
+## Step 3: মাইক্রো-সেগমেন্টেশন
 
-**Why it matters:** Even a valid user on a compromised device is a risk. Zero Trust evaluates **both** user identity AND device health.
+জিরো ট্রাস্টে নেটওয়ার্ককে ছোট ছোট ভাগে ভাগ করা হয় — একে বলে **মাইক্রো-সেগমেন্টেশন**।
 
-## Step 3: Micro-segmentation [বাংলা অনুবাদ প্রয়োজন]
+যেমন, একটা অ্যাপের ফ্রন্টএন্ড ও ব্যাকএন্ড আলাদা সেগমেন্ট। ফ্রন্টএন্ড থেকে ব্যাকএন্ডে যেতে হলে আলাদা অনুমতি লাগবে। একটা সেগমেন্ট হ্যাক হলেও বাকি সেগমেন্ট সুরক্ষিত।
 
-**Network Access** — the third pillar.
+## Step 4: প্র-অ্যাপ্লিকেশন অ্যাক্সেস
 
-**Micro-segmentation** means:
-• **Least-privilege access** — only access what you need, nothing more
-• **No implicit trust** — being on the network doesn’t mean you’re trusted
-• **Per-workload segmentation** — each app/server is its own security zone
+জিরো ট্রাস্টে **প্রতিটা অ্যাপ্লিকেশনে আলাদা অনুমতি** লাগে।
 
-**Traditional:** Flat network — once inside, you can reach everything.
-**Zero Trust:** Every connection is individually authorized and encrypted.
+যেমন, তুমি GitHub-এ অ্যাক্সেস পেলেও Slack-এ নাও পেতে পারো। প্রতিটা অ্যাপ্লিকেশনের জন্য আলাদা পলিসি থাকে। একটা অ্যাপে অ্যাক্সেস থাকা মানে সব অ্যাপে অ্যাক্সেস — এই ধারণা জিরো ট্রাস্টে নেই।
 
-## Step 4: Per-Application Access [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: পলিসি ইঞ্জিন
 
-**Application** layer — the fourth pillar.
+সব শেষে একটা **পলিসি ইঞ্জিন** সিদ্ধান্ত নেয়: "এই অনুরোধটা কি অনুমোদিত?"
 
-**ZTNA (Zero Trust Network Access)** replaces traditional VPN:
-• **No VPN** — users connect directly to apps, not the network
-• **Per-app access** — each application requires separate authorization
-• **Direct app access** — no backhauling through corporate network
+পলিসি ইঞ্জিন বিবেচনা করে:
 
-**Traditional VPN:** Full network access once connected.
-**ZTNA:** Only access the specific app you’re authorized for, nothing else.
+- কে অনুরোধ করছে? (Identity)
+- কোন ডিভাইস থেকে? (Device Trust)
+- কোন অ্যাপ্লিকেশন? (Application)
+- কখন? (Time-based policy)
+- কোথা থেকে? (Location)
 
-## Step 5: Policy Engine [বাংলা অনুবাদ প্রয়োজন]
+সব কিছু ম্যাচ করলেই অ্যাক্সেস দেয় — নাহলে ব্লক করে।
 
-**Policy Engine** — the brain of Zero Trust.
-
-**Context-aware decisions:**
-
-The policy engine evaluates multiple signals before granting access:
-• **User identity** — who is requesting?
-• **Device posture** — is the device compliant?
-• **Location** — where are they connecting from?
-• **Time** — is it during business hours?
-• **Risk score** — how likely is this a threat?
-
-**Result:** ALLOW or DENY — every request is individually evaluated.
+জিরো ট্রাস্ট হলো আধুনিক নিরাপত্তার ভিত্তি। "বাইরে থেকে আক্রমণ ঠেকাও" — এই পুরাতন ধারণার বদলে "প্রতিটা অনুরোধ যাচাই করো" — এটাই জিরো ট্রাস্ট।

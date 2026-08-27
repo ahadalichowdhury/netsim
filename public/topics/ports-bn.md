@@ -1,95 +1,95 @@
 ---
-name: TCP/UDP Ports
-description: How multiple services share one IP — port numbers explained
+name: TCP/UDP পোর্ট
+description: একটা IP তে কিভাবে একাধিক সার্ভিস চলে — পোর্ট নম্বর ব্যাখ্যা
 category: Components
 order: 3
 ---
 
-## Step 1: What are Ports? [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: পোর্ট কী?
 
-A single server with one IP address (192.168.1.20) can run **multiple services simultaneously** — a web server, an SSH daemon, a DNS resolver, and more.
+একটা সার্ভারে একটাই IP address (192.168.1.20) থাকলেও সে **একাধিক সার্ভিস** একসাথে চালাতে পারে — ওয়েব সার্ভার, SSH ডেমন, DNS রিজলভার, এবং আরো অনেক কিছু।
 
-**Ports** are the mechanism that makes this possible. A port is a 16-bit number (0–65535) that identifies a specific service or application on a host.
+**পোর্ট** হলো সেই মেকানিজম যেটা এটাকে সম্ভব করে। পোর্ট হলো একটা ১৬-বিট নম্বর (০–৬৫৫৩৫) যেটা একটা হোস্টে নির্দিষ্ট সার্ভিস বা অ্যাপ্লিকেশনকে চিহ্নিত করে।
 
-Think of an IP address as a **building address** and port numbers as **apartment numbers** — the building (IP) gets you to the right place, but the apartment number (port) gets you to the right service.
+IP address কে একটা **বিল্ডিং এর address** এবং পোর্ট নম্বরকে **অ্যাপার্টমেন্ট নম্বর** মনে করো — বিল্ডিং (IP) তোমাকে সঠিক জায়গায় নিয়ে যায়, কিন্তু অ্যাপার্টমেন্ট নম্বর (পোর্ট) তোমাকে সঠিক সার্ভিসের কাছে পৌঁছায়।
 
-## Step 2: TCP vs UDP Ports [বাংলা অনুবাদ প্রয়োজন]
+## Step 2: TCP বনাম UDP পোর্ট
 
-Both **TCP** and **UDP** use port numbers, but they work differently:
+**TCP** এবং **UDP** দুটোই পোর্ট নম্বর ব্যবহার করে, কিন্তু তারা আলাদাভাবে কাজ করে:
 
 **TCP (Transmission Control Protocol)**:
-• Connection-oriented — establishes a connection before sending data
-• Reliable delivery with acknowledgments
-• Used for: HTTP, HTTPS, SSH, SMTP, FTP
+• কানেশন-ওরিয়েন্টেড — ডাটা পাঠানোর আগে কানেশন তৈরি করে
+• নির্ভরযোগ্য ডেলিভারি, অ্যাকনলেজমেন্ট সহ
+• ব্যবহার: HTTP, HTTPS, SSH, SMTP, FTP
 
 **UDP (User Datagram Protocol)**:
-• Connectionless — sends data without establishing a connection
-• No acknowledgments, no guaranteed delivery
-• Used for: DNS queries, streaming, gaming, VoIP
+• কানেশনলেস — কানেশন তৈরি না করেই ডাটা পাঠায়
+• অ্যাকনলেজমেন্ট নেই, গ্যারান্টি নেই
+• ব্যবহার: DNS query, স্ট্রিমিং, গেমিং, VoIP
 
-Both protocols use the same port number ranges — port 80 is HTTP whether TCP or UDP carries it.
+দুটো প্রোটোকলই একই পোর্ট নম্বর রেঞ্জ ব্যবহার করে — TCP হোক বা UDP, port 80 হলেই HTTP।
 
-## Step 3: Well-Known Ports (0-1023) [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: ওয়েল-নোন পোর্ট (০-১০২৩)
 
-Ports in the range **0–1023** are reserved for **standardized services** defined by IANA. These require root/admin privileges to bind.
+**০–১০২৩** রেঞ্জের পোর্টগুলো IANA দ্বারা সংজ্ঞায়িত **স্ট্যান্ডার্ড সার্ভিসে**র জন্য সংরক্ষিত। এগুলো বাইন্ড করতে root/admin অনুমতি লাগে।
 
-Common well-known ports:
-`:80 — HTTP (Web traffic)`
-`:443 — HTTPS (Encrypted web)`
+সাধারণ ওয়েল-নোন পোর্ট:
+`:80 — HTTP (ওয়েব ট্রাফিক)`
+`:443 — HTTPS (এনক্রিপ্টেড ওয়েব)`
 `:22 — SSH (Secure Shell)`
 `:53 — DNS (Domain Name System)`
-`:25 — SMTP (Email sending)`
+`:25 — SMTP (ইমেইল পাঠানো)`
 `:21 — FTP (File Transfer)`
 `:3389 — RDP (Remote Desktop)`
 
-## Step 4: Registered Ports (1024-49151) [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: রেজিস্টার্ড পোর্ট (১০২৪-৪৯১৫১)
 
-Ports in the range **1024–49151** are registered with IANA for specific applications but don't require elevated privileges.
+**১০২৪–৪৯১৫১** রেঞ্জের পোর্টগুলো নির্দিষ্ট অ্যাপ্লিকেশনের জন্য IANA তে রেজিস্টার্ড, কিন্তু এদের জন্য বেশি অনুমতি লাগে না।
 
-Common registered ports:
-`:3306 — MySQL Database`
-`:5432 — PostgreSQL Database`
-`:6379 — Redis Cache`
-`:8080 — HTTP Alternate`
-`:8443 — HTTPS Alternate`
+সাধারণ রেজিস্টার্ড পোর্ট:
+`:3306 — MySQL ডাটাবেস`
+`:5432 — PostgreSQL ডাটাবেস`
+`:6379 — Redis ক্যাশ`
+`:8080 — HTTP অ্যাল্টারনেট`
+`:8443 — HTTPS অ্যাল্টারনেট`
 `:27017 — MongoDB`
 
-These are often used for development servers and databases that shouldn't need root access.
+এগুলো সাধারণত ডেভেলপমেন্ট সার্ভার এবং ডাটাবেসের জন্য ব্যবহৃত হয় যাদের root অ্যাক্সেস লাগে না।
 
-## Step 5: Dynamic/Ephemeral Ports (49152-65535) [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: ডাইনামিক/এফিমেরাল পোর্ট (৪৯১৫২-৬৫৫৩৫)
 
-Ports in the range **49152–65535** are dynamic or ephemeral — they're assigned **temporarily** to client-side applications.
+**৪৯১৫২–৬৫৫৩৫** রেঞ্জের পোর্টগুলো ডাইনামিক বা এফিমেরাল — ক্লায়েন্ট-সাইড অ্যাপ্লিকেশনে **অস্থায়ীভাবে** বরাদ্দ করা হয়।
 
-When your browser connects to a web server on port 80, it picks a random ephemeral port (e.g., 49152) as its source port. This allows:
+তোমার ব্রাউজার যখন port 80 তে একটা ওয়েব সার্ভারে সংযুক্ত হয়, সে একটা র‍্যান্ডম এফিমেরাল পোর্ট (যেমন 49152) সোর্স পোর্ট হিসেবে বেছে নেয়। এতে:
 
-• **Multiple connections** to the same server from one client
-• **Response routing** — the server knows where to send the reply
-• **Connection tracking** — the OS knows which socket owns the packet
+• **একাধিক কানেশন** একটা ক্লায়েন্ট থেকে একটা সার্ভারে সম্ভব হয়
+• **রেসপন্স রুটিং** — সার্ভার জানে রিপ্লাই কোথায় পাঠাতে হবে
+• **কানেশন ট্র্যাকিং** — OS জানে কোন সকেট প্যাকেটের মালিক
 
-## Step 6: How Ports Work in Communication [বাংলা অনুবাদ প্রয়োজন]
+## Step 6: যোগাযোগে পোর্ট কিভাবে কাজ করে
 
-When a client connects to a server, both **source and destination ports** are used:
+একটা ক্লায়েন্ট সার্ভারের সাথে সংযুক্ত হলে, **সোর্স এবং ডেস্টিনেশন পোর্ট** দুটোই ব্যবহৃত হয়:
 
 `Client (192.168.1.10:49152) → Server (192.168.1.20:80)`
 
-The TCP/UDP header contains both port numbers:
-• **Source port** (49152) — the client's temporary port
-• **Destination port** (80) — the server's well-known port
+TCP/UDP header তে দুটো পোর্ট নম্বর থাকে:
+• **সোর্স পোর্ট** (49152) — ক্লায়েন্টের অস্থায়ী পোর্ট
+• **ডেস্টিনেশন পোর্ট** (80) — সার্ভারের ওয়েল-নোন পোর্ট
 
-The server responds using the **reversed** port pair:
+সার্ভার **উল্টো** পোর্ট জুটি ব্যবহার করে রেসপন্স দেয়:
 `Server (192.168.1.20:80) → Client (192.168.1.10:49152)`
 
-## Step 7: Ports Summary [বাংলা অনুবাদ প্রয়োজন]
+## Step 7: পোর্ট সারসংক্ষেপ
 
-**Key takeaway:** Ports enable a single IP address to host multiple services by assigning unique numbers to each.
+**মূল কথা:** পোর্ট একটাই IP address দিয়ে একাধিক সার্ভিস চালানোর সুযোগ দেয়, প্রতিটাকে অনন্য নম্বর বরাদ্দ করে।
 
-**Range breakdown:**
-• 0–1023: Well-known (root required)
-• 1024–49151: Registered (application-specific)
-• 49152–65535: Dynamic (client temporary)
+**রেঞ্জ ভাঙা:**
+• ০–১০২৩: ওয়েল-নোন (root লাগে)
+• ১০২৪–৪৯১৫১: রেজিস্টার্ড (অ্যাপ্লিকেশন-নির্দিষ্ট)
+• ৪৯১৫২–৬৫৫৩৫: ডাইনামিক (ক্লায়েন্ট অস্থায়ী)
 
-**Protocol distinction:**
-• TCP: Reliable, connection-oriented
-• UDP: Fast, connectionless
+**প্রোটোকল পার্থক্য:**
+• TCP: নির্ভরযোগ্য, কানেশন-ওরিয়েন্টেড
+• UDP: দ্রুত, কানেশনলেস
 
-Understanding ports is essential for **firewall rules**, **port forwarding**, **NAT**, and **service troubleshooting**.
+পোর্ট বোঝা **ফায়ারওয়াল রুল**, **পোর্ট ফরওয়ার্ডিং**, **NAT** এবং **সার্ভিস ট্রাবলশুটিং** এর জন্য অত্যন্ত গুরুত্বপূর্ণ।

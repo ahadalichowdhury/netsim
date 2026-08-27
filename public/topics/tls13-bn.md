@@ -1,84 +1,45 @@
 ---
 name: TLS 1.3
-description: Modern encryption — faster, simpler, more secure handshake
-category: Advanced Networking
-order: 47
+description: আধুনিক এনক্রিপশন — HTTPS কীভাবে সুরক্ষিত থাকে
 ---
 
-## Step 1: 1-RTT Handshake [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: 1-RTT হ্যান্ডশেক
 
-**TLS 1.3** completes the handshake in **1 round trip (1-RTT)**.
+TLS 1.3 একটা বড় উন্নতি এনেছে — **1-RTT Handshake**। মানে শুধু একটা রাউন্ড-ট্রিপে কনেকশন স্থাপিত হয়।
 
-Compare to TLS 1.2 which needed **2 round trips**:
+TLS 1.2-তে 2-RTT লাগত। TLS 1.3-এ ক্লায়েন্ট একটা প্যাকেটেই সব কিছু পাঠায় — `ClientHello` এর সাথে key share। এতে একটা RTT বাঁচে!
 
-**TLS 1.2:**
-1. ClientHello → ServerHello
-2. Certificate + ServerKeyExchange → ClientKeyExchange
-3. ChangeCipherSpec + Finished (both sides)
+## Step 2: Key Exchange
 
-**TLS 1.3:**
-1. ClientHello (with key share) → ServerHello (with key share)
-2. Finished (encrypted)
+TLS 1.3-এ **Diffie-Hellman** (বা ECDH) দিয়ে key exchange হয়। ক্লায়েন্ট ও সার্ভার দুজনেই নিজেরদের key pair তৈরি করে, একে অপরকে public key পাঠায়, এবং দুজনেই একই **shared secret** তৈরি করে।
 
-**Result:** Faster connection establishment, especially on high-latency networks.
+গুরুত্বপূর্ণ: TLS 1.3-এ **RSA key exchange নেই**। শুধু DHE/ECDHE ব্যবহার হয়, যা **Forward Secrecy** দেয় — মানে ভবিষ্যতে প্রাইভেট কী হ্যাক হলেও পুরাতন ট্রাফিক ডিক্রিপ্ট করা যাবে না।
 
-## Step 2: Key Exchange [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: Cipher Suites
 
-**DH key shares** are included in the **first message**.
+TLS 1.3-এ cipher suite গুলো সিম্পল হয়ে গেছে। শুধু 5টা cipher suite মান্য:
 
-In TLS 1.3, the client includes its **Diffie-Hellman key share** in the ClientHello. The server responds with its key share in ServerHello.
+- `TLS_AES_256_GCM_SHA384`
+- `TLS_AES_128_GCM_SHA256`
+- `TLS_CHACHA20_POLY1305_SHA256`
+- `TLS_AES_128_CCM_SHA256`
+- `TLS_AES_128_CCM_8_SHA256`
 
-**Forward secrecy is mandatory** — every connection uses ephemeral keys that are destroyed after use. Even if the server’s private key is compromised later, past sessions cannot be decrypted.
+আগের অনেক পুরাতন ও দুর্বল cipher suite বাদ দেওয়া হয়েছে (RC4, 3DES, CBC মোড ইত্যাদি)।
 
-**Removed:** RSA key exchange (no forward secrecy) is no longer allowed.
+## Step 4: 0-RTT Resumption
 
-## Step 3: Cipher Suites [বাংলা অনুবাদ প্রয়োজন]
+যদি তুমি আগেও একই সার্ভারের সাথে কথা বলে থাকো, TLS 1.3 **0-RTT** সাপোর্ট করে। মানে কোনো handshake ছাড়াই সরাসরি ডেটা পাঠানো যায়!
 
-TLS 1.3 **drastically reduces** the number of cipher suites.
+কিন্তু সতর্ক হতে হবে — 0-RTT data **replay attack**-এর ঝুঁকি রাখে। তাই সব অপারেশনে 0-RTT ব্যবহার করা উচিত না (যেমন, GET request ঠিক আছে, কিন্তু payment request নয়)।
 
-**TLS 1.3 only allows 5 cipher suites:**
-• `TLS_AES_256_GCM_SHA384`
-• `TLS_AES_128_GCM_SHA256`
-• `TLS_CHACHA20_POLY1305_SHA256`
-• `TLS_AES_128_CCM_SHA256`
-• `TLS_AES_128_CCM_8_SHA256`
+## Step 5: TLS 1.3 বনাম 1.2
 
-**Removed insecure ciphers:**
-• RSA key exchange
-• CBC mode ciphers
-• RC4, 3DES, DES
-• SHA-1
+TLS 1.3, 1.2-র তুলনায়:
 
-**Result:** Smaller attack surface, fewer configuration mistakes.
+- **দ্রুত** — 1-RTT (আগে 2-RTT)
+- **সুরক্ষিত** — পুরাতন cipher suite বাদ
+- **Forward Secrecy** — সব সময়
+- **সিম্পল** — কম cipher suite, কম কনফিগ
 
-## Step 4: 0-RTT Resumption [বাংলা অনুবাদ প্রয়োজন]
-
-**0-RTT (Zero Round Trip)** allows instant reconnection.
-
-When a client reconnects to a server it has visited before:
-• The server provides a **Pre-Shared Key (PSK)** during the first connection
-• On reconnect, the client sends the PSK + encrypted data **immediately**
-• No handshake needed — data flows instantly
-
-**Trade-off:** 0-RTT data is **not replay-protected**. An attacker could capture and replay the 0-RTT data. Use for idempotent requests only.
-
-## Step 5: TLS 1.3 vs 1.2 [বাংলা অনুবাদ প্রয়োজন]
-
-**Key differences between TLS 1.3 and 1.2:**
-
-**Removed in TLS 1.3:**
-• RSA key exchange (no forward secrecy)
-• CBC mode ciphers (BEAST, Lucky13 attacks)
-• SHA-1 (collision attacks)
-• RC4, 3DES, DES (weak encryption)
-• Compression (CRIME attack)
-• Renegotiation (security issues)
-
-**Added in TLS 1.3:**
-• 0-RTT resumption
-• 1-RTT handshake (vs 2-RTT)
-• Mandatory forward secrecy
-• Encrypted handshake (most of ServerHello is now encrypted)
-• Simplified cipher suites (5 vs dozens)
-
-**Result:** Faster, simpler, and significantly more secure.
+TLS 1.2 এখনো কাজ করে, কিন্তু TLS 1.3 এখন স্ট্যান্ডার্ড। বেশিরভাগ ব্রাউজার ও সার্ভার TLS 1.3 সাপোর্ট করে।

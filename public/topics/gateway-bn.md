@@ -1,107 +1,116 @@
 ---
-name: Gateway
-description: How routers act as gateways between different networks
-category: Networking Fundamentals
-order: 13
+name: "গেটওয়ে"
+description: "গেটওয়ে কীভাবে বিভিন্ন নেটওয়ার্কের মধ্যে সংযোগ তৈরি করে।"
 ---
 
-## Step 1: PC-A wants to reach Server (10.0.0.20) [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: PC-A সার্ভারে যেতে চায়
 
-**PC-A** (192.168.1.10) needs to send data to **Server** (10.0.0.20).
+ধরো `PC-A` (192.168.1.10) থেকে `Server` (192.168.2.100)-এ ডেটা পাঠাতে চায়। দুটো ডিভাইস আলাদা আলাদা নেটওয়ার্কে আছে:
 
-These two devices are on **completely different networks**:
-• PC-A: 192.168.1.0/24
-• Server: 10.0.0.0/24
+- PC-A আছে `192.168.1.0/24` নেটওয়ার্কে
+- Server আছে `192.168.2.0/24` নেটওয়ার্কে
 
-PC-A cannot send a frame directly to the Server — it needs help from a **gateway** (router).
+PC-A জানে যে Server অন্য নেটওয়ার্কে — কারণ সাবনেট মাস্ক দিয়ে ক্যালকুলেট করলে বোঝা যায়।
 
-**Prerequisite:** Understand **Default Gateway** (how hosts reach other networks) and **ARP** (how MAC addresses are resolved) first.
+## Step 2: সাবনেট চেক করা হয়
 
-**How does PC-A know the Server's IP?** The application has it configured, or DNS resolved a hostname. See **How Networks Start** for the complete chain from user action to first packet.
+PC-A ধরো এরকম ক্যালকুলেশন করে:
 
-**See also:** **Routing Table** and **Subnetting** topics for routing decisions and network boundaries.
+```
+PC-A IP:     192.168.1.10
+Subnet Mask: 255.255.255.0
 
-## Step 2: PC-A checks: 10.0.0.20 is NOT in my subnet [বাংলা অনুবাদ প্রয়োজন]
+AND করলে: 192.168.1.0 (PC-A এর নেটওয়ার্ক)
 
-PC-A compares the destination IP against its own subnet:
+Server IP:   192.168.2.100
+Subnet Mask: 255.255.255.0
 
-`Destination: 10.0.0.20`
-`My subnet: 192.168.1.0/24`
+AND করলে: 192.168.2.0 (Server এর নেটওয়ার্ক)
+```
 
-The networks don't match — the Server is **remote**. PC-A must forward the frame to its **default gateway** (Router at 192.168.1.1).
+দুটো আলাদা নেটওয়ার্ক — তাহলে PC-A জানে যে সরাসরি পাঠানো যাবে না, **Default Gateway**-র দরকার।
 
-## Step 3: PC-A sends frame to default gateway (Router) [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: Default Gateway-তে পাঠানো হয়
 
-PC-A builds an Ethernet frame with the **Router's MAC** as the Layer 2 destination.
+PC-A এর Default Gateway হলো `192.168.1.1` — যেটা সাধারণত একটা রাউটার। PC-A সব ডেটা প্যাকেট এই গেটওয়েতে পাঠায়।
 
-The IP packet inside still has the **Server's IP** as the final destination — but the frame is addressed to the **Router** for local delivery.
+PC-A ARP দিয়ে `192.168.1.1`-এর MAC ঠিকানা খুঁজে বের করে, তারপর Ethernet ফ্রেম তৈরি করে:
 
-## Step 4: Switch forwards to Router [বাংলা অনুবাদ প্রয়োজন]
+```
+Dst MAC: Router's MAC (AA:BB:CC:DD:EE:01)
+Src MAC: PC-A's MAC
+Dst IP:  192.168.2.100 (Server)
+Src IP:  192.168.1.10 (PC-A)
+```
 
-The Switch receives the frame and looks up the destination MAC (AA:BB:CC:DD:EE:FF).
+## Step 4: সুইচ ফ্রেম ফরওয়ার্ড করে
 
-It finds the Router on the connected port and **forwards** the frame directly.
+ফ্রেমটা প্রথমে `Switch A`-তে যায়। Switch A শুধু Destination MAC দেখে — `AA:BB:CC:DD:EE:01` কোন পোর্টে আছে সেটাতে পাঠায়।
 
-## Step 5: Router receives on eth0 (192.168.1.1) [বাংলা অনুবাদ প্রয়োজন]
+Switch A IP দেখে না — সে শুধু MAC লেভেলে কাজ করে।
 
-The Router receives the frame on its **eth0 interface** (192.168.1.1) — the gateway interface for the 192.168.1.0/24 network.
+## Step 5: রাউটার eth0 পোর্টে আসে
 
-It strips the Ethernet header and examines the **IP destination**: 10.0.0.20.
+ফ্রেমটা `Router A`-র `eth0` পোর্টে পৌঁছায়। রাউটার ফ্রেমের FCS চেক করে — ডেটা ক্রপ্ট হয়নি কিনা। তারপর Ethernet হেডার সরিয়ে ফেলে এবং IP প্যাকেট বের করে।
 
-## Step 6: Router checks routing table for 10.0.0.0/24 [বাংলা অনুবাদ প্রয়োজন]
+## Step 6: রাউটিং টেবিল চেক করা হয়
 
-The Router looks up the destination IP (10.0.0.20) in its **routing table**.
+রাউটার এখন IP প্যাকেটের Destination IP (`192.168.2.100`) দেখে এবং নিজের **রাউটিং টেবিল** চেক করে:
 
-It finds a match:
-`10.0.0.0/24 → eth1 (directly connected)`
+```
+Destination     Gateway         Interface
+192.168.1.0/24  0.0.0.0         eth0 (connected)
+192.168.2.0/24  0.0.0.0         eth1 (connected)
+```
 
-The network 10.0.0.0/24 is **directly attached** to the Router's eth1 interface. No next-hop router needed.
+রাউটার দেখে যে `192.168.2.0/24` সরাসরি `eth1`-এ কানেক্টেড।
 
-## Step 7: Router knows 10.0.0.0/24 is directly connected on eth1 [বাংলা অনুবাদ প্রয়োজন]
+## Step 7: সরাসরি কানেক্টেড নেটওয়ার্ক
 
-Since the destination network is **directly connected**, the Router knows it can reach the Server through its **eth1 interface** (10.0.0.1).
+রাউটিং টেবিলে `192.168.2.0/24` এন্ট্রি আছে এবং Gateway `0.0.0.0` — মানে সেটা সরাসরি কানেক্টেড। রাউটার জানে যে এই নেটওয়ার্ক `eth1` পোর্টের সাথে সরাসরি জুড়ে আছে।
 
-The Router decrements the TTL and prepares to build a **new Ethernet frame** for the Server.
+## Step 8: নতুন ফ্রেম তৈরি করা হয়
 
-## Step 8: Router builds NEW frame for Server [বাংলা অনুবাদ প্রয়োজন]
+রাউটার এখন নতুন একটা Ethernet ফ্রেম তৈরি করে। পুরানো ফ্রেমের MAC সম্পূর্ণ বদলে যায়:
 
-The Router constructs a **brand-new Ethernet frame** for the second hop:
+```
+Dst MAC: Server's MAC (11:22:33:44:55:66)
+Src MAC: Router's eth1 MAC (AA:BB:CC:DD:EE:02)
+Dst IP:  192.168.2.100 (Server)
+Src IP:  192.168.1.10 (PC-A)
+```
 
-`Src MAC: AA:BB:CC:DD:EE:FF (Router eth1)`
-`Dst MAC: 11:22:33:44:55:66 (Server)`
+লক্ষ্য করো — IP ঠিকানা অপরিবর্তিত থাকে, শুধু MAC ঠিকানা বদলায়।
 
-**Crucial:** The L2 header is completely new, but the L3 IP addresses remain unchanged — `192.168.1.10 → 10.0.0.20`.
+## Step 9: সুইচ B দিয়ে ফ্রেম যায়
 
-## Step 9: Frame: Router → Switch B [বাংলা অনুবাদ প্রয়োজন]
+নতুন ফ্রেমটা `Switch B`-তে যায়। Switch B আবার MAC টেবিল চেক করে এবং `11:22:33:44:55:66` (Server)-র দিকে পাঠায়।
 
-The Router sends the new frame out eth1 to **Switch B**.
+## Step 10: সার্ভার ডেটা গ্রহণ করে
 
-The frame now carries the Router as source and Server as destination at Layer 2.
+`Server` ফ্রেমটা গ্রহণ করে, MAC চেক করে (নিজের সাথে ম্যাচ করে), তারপর IP প্যাকেট বের করে এবং পেলোড প্রসেস করে।
 
-## Step 10: Switch B forwards to Server [বাংলা অনুবাদ প্রয়োজন]
+সার্ভার বুঝতে পারে যে প্যাকেটটা PC-A (`192.168.1.10`) থেকে এসেছে — কারণ Source IP তাই বলছে।
 
-Switch B receives the frame, looks up the destination MAC — found on the port connected to the Server.
+## Step 11: সার্ভার রিপ্লাই পাঠায়
 
-It **forwards** the frame directly. The Server receives it, checks the destination IP — it matches!
+সার্ভার রিপ্লাই তৈরি করে — এবার Source আর Destination IP উল্টে যায়। পাঠানোর প্রসেস আগের উল্টো:
 
-## Step 11: Server receives and replies [বাংলা অনুবাদ প্রয়োজন]
+- সার্ভার দেখে Gateway দরকার
+- Gateway (`192.168.2.1`)-তে পাঠায়
+- রাউটার রাউটিং চেক করে `192.168.1.0/24`-তে
+- নতুন ফ্রেম দিয়ে `eth0` দিয়ে পাঠায়
+- PC-A পৌঁছায়
 
-The Server accepts the frame — the destination IP matches its own.
+## Step 12: সারসংক্ষেপ
 
-It processes the data and sends a **reply** back:
-`Src IP: 10.0.0.20 (Server)`
-`Dst IP: 192.168.1.10 (PC-A)`
+সম্পূর্ণ প্রসেসটা এরকম:
 
-The reply travels back through the Router (gateway) to reach PC-A.
+1. PC-A সাবনেট চেক করে — ভিন্ন নেটওয়ার্ক
+2. Default Gateway-তে পাঠায়
+3. Switch A MAC ভিত্তিতে ফরওয়ার্ড করে
+4. রাউটার রাউটিং টেবিল চেক করে
+5. নতুন ফ্রেম তৈরি করে (নতুন MAC)
+6. Switch B সার্ভারে পৌঁছায়
 
-## Step 12: Gateway routing complete! [বাংলা অনুবাদ প্রয়োজন]
-
-The Router receives the reply from the Server, looks up the destination (192.168.1.10), and forwards it to PC-A via eth0.
-
-**Key takeaway:** A **gateway** (router) connects different networks. When devices need to communicate across networks, they send frames to the gateway, which:
-1. Strips the old L2 header
-2. Looks up the routing table
-3. Builds a **new L2 header** for the next network
-4. Forwards the packet
-
-The L3 IP addresses stay the same end-to-end, but the L2 MAC addresses change at every hop.
+মূল কথা — **গেটওয়ে/রাউটার** হলো সেই ডিভাইস যেটা দুটো আলাদা নেটওয়ার্কের মধ্যে ব্রিজ তৈরি করে। ছাড়া একটা নেটওয়ার্কের ডিভাইস অন্য নেটওয়ার্কের সাথে কথা বলতে পারে না।

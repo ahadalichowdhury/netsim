@@ -1,91 +1,34 @@
 ---
-name: SDN
-description: Software Defined Networking — separating control and data planes
-category: Advanced Networking
-order: 45
+name: সফটওয়্যার ডিফাইন্ড নেটওয়ার্কিং (SDN)
+description: নেটওয়ার্ককে প্রোগ্রামেবল করা — কন্ট্রোলার দিয়ে সব চালাও
 ---
 
-## Step 1: Application Layer — Network Apps [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: অ্যাপ্লিকেশন লেয়ার
 
-The **Application Layer** contains network applications that define **what** the network should do.
+SDN-এ সবচেয়ে উপরের অংশ হলো **অ্যাপ্লিকেশন লেয়ার**। এখানে থাকে নেটওয়ার্ক অ্যাপ্লিকেশন — লোড ব্যালান্সার, ফায়ারওয়াল, পলিসি ইঞ্জিন ইত্যাদি।
 
-**Examples:**
-• **Routing apps** — compute optimal paths for traffic
-• **Monitoring apps** — track traffic flows and anomalies
-• **Security apps** — detect and block threats
-• **Load balancing apps** — distribute traffic across servers
+যেমন, তুমি একটা অ্যাপ লিখতে পারো: "৮০% ট্রাফিক এই সার্ভারে পাঠাও, ২০% ওই সার্ভারে।" এই সিদ্ধান্ত অ্যাপ্লিকেশন লেয়ার নেয়।
 
-These applications communicate with the controller via the **Northbound API**. They don't directly configure switches — they express intent, and the controller translates that into forwarding rules.
+## Step 2: কন্ট্রোল প্লেন
 
-## Step 2: Control Plane — The SDN Controller [বাংলা অনুবাদ প্রয়োজন]
+মাঝখানে আছে **কন্ট্রোল প্লেন** — SDN-এর মস্তিষ্ক। এটা জানে নেটওয়ার্কে কী ঘটছে এবং সব সুইচ/রাউটারকে কী করতে হবে সেটা নির্দেশনা দেয়।
 
-The **SDN Controller** is the centralized brain of the network.
+কন্ট্রোলার (যেমন OpenDaylight, ONOS) সব নেটওয়ার্ক ডিভাইসের সাথে কথা বলে এবং সিদ্ধান্ত নেয় কোন প্যাকেট কোন পথে যাবে।
 
-**What it does:**
-• Maintains a **global view** of the entire network topology
-• Makes **forwarding decisions** based on application requirements
-• Pushes **flow rules** to switches via the Southbound API
-• Responds to **network events** (link failures, new devices)
+## Step 3: ডেটা প্লেন
 
-**Popular controllers:**
-• **ONOS** — open-source, carrier-grade
-• **OpenDaylight (ODL)** — modular, extensible
-• **Ryu** — lightweight, Python-based
+সবচেয়ে নিচের অংশ হলো **ডেটা প্লেন**। এখানে থাকে প্রকৃত সুইচ ও রাউটার — যারা প্যাকেট ফরোয়ার্ড করে।
 
-The controller is the single point of intelligence — it knows the entire network state and makes optimal decisions.
+ডেটা প্লেনের ডিভাইসগুলো নিজেরাই সিদ্ধান্ত নেয় না। তারা শুধু কন্ট্রোলারের দেওয়া নিয়ম ফলো করে। যেমন: "এই MAC এড্রেস থাকলে এই পোর্টে পাঠাও।"
 
-## Step 3: Data Plane — OpenFlow Switches [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: নর্থবাউন্ড API
 
-The **Data Plane** consists of **programmable switches** that follow controller instructions.
+কন্ট্রোলার ও অ্যাপ্লিকেশন লেয়ারের মাঝে যোগাযোগ হয় **নর্থবাউন্ড API** দিয়ে। এটাই SDN-এর REST API।
 
-**How they work:**
-• Switches have **flow tables** (not MAC tables)
-• Each flow table entry matches packets and defines actions
-• Switches forward packets based on these entries
-• If no match → send to controller (packet-in)
+অ্যাপ্লিকেশন এই API দিয়ে কন্ট্রোলারকে বলে: "এই নেটওয়ার্ক পলিসি লাগো।" কন্ট্রোলার তা মেনে নেয় এবং ডেটা প্লেনে প্রয়োগ করে।
 
-**Flow table entry structure:**
-`Match fields → Priority → Counters → Actions`
+## Step 5: সাউথবাউন্ড API
 
-**Match fields:** src/dst IP, ports, VLAN, protocol
-**Actions:** forward, drop, modify headers, send to controller
+কন্ট্রোলার ও ডেটা প্লেনের মাঝে যোগাযোগ হয় **সাউথবাউন্ড API** দিয়ে। সবচেয়ে জনপ্রিয় হলো **OpenFlow**।
 
-Unlike traditional switches, OpenFlow switches are **dumb forwarding engines** — the controller tells them exactly what to do.
-
-## Step 4: Northbound API — Apps ↔ Controller [বাংলা অনুবাদ প্রয়োজন]
-
-The **Northbound API** enables applications to communicate with the SDN controller.
-
-**Primary interface: REST API**
-• Apps send HTTP requests to the controller
-• Query topology, push rules, get statistics
-• Language-agnostic — any app in any language can use it
-
-**Example API calls:**
-`GET /topology` — get network topology
-`POST /flows` — install new flow rules
-`GET /stats/flow` — get flow statistics
-
-The Northbound API is what makes SDN **programmable** — developers can write network applications without understanding hardware-specific CLI commands.
-
-## Step 5: Southbound API — Controller ↔ Switches [বাংলা অনুবাদ প্রয়োজন]
-
-The **Southbound API** enables the controller to communicate with network devices.
-
-**Primary protocols:**
-• **OpenFlow** — the standard SDN protocol for switch control
-• **NETCONF/YANG** — configuration management for routers/switches
-• **gRPC/gNMI** — modern, high-performance device management
-
-**How it works:**
-• Controller pushes flow entries to switches via OpenFlow
-• Switches report events (packet-in, link changes) back to controller
-• Controller maintains real-time view of all device states
-
-**OpenFlow message types:**
-• `FlowMod` — add/modify/delete flow entries
-• `PacketOut` — send a packet out a switch port
-• `PacketIn` — switch sends unknown packet to controller
-• `Barrier` — ensure ordering of operations
-
-The Southbound API is what **decouples** the control plane from the data plane — the defining characteristic of SDN.
+OpenFlow দিয়ে কন্ট্রোলার সুইচকে বলে: "এই ফ্লো রুল যোগ করো।" সুইচ সেই রুল অনুযায়ী প্যাকেট হ্যান্ডল করে। এভাবেই SDN নেটওয়ার্ককে ফ্লেক্সিবল ও প্রোগ্রামেবল করে।

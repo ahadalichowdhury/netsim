@@ -1,60 +1,42 @@
 ---
 name: WireGuard
-description: Modern VPN — fast, simple, secure tunnel protocol
-category: Advanced Networking
-order: 48
+description: আধুনিক VPN — দ্রুত, সিম্পল, শক্তিশালী
 ---
 
-## Step 1: Peer-to-Peer [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: পিয়ার-টু-পিয়ার
 
-**WireGuard** operates as a **mesh VPN** — peers connect directly to each other.
+WireGuard হলো একটা **পিয়ার-টু-পিয়ার** VPN। মানে দুটো ডিভাইস সরাসরি একে অপরের সাথে কনেক্ট হয় — কোনো জটিল কনফিগ ছাড়াই।
 
-**No central server needed** (though one can be used for coordination):
-• Each peer has a pair of cryptographic keys
-• Peers communicate directly when possible
-• NAT traversal is handled automatically
+প্রতিটা পিয়ারের একটা **পাবলিক কী** ও একটা **প্রাইভেট কী** থাকে। পাবলিক কী শেয়ার করো, প্রাইভেট কী গোপন রাখো।
 
-**Traditional VPN:** All traffic routes through a central server.
-**WireGuard:** Peers establish direct encrypted tunnels when they can reach each other.
+## Step 2: Noise Protocol
 
-## Step 2: Noise Protocol [বাংলা অনুবাদ প্রয়োজন]
+WireGuard **Noise Protocol Framework** ব্যবহার করে। এটা একটা আধুনিক ক্রিপ্টোগ্রাফিক প্রোটোকল:
 
-**Noise Protocol Framework** — the foundation of WireGuard.
+- হ্যান্ডশেক **1-RTT**-তে শেষ হয়
+- **Curve25519** কী এক্সচেঞ্জ
+- **ChaCha20** সিমেট্রিক এনক্রিপশন
+- **Poly1305** ম্যাক
+- **BLAKE2s** হ্যাশ
 
-The **IK (Init with known responder)** handshake pattern:
-1. Initiator sends: ephemeral key + encrypted static key + encrypted payload
-2. Responder replies: ephemeral key + encrypted payload + MAC
+এতে WireGuard অনেক দ্রুত ও সুরক্ষিত।
 
-**Encryption:**
-• **ChaCha20** — stream cipher for data encryption
-• **Poly1305** — MAC for message authentication
-• **Curve25519** — elliptic curve for key exchange
+## Step 3: কী ম্যানেজমেন্ট
 
-**Result:** Complete handshake in just **1 round trip** — 1-RTT.
+WireGuard-এর কী ম্যানেজমেন্ট সিম্পল:
 
-## Step 3: Key Management [বাংলা অনুবাদ প্রয়োজন]
+```bash
+wg genkey | tee privatekey | wg pubkey > publickey
+```
 
-**Static + ephemeral keys** provide both identity and forward secrecy.
+এই দুটো কমান্ডেই কী তৈরি হয়ে যায়। কোনো CA সার্টিফিকেট, কোনো জটিল PKI — কিছুই লাগে না। শুধু পাবলিক কী শেয়ার করো।
 
-**Static keys:**
-• Long-term public/private key pair per peer
-• Used for peer identification
-• Distributed out-of-band (config files)
+## Step 4: রোমিং ও মোবিলিটি
 
-**Ephemeral keys:**
-• Generated fresh for each session
-• Used for key derivation during handshake
-• Destroyed after use
+WireGuard **নেটিভ রোমিং সাপোর্ট** করে। মানে:
 
-**Result:** Even if a static key is compromised, past sessions remain secure (forward secrecy).
+- WiFi থেকে 4G-তে সুইচ করলেও কনেকশন থামে না
+- IP এড্রেস পরিবর্তন হলেও WireGuard অটোমেটিক্যালি অ্যাডজাস্ট করে
+- কোনো অতিরিক্ত কনফিগ লাগে না
 
-## Step 4: Roaming & Mobility [বাংলা অনুবাদ প্রয়োজন]
-
-**Auto peer discovery** and seamless IP changes.
-
-WireGuard handles network changes automatically:
-• **Auto peer discovery** — peers find each other without static configuration
-• **IP changes handled seamlessly** — if a peer’s IP changes (e.g., switching WiFi to cellular), the tunnel continues uninterrupted
-• **NAT traversal** — built-in hole punching for peers behind NAT
-
-**Why it works:** WireGuard identifies peers by their public key, not their IP address. As long as the key is the same, the peer can appear from any IP.
+এই ফিচার WireGuard-কে মোবাইল ডিভাইসে খুবই জনপ্রিয় করেছে।

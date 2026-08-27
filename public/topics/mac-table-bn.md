@@ -1,90 +1,81 @@
 ---
-name: MAC Address Table
-description: How switches remember which port connects to which device
-category: Components
-order: 5
+name: MAC Address Table - সুইচ লার্নিং
+description: MAC Address Table কী, সুইচ কীভাবে শেখে, forward করে, timeout করে — সব বাংলায়
 ---
 
-## Step 1: What is a MAC Table? [বাংলা অনুবাদ প্রয়োজন]
+# MAC Address Table — সুইচ লার্নিং
 
-A **MAC address table** (also called a forwarding database or FDB) is the switch's internal database that maps **MAC addresses to physical ports**.
+আজ দেখবো সুইচ কীভাবে MAC Address Table তৈরি করে এবং ব্যবহার করে।
 
-When a switch receives an Ethernet frame, it looks at the **source MAC address** to learn which device is on which port. It then uses this table to **forward frames** to the correct port — rather than flooding all ports.
+## Step 1: MAC Address Table কী
 
-This is the fundamental mechanism that makes switches smarter than hubs.
+MAC Address Table হলো সুইচের ডায়েরি — সে এখানে লেখে কোন MAC address কোন পোর্টে আছে। এটা ছাড়া সুইচ ফরোয়ার্ড করতে পারবে না।
 
-## Step 2: How Switches Learn [বাংলা অনুবাদ প্রয়োজন]
+উদাহরণ:
 
-Switches learn by inspecting the **source MAC address** of every incoming frame:
+| MAC Address | Port |
+|---|---|
+| `AA:AA:AA:AA:AA:01` | Port 1 |
+| `BB:BB:BB:BB:BB:01` | Port 2 |
+| `CC:CC:CC:CC:CC:01` | Port 3 |
 
-1. Frame arrives on **Port 1** from MAC `AA:BB:CC:DD:EE:01`
-2. Switch records: `AA:BB:CC:DD:EE:01 → Port 1`
-3. Frame arrives on **Port 2** from MAC `AA:BB:CC:DD:EE:02`
-4. Switch records: `AA:BB:CC:DD:EE:02 → Port 2`
+## Step 2: সুইচ কীভাবে শেখে (Learning)
 
-This process is called **MAC learning** — it happens automatically on every frame. The switch doesn't need any configuration to build its table.
+সুইচ প্রতিটা ইনকামিং ফ্রেমের **সোর্স MAC** দেখে। ধরো Port 1-এ `AA:AA:AA:AA:AA:01` থেকে ফ্রেম এলো। সুইচ তার MAC Table-ে এন্ট্রি বানায়:
 
-## Step 3: Forwarding Decision [বাংলা অনুবাদ প্রয়োজন]
+```
+AA:AA:AA:AA:AA:01 → Port 1
+```
 
-When a switch receives a frame, it uses its MAC table for the **forwarding decision**:
+এটাই **self-learning** — সুইচ নিজে থেকে শেখে, কেউ শেখায় না।
 
-**Known destination MAC:**
-• Look up the destination in the MAC table
-• Find the associated port
-• Forward the frame **only to that port** (unicast)
+## Step 3: Forwarding সিদ্ধান্ত (Forwarding Decision)
 
-**Unknown destination MAC:**
-• The MAC is not in the table
-• **Flood** the frame out all ports except the source
-• This is called **unknown unicast flooding**
+সুইচ ফ্রেম পায়, সোর্স MAC শেখে, এবং এখন **ডেস্টিনেশন MAC** দেখে:
 
-**Broadcast (FF:FF:FF:FF:FF:FF):**
-• Always flood to all ports except source
+- **MAC Table-এ আছে:** শুধু সঠিক পোর্টে পাঠায় (unicast)
+- **MAC Table-এ নেই:** সব পোর্টে (ইনকামিং বাদ) ছড়িয়ে দেয় (flood)
+- **Broadcast (`FF:FF:FF:FF:FF:FF`):** সব পোর্টে পাঠায়
 
-## Step 4: Aging and Timeout [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: Aging এবং Timeout
 
-MAC table entries are **temporary** and expire after an **aging time** (typically 300 seconds).
+সুইচের MAC Table-এর প্রতিটা এন্ট্রির একটা **timer** থাকে। ধরো timer 300 সেকেন্ড (5 মিনিট)।
 
-If a device stops sending frames (e.g., it's turned off or disconnected), its MAC entry will **age out** and be removed from the table.
+- যদি 300 সেকেন্ডের মধ্যে সেই MAC থেকে আবার ফ্রেম না আসে → এন্ট্রি **মুয়ে ফেলা** হয়
+- যদি আসে → timer **রিসেট** হয়ে যায়
 
-Why aging matters:
-• Devices can **move between ports** (laptop moves to different jack)
-• Prevents **stale entries** from causing misforwarding
-• Keeps the MAC table **compact and accurate**
+কেন এটা দরকার? যদি একটা PC সুইচ থেকে সরিয়ে নেওয়া হয়, তাহলে সুইচ আর সেই পোর্টে পাঠাবে না।
 
-The aging time is configurable on managed switches:
-`switch(config)# mac address-table aging-time 600`
+## Step 5: MAC Table দেখো
 
-## Step 5: Viewing MAC Table [বাংলা অনুবাদ প্রয়োজন]
+তুমি `show mac address-table` কমান্ড দিয়ে সুইচের MAC Table দেখতে পারো:
 
-On **Cisco IOS** switches:
-`show mac address-table`
+```bash
+# Cisco Switch-এ
+show mac address-table
+```
 
-`MAC Address Table`
-`-------------------------------------------`
-`Vlan    MAC Address       Type    Ports`
-`----    -----------------  ------  ------`
-`1       AA:BB:CC:DD:EE:01  DYNAMIC  Fa0/1`
-`1       AA:BB:CC:DD:EE:02  DYNAMIC  Fa0/2`
+আউটপুট:
 
-On **Linux bridges**:
-`bridge fdb show`
+```
+MAC Address Table
+-------------------------------------------
+VLAN    MAC Address       Ports
+----    -----------       -----
+1       AA:AA:AA:AA:AA:01  Fa0/1
+1       BB:BB:BB:BB:BB:01  Fa0/2
+1       CC:CC:CC:CC:CC:01  Fa0/3
+```
 
-On **Linux** with `brctl`:
-`brctl showmacs br0`
+এখানে দেখতে পাচ্ছো কোন MAC কোন পোর্টে আছে।
 
-## Step 6: MAC Table Summary [বাংলা অনুবাদ প্রয়োজন]
+## Step 6: সারসংক্ষেপ
 
-**Key takeaway:** The MAC address table is the switch's forwarding database that maps MAC addresses to physical ports.
+MAC Address Table-এর মূল কথা:
 
-**How it works:**
-• Switch **learns** by inspecting source MACs on incoming frames
-• Switch **forwards** by looking up destination MACs in the table
-• Entries **age out** after 300 seconds if not refreshed
+- **শেখে (Learn):** সোর্স MAC থেকে এন্ট্রি তৈরি করে
+- **মনে রাখে (Remember):** সব এন্ট্রি table-এ থাকে
+- **ফরোয়ার্ড করে (Forward):** MAC জানলে unicast, না জানলে flood
+- **পুরোনো মুয়ে দেয় (Age):** Timer শেষ হলে এন্ট্রি মুয়ে যায়
 
-**Commands:**
-• Cisco: `show mac address-table`
-• Linux bridge: `bridge fdb show`
-• Add static: `mac address-table static AA:BB:CC:DD:EE:01 vlan 1 interface Fa0/1`
-
-The MAC table is what makes switches efficient — without it, every frame would be flooded like a hub.
+এটাই সুইচের আসল জাদু — নিজে থেকে শেখে, মনে রাখে, এবং সঠিক পথে পাঠায়!

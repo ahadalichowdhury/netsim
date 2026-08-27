@@ -1,100 +1,100 @@
 ---
-name: How Networks Start
-description: From user action to first packet — the complete journey
+name: নেটওয়ার্ক কিভাবে শুরু হয়
+description: ব্যবহারকারীর একশন থেকে প্রথম প্যাকেট পর্যন্ত — সম্পূর্ণ যাত্রা
 category: Networking Fundamentals
 order: 8
 ---
 
-## Step 1: User initiates a network action [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: ব্যবহারকারী নেটওয়ার্ক একশন শুরু করে
 
-Everything starts with a **user action**:
+সব শুরু হয় একটা **ব্যবহারকারীর একশন** দিয়ে:
 
-• User types `ping google.com`
-• User opens a web browser and enters a URL
-• User runs `ssh server.example.com`
+• ব্যবহারকারী `ping google.com` টাইপ করে
+• ব্যবহারকারী ওয়েব ব্রাউজার খুলে URL লেখে
+• ব্যবহারকারী `ssh server.example.com` চালায়
 
-The application now needs to communicate with a remote server. But how does it know **where** to send the data?
+এবার অ্যাপ্লিকেশনকে একটা রিমোট সার্ভারের সাথে যোগাযোগ করতে হবে। কিন্তু সে কোথায় ডাটা পাঠাবে **সেটা কিভাবে জানবে**?
 
-## Step 2: Application needs the server's IP address [বাংলা অনুবাদ প্রয়োজন]
+## Step 2: অ্যাপ্লিকেশনকে সার্ভারের IP address লাগবে
 
-The application has a **hostname** (like google.com) but needs an **IP address** to route packets.
+অ্যাপ্লিকেশনের কাছে একটা **হোস্টনেম** (যেমন google.com) আছে, কিন্তু প্যাকেট রুট করতে একটা **IP address** লাগবে।
 
-**Two scenarios:**
+**দুটো পরিস্থিতি:**
 
-1. **Hostname given** (e.g., google.com) → Need **DNS** to resolve to IP
-2. **IP given directly** (e.g., ping 192.168.1.20) → Skip DNS
+1. **হোস্টনেম দেওয়া আছে** (যেমন google.com) → **DNS** লাগবে IP তে রূপান্তর করতে
+2. **সরাসরি IP দেওয়া আছে** (যেমন ping 192.168.1.20) → DNS ছাড়িয়ে যাও
 
-See the **DNS topic** for how resolution works.
+কিভাবে কাজ করে সেটা জানতে **DNS** টপিক দেখুন।
 
-## Step 3: DNS resolves hostname to IP (if needed) [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: DNS হোস্টনেমকে IP তে রূপান্তর করে (যদি লাগে)
 
-If the user typed a **hostname**, the application sends a **DNS query**:
+ব্যবহারকারী যদি একটা **হোস্টনেম** টাইপ করে থাকে, তাহলে অ্যাপ্লিকেশন একটা **DNS query** পাঠায়:
 
 `DNS Query: google.com → ?`
 `DNS Reply: google.com → 142.250.80.46`
 
-Now the application has the **destination IP**. See the **DNS topic** for the full process.
+এবার অ্যাপ্লিকেশনের কাছে **ডেস্টিনেশন IP** আছে। পুরো প্রক্রিয়া জানতে **DNS** টপিক দেখুন।
 
-## Step 4: Application needs the destination MAC address [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: অ্যাপ্লিকেশনকে ডেস্টিনেশন MAC address লাগবে
 
-Now the application has the **IP address**, but to send an **Ethernet frame**, it needs the **MAC address**.
+এখন অ্যাপ্লিকেশনের কাছে **IP address** আছে, কিন্তু একটা **Ethernet frame** পাঠাতে গেলে **MAC address** লাগবে।
 
-**Question:** How does the sender know the destination MAC?
+**প্রশ্ন:** পাঠানোর পক্ষ ডেস্টিনেশন MAC কিভাবে জানবে?
 
-**Answer:** **ARP** (Address Resolution Protocol) discovers it.
+**উত্তর:** **ARP** (Address Resolution Protocol) সেটা খুঁজে বের করে।
 
-But first — is the destination on the **same network** or a **different network**?
+কিন্তু আগে — ডেস্টিনেশন **একই নেটওয়ার্কে** আছে না **আলাদা নেটওয়ার্কে**?
 
-## Step 5: Same network? Use ARP directly. Different network? Use Gateway. [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: একই নেটওয়ার্কে? সরাসরি ARP ব্যবহার করো। আলাদা নেটওয়ার্কে? গেটওয়ে ব্যবহার করো।
 
-**If same subnet** (e.g., both 192.168.1.x):
-• Use **ARP** to find the destination MAC directly
-• See the **ARP topic**
+**যদি একই সাবনেটে** থাকে (যেমন দুটোই 192.168.1.x):
+• **ARP** দিয়ে সরাসরি ডেস্টিনেশন MAC খুঁজো
+• **ARP** টপিক দেখুন
 
-**If different subnet** (e.g., 192.168.1.x → 8.8.8.8):
-• Send frame to the **default gateway** (router)
-• Use **ARP** to find the gateway's MAC
-• See **Default Gateway** and **Gateway** topics
+**যদি আলাদা সাবনেটে** থাকে (যেমন 192.168.1.x → 8.8.8.8):
+• **ডিফল্ট গেটওয়ে** (রাউটার) তে ফ্রেম পাঠাও
+• **ARP** দিয়ে গেটওয়ের MAC খুঁজো
+• **Default Gateway** এবং **Gateway** টপিক দেখুন
 
-The **routing table** decides which path to take.
+**রাউটিং টেবিল** সিদ্ধান্ত নেয় কোন পাথ বেছে নেবে।
 
-## Step 6: ARP discovers the MAC address [বাংলা অনুবাদ প্রয়োজন]
+## Step 6: ARP MAC address খুঁজে বের করে
 
-The application (or OS kernel) sends an **ARP broadcast**:
+অ্যাপ্লিকেশন (বা OS kernel) একটা **ARP broadcast** পাঠায়:
 
 `ARP Request: "Who has 192.168.1.20?"`
 `ARP Reply: "192.168.1.20 is at AA:BB:CC:DD:EE:02"`
 
-Now we have both the **IP address** and the **MAC address**. See the **ARP topic** for the full process.
+এবার আমাদের **IP address** এবং **MAC address** দুটোই আছে। পুরো প্রক্রিয়া জানতে **ARP** টপিক দেখুন।
 
-## Step 7: Application builds the Ethernet frame [বাংলা অনুবাদ প্রয়োজন]
+## Step 7: অ্যাপ্লিকেশন Ethernet frame তৈরি করে
 
-Now the application has everything it needs:
+এবার অ্যাপ্লিকেশনের সবকিছু আছে:
 
-`Source MAC: AA:BB:CC:DD:EE:01 (our NIC)`
-`Destination MAC: AA:BB:CC:DD:EE:02 (target)`
+`Source MAC: AA:BB:CC:DD:EE:01 (আমাদের NIC)`
+`Destination MAC: AA:BB:CC:DD:EE:02 (টার্গেট)`
 `Source IP: 192.168.1.10`
 `Destination IP: 192.168.1.20`
 
-The **Ethernet frame** is constructed with the IP packet inside.
+**Ethernet frame** তৈরি হয়, ভেতরে IP packet সহ।
 
-## Step 8: NIC transmits the frame onto the wire [বাংলা অনুবাদ প্রয়োজন]
+## Step 8: NIC ফ্রেমটা তারে প্রেরণ করে
 
-The **NIC** (Network Interface Card) takes the frame and **transmits it** as electrical/optical signals on the cable.
+**NIC** (Network Interface Card) ফ্রেমটা নিয়ে কেবলে **ইলেকট্রিক্যাল/অপটিক্যাল সিগনাল** হিসেবে তারে প্রেরণ করে।
 
-The **switch** receives the frame and forwards it to the destination. See the **Layer 2 topic** for how switches work.
+**Switch** ফ্রেমটা গ্রহণ করে এবং ডেস্টিনেশনের দিকে ফরওয়ার্ড করে। সুইচ কিভাবে কাজ করে সেটা জানতে **Layer 2** টপিক দেখুন।
 
-## Step 9: The complete journey [বাংলা অনুবাদ প্রয়োজন]
+## Step 9: সম্পূর্ণ যাত্রা
 
-**Full chain from user action to network packet:**
+**ব্যবহারকারীর একশন থেকে নেটওয়ার্ক প্যাকেট পর্যন্ত পুরো চেইন:**
 
-1. **User** types command or opens URL
-2. **Application** needs destination IP
-3. **DNS** resolves hostname → IP (if needed)
-4. **Routing table** decides: same network or gateway?
-5. **ARP** discovers MAC address
-6. **Frame** is built with MAC + IP headers
-7. **NIC** transmits onto the wire
-8. **Switch** forwards to destination
+1. **ব্যবহারকারী** কমান্ড টাইপ করে বা URL খুলে
+2. **অ্যাপ্লিকেশনকে** ডেস্টিনেশন IP লাগে
+3. **DNS** হোস্টনেমকে IP তে রূপান্তর করে (যদি লাগে)
+4. **রাউটিং টেবিল** সিদ্ধান্ত নেয়: একই নেটওয়ার্ক নাকি গেটওয়ে?
+5. **ARP** MAC address খুঁজে বের করে
+6. **ফ্রেম** তৈরি হয় MAC + IP header সহ
+7. **NIC** তারে প্রেরণ করে
+8. **Switch** ডেস্টিনেশনে ফরওয়ার্ড করে
 
-Each step is covered in detail in the other topics!
+প্রতিটা স্টেপ অন্যান্য টপিকে বিস্তারিত আলোচনা করা আছে!

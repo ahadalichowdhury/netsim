@@ -1,83 +1,75 @@
 ---
-name: TCP Handshake
-description: TCP 3-Way Handshake — how connections are established
-category: Networking Fundamentals
-order: 17
+name: TCP হ্যান্ডশেক (3-way)
+description: ক্লায়েন্ট ও সার্ভার কীভাবে কনেকশন স্থাপন করে — SYN, SYN-ACK, ACK
 ---
 
-## Step 1: Client wants to connect to Web Server [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: ক্লায়েন্ট Web Server-এ যুক্ত হতে চায়
 
-The Client wants to fetch a web page from the **Web Server** (192.168.1.20).
+তোমার ব্রাউজার (ক্লায়েন্ট) Google-এর Web Server-এর সাথে কথা বলতে চায়। কিন্তু আগে কনেকশন স্থাপন করতে হবে। TCP 3-way handshake দিয়ে এটা হয়।
 
-Before any data can be exchanged, TCP requires a **3-way handshake** to establish a reliable connection. Both sides must agree on initial sequence numbers.
+## Step 2: ক্লায়েন্ট SYN তৈরি করে
 
-**Prerequisite:** DNS resolution must happen first to get the server's IP address. See the **DNS** topic.
+ক্লায়েন্ট একটা **SYN** (Synchronize) প্যাকেট তৈরি করে:
 
-**See also:** **TCP/UDP Ports** topic for port numbers used in the handshake.
+- Source IP: 192.168.1.10 (ক্লায়েন্ট)
+- Destination IP: 142.250.80.46 (Server)
+- SYN Flag: SET
+- Sequence Number: 1000 (ক্লায়েন্টের র‍্যান্ডম নম্বর)
 
-## Step 2: Client builds SYN (Seq=1000) [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: SYN প্যাকেট সুইচে যায়
 
-The Client initiates the handshake by building a **SYN** (Synchronize) segment:
-`SYN=1, Seq=1000`
+SYN প্যাকেট ক্লায়েন্ট থেকে সুইচে পৌঁছায়। সুইচ MAC টেবিল দেখে প্যাকেটটা সার্ভারের দিকে ফরোয়ার্ড করে।
 
-This tells the server: "I want to connect, and my starting sequence number is **1000**."
+## Step 4: সুইচ সার্ভারের দিকে ফরোয়ার্ড করে
 
-## Step 3: SYN: Client → Switch [বাংলা অনুবাদ প্রয়োজন]
+সুইচ SYN প্যাকেট পায় এবং তার MAC টেবিল চেক করে। ডেস্টিনেশন MAC (সার্ভার) যে পোর্টে আছে, সেই পোর্টে প্যাকেটটা পাঠায়।
 
-The Client sends the SYN segment to the Switch.
-`Src MAC: AA:BB:CC:DD:EE:01 (Client)`
-`Dst MAC: AA:BB:CC:DD:EE:FF (Web Server)`
+## Step 5: সার্ভার SYN-ACK তৈরি করে
 
-The Switch receives the frame and will forward it toward the Server.
+সার্ভার SYN প্যাকেট পায় এবং বুঝতে পারে: "ওকে, ক্লায়েন্ট কনেকশন চায়।" সে একটা **SYN-ACK** প্যাকেট তৈরি করে:
 
-## Step 4: Switch forwards SYN to Server [বাংলা অনুবাদ প্রয়োজন]
+- SYN Flag: SET
+- ACK Flag: SET
+- Server-এর Sequence Number: 5000
+- Acknowledgment Number: 1001 (ক্লায়েন্টের SEQ + 1)
 
-The Switch looks up the destination MAC and forwards the SYN frame to the Web Server.
+## Step 6: SYN-ACK সুইচে যায়
 
-## Step 5: Server receives SYN, builds SYN-ACK [বাংলা অনুবাদ প্রয়োজন]
+SYN-ACK প্যাকেট সার্ভার থেকে সুইচে পৌঁছায়। সুইচ ক্লায়েন্টের MAC এড্রেস খুঁজে প্যাকেটটা ক্লায়েন্টের দিকে ফরোয়ার্ড করে।
 
-The Web Server receives the SYN and builds a **SYN-ACK**:
-`SYN=1, ACK=1, Seq=5000, Ack=1001`
+## Step 7: সুইচ ক্লায়েন্টের দিকে ফরোয়ার্ড করে
 
-This means: "I acknowledge your SYN (Ack=**1001** = your Seq + 1), and my starting sequence number is **5000**."
+সুইচ SYN-ACK প্যাকেট ক্লায়েন্টের পোর্টে পাঠায়। ক্লায়েন্ট প্যাকেট পায়।
 
-## Step 6: SYN-ACK: Server → Switch [বাংলা অনুবাদ প্রয়োজন]
+## Step 8: ক্লায়েন্ট ACK তৈরি করে
 
-The Web Server sends the SYN-ACK segment to the Switch.
-`Src MAC: AA:BB:CC:DD:EE:FF (Server)`
-`Dst MAC: AA:BB:CC:DD:EE:01 (Client)`
+ক্লায়েন্ট SYN-ACK পায় এবং তৈরি করে **ACK** (Acknowledgment) প্যাকেট:
 
-## Step 7: Switch forwards SYN-ACK to Client [বাংলা অনুবাদ প্রয়োজন]
+- ACK Flag: SET
+- Sequence Number: 1001
+- Acknowledgment Number: 5001 (সার্ভারের SEQ + 1)
 
-The Switch looks up the destination MAC (Client) and forwards the SYN-ACK frame.
+## Step 9: ACK সুইচে যায়
 
-## Step 8: Client builds final ACK (Ack=5001) [বাংলা অনুবাদ প্রয়োজন]
+ACK প্যাকেট ক্লায়েন্ট থেকে সুইচে পৌঁছায়।
 
-The Client receives the SYN-ACK and builds the final **ACK**:
-`ACK=1, Ack=5001`
+## Step 10: সুইচ সার্ভারের দিকে ফরোয়ার্ড করে
 
-This means: "I acknowledge your SYN (Ack=**5001** = your Seq + 1)." The 3-way handshake is complete!
+সুইচ ACK প্যাকেট সার্ভারের পোর্টে পাঠায়।
 
-## Step 9: ACK: Client → Switch [বাংলা অনুবাদ প্রয়োজন]
+## Step 11: কনেকশন স্থাপিত!
 
-The Client sends the final ACK to the Switch. The TCP 3-way handshake is now complete — a reliable connection is established!
+সার্ভার ACK পায়। এখন দুই পাশেই জানে — কনেকশন রেডি! এখন তুমি HTTP Request পাঠাতে পারো।
 
-## Step 10: Switch forwards ACK to Server [বাংলা অনুবাদ প্রয়োজন]
+তিনটা প্যাকেটের এই বিনিময়কে বলে **3-Way Handshake**:
 
-The Switch forwards the ACK frame to the Web Server. Both sides have agreed on sequence numbers — the connection is established!
+```
+Client          Server
+  |--- SYN ----->|
+  |<-- SYN-ACK --|
+  |--- ACK ----->|
+```
 
-## Step 11: Connection established! HTTP GET sent [বাংলা অনুবাদ প্রয়োজন]
+## Step 12: সার্ভার রেসপন্স দেয়
 
-Now that the TCP connection is established, the Client sends an **HTTP GET** request:
-`GET / HTTP/1.1`
-`Host: web-server`
-
-TCP ensures this data arrives reliably and in order.
-
-## Step 12: Server responds HTTP 200 OK [বাংলা অনুবাদ প্রয়োজন]
-
-The Web Server processes the request and sends back an **HTTP response**:
-`HTTP/1.1 200 OK`
-`Content-Type: text/html`
-
-TCP guarantees the response data arrives intact and in order.
+কনেকশন স্থাপিত হলে ক্লায়েন্ট HTTP Request পাঠায় (যেমন `GET /`) এবং সার্ভার HTTP Response দেয় (HTML পেজ)। এভাবেই TCP 3-way handshake দিয়ে ব্রাউজিং শুরু হয়!

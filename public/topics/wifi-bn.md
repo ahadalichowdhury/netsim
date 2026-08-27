@@ -1,40 +1,44 @@
 ---
-name: WiFi Fundamentals
-description: Wireless networking — SSID, channels, WPA2/3, 802.11
-category: Networking Fundamentals
-order: 37
+name: WiFi ফান্ডামেন্টালস
+description: ওয়ারলেস নেটওয়ার্কিং — চ্যানেল, ব্যান্ড, সিকিউরিটি
 ---
 
-## Step 1: WiFi Channels [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: WiFi চ্যানেল
 
-WiFi operates on specific **frequency channels** within the 2.4GHz and 5GHz bands.
+WiFi চ্যানেল হলো রেডিও ফ্রিকোয়েন্সির ছোট ছোট স্লট। 2.4 GHz ব্যান্ডে 1 থেকে 14 পর্যন্ত চ্যানেল আছে (বাংলাদেশে 1-13)।
 
-In the **2.4GHz band**, channels 1, 6, and 11 are the only non-overlapping channels. Using overlapping channels causes interference from neighboring networks.
+প্রতিটা চ্যানেল একটা নির্দিষ্ট ফ্রিকোয়েন্সি রেঞ্জ কভার করে। যদি পাশাপাশি দুটো রাউটার একই চ্যানে থাকে, তাহলে **ইন্টারফারেন্স** হয়। তাই সেরা চ্যানেল বাছাই করা গুরুত্বপূর্ণ।
 
-The **5GHz band** has many more non-overlapping channels (36, 40, 44, 48, etc.), reducing congestion.
+## Step 2: WiFi ব্যান্ড
 
-## Step 2: WiFi Bands [বাংলা অনুবাদ প্রয়োজন]
+WiFi মূলত দুটো ব্যান্ডে কাজ করে:
 
-**2.4GHz band:** Better range, penetrates walls better, but slower speeds and more interference from devices like microwaves and Bluetooth.
+- **2.4 GHz** — রেঞ্জ বেশি, স্পিড কম। পুরাতন ডিভাইস সাপোর্ট করে। চ্যানেল কম, তাই বেশি ভিড় হয়।
+- **5 GHz** — স্পিড বেশি, রেঞ্জ কম। কম ডিভাইস ব্যবহার করে, তাই কম ভিড়।
 
-**5GHz band:** Faster speeds, more available channels, but shorter range and less wall penetration.
+নতুন **WiFi 6 (802.11ax)** দুটো ব্যান্ডেই কাজ করে এবং MU-MIMO সাপোর্ট করে — মানে একই সাথে অনেক ডিভাইসের সাথে কথা বলতে পারে।
 
-Modern routers support **dual-band** or **tri-band** to combine both frequencies.
+## Step 3: WiFi সিকিউরিটি
 
-## Step 3: WiFi Security [বাংলা অনুবাদ প্রয়োজন]
+WiFi সিকিউরিটি প্রোটোকলগুলো:
 
-**WEP** (Wired Equivalent Privacy) — broken and deprecated. Never use.
+- **WEP** — পুরাতন, দুর্বল, ব্যবহার করো না
+- **WPA** — WEP-র চেয়ে ভালো, কিন্তু এখনো দুর্বল
+- **WPA2** — ভালো, AES এনক্রিপশন ব্যবহার করে। বেশিরভাগ রাউটারে পাওয়া যায়
+- **WPA3** — সবচেয়ে নতুন ও শক্তিশালী
 
-**WPA2** (WiFi Protected Access 2) — uses **AES encryption**, widely deployed and considered secure when using strong passwords.
+সবচেয়ে কম তুমি **WPA2** ব্যবহার করো। WEP কখনো ব্যবহার করো না।
 
-**WPA3** (latest) — stronger encryption, protection against offline dictionary attacks, and forward secrecy.
+## Step 4: 802.11 স্ট্যান্ডার্ড
 
-## Step 4: 802.11 Standards [বাংলা অনুবাদ প্রয়োজন]
+WiFi-র বিভিন্ন স্ট্যান্ডার্ড:
 
-The IEEE 802.11 family defines WiFi standards:
+| স্ট্যান্ডার্ড | নাম | সর্বোচ্চ স্পিড | ব্যান্ড |
+|-----------|------|-------------|--------|
+| 802.11b | WiFi 1 | 11 Mbps | 2.4 GHz |
+| 802.11g | WiFi 3 | 54 Mbps | 2.4 GHz |
+| 802.11n | WiFi 4 | 600 Mbps | 2.4/5 GHz |
+| 802.11ac | WiFi 5 | 6.9 Gbps | 5 GHz |
+| 802.11ax | WiFi 6 | 9.6 Gbps | 2.4/5 GHz |
 
-**WiFi 4 (802.11n)** — introduced MIMO, up to 600 Mbps
-**WiFi 5 (802.11ac)** — 5GHz only, MU-MIMO, up to 3.5 Gbps
-**WiFi 6 (802.11ax)** — OFDMA, BSS coloring, up to 9.6 Gbps, better in dense environments
-
-Each generation improves speed, capacity, and efficiency.
+WiFi 4 থেকে শুরু করে ডুয়াল-ব্যান্ড সাপোর্ট এসেছে। WiFi 6 এখন স্ট্যান্ডার্ড।

@@ -1,49 +1,47 @@
 ---
-name: eBPF Networking
-description: Programmable kernel — packet processing without kernel modules
-category: Advanced Networking
-order: 53
+name: "eBPF নেটওয়ার্কিং"
+description: "eBPF প্রোগ্রাম, হুক পয়েন্ট, ম্যাপ এবং নেটওয়ার্কিং ব্যবহার ক্ষেত্র।"
 ---
 
-## Step 1: eBPF Programs [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: eBPF কী?
 
-**eBPF** (extended Berkeley Packet Filter) allows **safe, verified programs** to run inside the Linux kernel.
+eBPF মানে **extended Berkeley Packet Filter**। এটা এমন একটা টেকনোলজি যেটা দিয়ে তুমি Linux কার্নেলে নিরাপদভাবে প্রোগ্রাম চালাতে পারো — কার্নেল সোর্স কোড ছাড়াই।
 
-How it works:
-1. Write a program in C or restricted BPF
-2. **Verifier** checks it's safe (no crashes, no loops)
-3. **JIT compiler** converts to native machine code
-4. Program is attached to a kernel hook
+সাধারণ ভাষায়, eBPF দিয়ে তুমি কার্নেলে ছোট ছোট প্রোগ্রাম জুড়ে দিতে পারো — যেগুলো নেটওয়ার্ক ট্রাফিক মনিটর করবে, ফায়ারওয়াল চেক করবে, পারফরম্যান্স ট্র্যাক করবে।
 
-eBPF programs run at **kernel speed** — no context switches to userspace.
+## Step 2: হুক পয়েন্ট
 
-## Step 2: Hook Points [বাংলা অনুবাদ প্রয়োজন]
+eBPF প্রোগ্রামগুলো বিভিন্ন **হুক পয়েন্টে** আটকানো যায়। নেটওয়ার্কিং-এ সবচেয়ে বেশি ব্যবহৃত হুক পয়েন্টগুলো:
 
-eBPF programs attach to specific **kernel hook points**:
+- **XDP (eXpress Data Path)**: প্যাকেট নেটওয়ার্ক কার্ডে আসার সাথে সাথেই প্রসেস হয় — খুব দ্রুত
+- **TC (Traffic Control)**: প্যাকেট ফায়ারওয়াল বা ক্লাসিফাই করার জন্য
+- **Socket লেভেল**: TCP/UDP সকেটে ডেটা পাঠানো-গ্রহণ করার সময়
+- **Kprobe/Tracepoint**: কার্নেল ফাংশন কল ট্র্যাক করার জন্য
 
-• **XDP (eXpress Data Path)** — earliest hook, runs before the kernel network stack. Maximum performance for filtering/routing.
-• **TC (Traffic Control)** — runs at the traffic control layer, after XDP but before the socket layer.
-• **Socket hooks** — run at the socket level for application-aware processing.
+XDP সবচেয়ে দ্রুত কারণ এটা প্যাকেট প্রসেস করে যেন সময়েই, আগে নয়।
 
-The earlier the hook, the less kernel code is traversed — XDP is the fastest.
+## Step 3: eBPF ম্যাপ
 
-## Step 3: eBPF Maps [বাংলা অনুবাদ প্রয়োজন]
+eBPF প্রোগ্রামগুলো ডেটা শেয়ার করতে **eBPF Maps** ব্যবহার করে। এগুলো হলো কার্নেল ও ইউজার-স্পেসের মধ্যে ব্রিজ।
 
-**eBPF Maps** are **key-value stores** shared between eBPF programs and userspace.
+কিছু জনপ্রিয় ম্যাপ টাইপ:
 
-They enable:
-• **Stateful processing** — track connections, counters, statistics
-• **Communication** — programs can share data with each other
-• **Userspace access** — read/update maps from userspace tools
+- **Hash Map**: Key-value পেয়ার — যেমন IP ঠিকানা ট্র্যাক করার জন্য
+- **Array Map**: ইন্ডেক্সেড অ্যারে — কাউন্টার রাখার জন্য
+- **Ring Buffer**: ইউজার-স্পেসে ইভেন্ট পাঠানোর জন্য
 
-Common map types: **HashMap**, **ArrayMap**, **LPM Trie** (longest prefix match), **Ring Buffer**.
+ধরো তুমি প্রতিটা IP থেকে আসা প্যাকেট গুনতে চাও — তাহলে Hash Map ব্যবহার করো, IP কী হিসেবে এবং কাউন্টার ভ্যালু হিসেবে।
 
-## Step 4: Use Cases [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: নেটওয়ার্কিং ব্যবহার ক্ষেত্র
 
-eBPF powers several major networking projects:
+eBPF নেটওয়ার্কিং-এ যেখানে যেখানে ব্যবহৃত হয়:
 
-• **Cilium** — Kubernetes CNI (Container Network Interface) using eBPF for high-performance networking, load balancing, and security policies
-• **Falco** — runtime security threat detection using eBPF to monitor syscall activity
-• **bcc** — BPF Compiler Collection for tracing and observability (tcpdump, network statistics)
+**লোড ব্যালান্সিং**: Cilium ও CCO দিয়ে Kubernetes নেটওয়ার্কিং — eBPF দিয়ে প্যাকেট রাউটিং করে সরাসরি।
 
-eBPF eliminates the need for kernel modules — programs are verified and sandboxed by the kernel.
+**ফায়ারওয়াল**: XDP দিয়ে DDoS অ্যাটাক ব্লক করা হয় — প্যাকেট এসেই ড্রপ করে দেয়।
+
+**অবজারভেবিলিটি**: প্রতিটা TCP কানেকশন ট্র্যাক করে, লেটেন্সি মাপে, এরর মনিটর করে।
+
+**সার্ভিস মেশ**: Istio ও Linkerd-এর পুরানো সংস্করণে sidecar proxy লাগতো — eBPF সেটা কার্নেল-লেভেলেই করে দেয়, তাই স্পিড বাড়ে।
+
+মূল কথা — eBPF দিয়ে তুমি কার্নেলকে নিজের মতো কাস্টমাইজ করতে পারো, রিবুট ছাড়াই।

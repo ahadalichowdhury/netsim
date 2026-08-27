@@ -1,99 +1,80 @@
 ---
-name: Network Stack
-description: TCP/IP stack layers and packet flow through the kernel
-category: Linux Core Networking
-order: 21
+name: নেটওয়ার্ক স্ট্যাক (TCP/IP)
+description: একটা প্যাকেট যেভাবে তোমার অ্যাপ থেকে সার্ভারে যায় — সম্পূর্ণ যাত্রা
 ---
 
-## Step 1: App wants to send data to remote server [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: অ্যাপ ডেটা পাঠাতে চায়
 
-A **user application** (e.g., curl, browser) wants to send data to a remote server at `10.0.0.50`.
+তুমি ব্রাউজারে URL টাইপ করলে — `google.com` — ব্রাউজার ডেটা পাঠাতে চায়। কিন্তু সরাসরি পাঠানো যায় না। ডেটাকে আগে **লেয়ার বাই লেয়ার** প্যাক করতে হবে। প্রথমে অ্যাপলিকেশন লেয়ার থেকে শুরু।
 
-The data must travel down through each layer of the **TCP/IP network stack** before it can be transmitted on the wire.
+## Step 2: send() কল
 
-**Prerequisite:** Understand the **TCP Handshake** and **DNS** topics to see how applications use the stack.
+ব্রাউজার OS-কে বলে: `send(data)`। OS এই ডেটাকে একটা **সকেট** দিয়ে পাঠায়। সকেট হলো অ্যাপ ও নেটওয়ার্ক স্ট্যাকের মাঝের দরজা।
 
-**See also:** **TCP/UDP Ports** and **IP Address** topics for the headers at each layer.
+## Step 3: সকেট API
 
-## Step 2: Application calls send() — data enters Socket API [বাংলা অনুবাদ প্রয়োজন]
+সকেট API হলো অ্যাপ ও OS-এর মাঝের চুক্তি। অ্যাপ বলে: "এই ডেটাটা এই IP এড্রেসে পাঠাও।" OS বুঝে, "ওকে, আমি TCP/UDP দিয়ে প্যাক করে পাঠাচ্ছি।"
 
-The application calls the `send()` system call. The data enters the **Socket API** layer — the boundary between user space and kernel space.
+## Step 4: TCP লেয়ার
 
-The Socket API provides a standardized interface for network communication.
+ডেটা যায় **TCP লেয়ারে**। TCP ডেটাকে ছোট ছোট পিসে ভাগ করে — এদের বলে **সেগমেন্ট**। প্রতিটা সেগমেন্টে একটা সিকোয়েন্স নম্বর থাকে, যাতে পরে সব সেগমেন্ট সঠিক ক্রমে জোড়া লাগানো যায়।
 
-## Step 3: Socket API passes data to TCP layer [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: TCP হেডার যোগ করে
 
-The Socket API hands the data to the **TCP layer** in the kernel.
+TCP প্রতিটা সেগমেন্টের সাথে একটা **হেডার** যোগ করে। হেডারে থাকে:
 
-TCP will handle reliability, sequencing, flow control, and congestion management. The data is placed into a TCP segment.
+- Source Port: কোন অ্যাপ থেকে এসেছে
+- Destination Port: কোন অ্যাপে যাবে
+- Sequence Number: কোন অর্ডারে যাবে
+- Flags: SYN, ACK, FIN ইত্যাদি
 
-## Step 4: TCP adds header: ports, seq/ack numbers [বাংলা অনুবাদ প্রয়োজন]
+## Step 6: TCP থেকে IP-তে
 
-The TCP layer wraps the data with a **TCP header**:
-`Source Port: 49152`
-`Dest Port: 80`
-`Seq: 1000`
-`Ack: 0`
-`Flags: SYN`
+TCP-র প্যাক **IP লেয়ারে** যায়। IP লেয়ার প্রতিটা সেগমেন্টের সাথে আরেকটা **হেডার** যোগ করে:
 
-This segment is now ready to be passed to the IP layer.
+- Source IP: 192.168.1.10 (তোমার IP)
+- Destination IP: 142.250.80.46 (Google-এর IP)
 
-## Step 5: TCP passes segment to IP layer [বাংলা অনুবাদ প্রয়োজন]
+এখন এটা একটা **প্যাকেট** হয়ে গেছে।
 
-The TCP segment is passed down to the **IP layer**. IP will wrap it with an IP header for routing across networks.
+## Step 7: IP হেডার যোগ করে
 
-## Step 6: IP adds header: src/dst IP, TTL, protocol [বাংলা অনুবাদ প্রয়োজন]
+IP হেডারে থাকে সোর্স-ডেস্টিনেশন IP, TTL, প্রোটোকল (TCP=6) ইত্যাদি। IP লেয়ার রাউটিং টেবিল দেখে ঠিক করে প্যাকেটটা কোন ইন্টারফেস দিয়ে বের হবে।
 
-The IP layer wraps the TCP segment with an **IPv4 header**:
-`Src IP: 192.168.1.10`
-`Dst IP: 10.0.0.50`
-`TTL: 64`
-`Protocol: TCP (6)`
+## Step 8: IP থেকে NIC-তে
 
-The IP packet is now ready for the NIC driver.
+প্যাকেট যায় **নেটওয়ার্ক ইন্টারফেস কার্ড (NIC)**-তে। NIC প্যাকেটকে **ফ্রেমে** রূপান্তর করে। ফ্রেমে থাকে:
 
-## Step 7: IP passes frame to NIC driver [বাংলা অনুবাদ প্রয়োজন]
+- Destination MAC: নেক্সট হপের MAC (যেমন তোমার রাউটার)
+- Source MAC: NIC-র নিজের MAC
 
-The IP layer passes the packet to the **NIC driver**. The driver will hand it to the physical NIC (eth0) for transmission.
+## Step 9: NIC ফ্রেম ট্রান্সমিট করে
 
-## Step 8: NIC adds MAC header, transmits on wire [বাংলা অনুবাদ প্রয়োজন]
+NIC ফ্রেমকে **কেবল/ওয়ারলেস** দিয়ে পাঠায়। ইলেকট্রিক্যাল/অপটিক্যাল সিগনাল হিসেবে ডেটা তারে ভেসে যায়।
 
-The NIC adds the **Ethernet II header** with source and destination MAC addresses, calculates the FCS, and transmits the frame onto the physical wire.
+## Step 10: সুইচ ফরোয়ার্ড করে
 
-`Src MAC: AA:BB:CC:DD:EE:01 (eth0)`
-`Dst MAC: Default Gateway MAC`
+ফ্রেম তোমার **সুইচে** পৌঁছায়। সুইচ MAC টেবিল দেখে ঠিক করে ফ্রেমটা কোন পোর্টে পাঠাতে হবে। যদি ডেস্টিনেশন MAC জানা থাকে, unicast করে; না হলে flood করে।
 
-## Step 9: Switch forwards to remote server [বাংলা অনুবাদ প্রয়োজন]
+## Step 11: সার্ভারের NIC ফ্রেম রিসিভ করে
 
-The **Switch** receives the frame, looks up the destination MAC in its forwarding table, and forwards the frame toward the remote server.
+সার্ভারের NIC ফ্রেম পায়। সে MAC চেক করে — "এটা কি আমার?" হ্যাঁ হলে ফ্রেম গ্রহণ করে, না হলে ডিসকার্ড করে।
 
-## Step 10: Server NIC receives frame [বাংলা অনুবাদ প্রয়োজন]
+## Step 12: সার্ভার উপরের লেয়ারে প্রসেস করে
 
-The **Remote Server's NIC** receives the frame, checks the destination MAC — it matches! The NIC strips the Ethernet header and passes the IP packet up to the server's network stack.
+সার্ভার NIC ফ্রেম থেকে IP প্যাকেট বের করে, IP থেকে TCP সেগমেন্ট বের করে, TCP সেগমেন্ট থেকে অ্যাপলিকেশন ডেটা বের করে। এভাবে **লেয়ার বাই লেয়ার আনপ্যাক** হয়।
 
-The server's NIC triggers an interrupt to notify the CPU.
+## Step 13: সম্পূর্ণ যাত্রা
 
-## Step 11: Server processes UP the stack [বাংলা অনুবাদ প্রয়োজন]
+সারসংক্ষেপে পুরো যাত্রা:
 
-The Remote Server processes the packet **upward** through its own network stack:
+1. **App** → `send(data)`
+2. **Socket API** → OS-কে বলে পাঠাতে
+3. **TCP** → সেগমেন্টে ভাগ, হেডার যোগ
+4. **IP** → প্যাকেট তৈরি, হেডার যোগ
+5. **NIC** → ফ্রেমে রূপান্তর, ট্রান্সমিট
+6. **Switch** → ফরোয়ার্ড
+7. **সার্ভার NIC** → রিসিভ
+8. **সার্ভার App** → ডেটা পাওয়া
 
-`NIC Driver → IP Layer → TCP Layer → Application`
-
-Each layer strips its header and passes the payload upward — the reverse of what the sending host did.
-
-## Step 12: Full journey complete! [বাংলা অনুবাদ প্রয়োজন]
-
-**Key takeaway:** Data travels **DOWN** the sending host's stack, across the wire, then **UP** the receiving host's stack.
-
-The journey:
-1. **Application** → Socket API (`send()`)
-2. **TCP** adds ports, sequence numbers
-3. **IP** adds source/destination IPs, TTL
-4. **NIC** adds MAC header, transmits
-5. **Switch** forwards to destination
-6. Server NIC receives, strips MAC header
-7. **IP** strips IP header
-8. **TCP** strips TCP header, delivers data
-9. **Application** receives the data!
-
-Each layer only talks to its **peer** on the other side (TCP-to-TCP, IP-to-IP, MAC-to-MAC).
+এই পুরো প্রক্রিয়া মিলিসেকেন্ডের মধ্যে শেষ হয়!

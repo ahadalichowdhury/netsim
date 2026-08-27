@@ -1,65 +1,55 @@
 ---
-name: Ethernet Frame
-description: The data container — how bits are packaged for the wire
-category: Components
-order: 8
+name: "Ethernet ফ্রেম"
+description: "Ethernet ফ্রেমের গঠন — Preamble, MAC, EtherType, Payload, FCS।"
 ---
 
-## Step 1: Preamble [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: Ethernet ফ্রেম কী?
 
-The **preamble** is the first field in an Ethernet frame — 7 bytes of alternating 1s and 0s (10101010 pattern).
+ইথারনেট হলো লোকাল এরিয়া নেটওয়ার্কের (LAN) সবচেয়ে সাধারণ ডেটা লিংক লেয়ার প্রোটোকল। যখন তুমি নেটওয়ার্কে কোনো ডেটা পাঠাও, সেটা ছোট ছোট **ফ্রেমে** ভাগ হয়।
 
-Its purpose is **synchronization**. It gives the receiving NIC time to lock onto the signal's timing before the actual frame begins.
+প্রতিটা ফ্রেম একটা নির্দিষ্ট ফরম্যাটে তৈরি হয় — যাতে রিসিভার বুঝতে পারে এটা কার পাঠানো, কোন টাইপের ডেটা, এবং ডেটা ক্রপ্ট হয়নি কিনা।
 
-The preamble is followed by the **SFD (Start Frame Delimiter)**, a 1-byte field that signals "the actual frame starts now."
+## Step 2: Preamble ও Destination MAC
 
-## Step 2: Destination MAC [বাংলা অনুবাদ প্রয়োজন]
+ফ্রেমের শুরুতে থাকে **Preamble** — এটা 7 বাইটের `10101010` প্যাটার্ন। এটা রিসিভারকে সিঙ্ক করে দেয় যে একটা ফ্রেম আসছে। তারপর থাকে **SFD (Start Frame Delimiter)** — এক বাইট `10101011` — যেটা বলে দেয় এখন আসল ডেটা শুরু হলো।
 
-The **destination MAC address** identifies who the frame is for — 6 bytes (48 bits).
+এরপর আসে **Destination MAC Address** — 6 বাইট। এটা বলে কোন ডিভাইসের কাছে এই ফ্রেমটা যাচ্ছে।
 
-Special values:
-• `FF:FF:FF:FF:FF:FF` — broadcast, received by all devices
-• Multicast addresses — received by a group of devices
-• Unicast — addressed to a specific NIC
+```
+FF:FF:FF:FF:FF:FF  → Broadcast
+00:1A:2B:3C:4D:5E  → নির্দিষ্ট ডিভাইস
+```
 
-If the destination is on the same network, the frame goes directly. If it's on a different network, it goes to the default gateway (router).
+## Step 3: Source MAC ও EtherType
 
-## Step 3: Source MAC [বাংলা অনুবাদ প্রয়োজন]
+**Source MAC** — আবার 6 বাইট। এটা বলে ফ্রেমটা কার পাঠানো।
 
-The **source MAC address** identifies who sent the frame — 6 bytes (48 bits).
+**EtherType** — 2 বাইট। এটা বলে পেলোডে কী ধরনের ডেটা আছে:
 
-Switches use the source MAC to **learn** which device is on which port. When a switch receives a frame, it records the source MAC and the incoming port in its MAC address table.
+- `0x0800` → IPv4
+- `0x86DD` → IPv6
+- `0x0806` → ARP
 
-The source MAC is **always** a unicast address (never broadcast or multicast).
+এই ফিল্ড ছাড়া রিসিভার বুঝতে পারতো না পেলোডে কী আছে।
 
-## Step 4: EtherType [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: Payload
 
-The **EtherType** field identifies which protocol is encapsulated in the payload — 2 bytes.
+**Payload** হলো ফ্রেমের আসল ডেটা — সাধারণত 46 থেকে 1500 বাইট। এখানেই থাকে IP প্যাকেট, TCP সেগমেন্ট, বা অন্য যেকোনো ডেটা।
 
-Common values:
-• `0x0800` — IPv4
-• `0x0806` — ARP
-• `0x86DD` — IPv6
+সবচেয়ে ছোট পেলোড হতে পারে 46 বাইট — এর ছোট হলে পেডিং করা হয়। সবচেয়ে বড় হতে পারে 1500 বাইট — এটাই **MTU (Maximum Transmission Unit)**।
 
-This field tells the receiving device how to interpret the payload. If the payload is an IPv4 packet, the NIC passes it up to the IPv4 stack.
+## Step 5: FCS (Frame Check Sequence)
 
-## Step 5: Payload [বাংলা অনুবাদ প্রয়োজন]
+ফ্রেমের শেষে থাকে **FCS** — 4 বাইট। এটা **CRC (Cyclic Redundancy Check)** ভ্যালু যেটা পুরো ফ্রেমের ডেটা দিয়ে ক্যালকুলেট হয়।
 
-The **payload** contains the actual data being transmitted — 46 to 1500 bytes.
+রিসিভার যখন ফ্রেম পায়, সে নিজেও FCS ক্যালকুলেট করে। দুইটা ম্যাচ করলে ডেটা ঠিক আছে। ম্যাচ না করলে ফ্রেম ড্রপ করে দেয় — তাহলে সেন্ডারকে আবার পাঠাতে হবে।
 
-This is typically an **IP packet**, but it could also be ARP, IPv6, or other protocols as indicated by the EtherType field.
+## Step 6: সম্পূর্ণ ফ্রেম স্ট্রাকচার
 
-If the data is smaller than 46 bytes, it's padded to meet the minimum Ethernet frame size (64 bytes total). The maximum of 1500 bytes is the **MTU** (Maximum Transmission Unit).
+মোটামুটি এরকম দেখতে:
 
-## Step 6: Frame Check Sequence [বাংলা অনুবাদ প্রয়োজন]
+```
+| Preamble (7B) | SFD (1B) | Dst MAC (6B) | Src MAC (6B) | EtherType (2B) | Payload (46-1500B) | FCS (4B) |
+```
 
-The **FCS (Frame Check Sequence)** is a 4-byte CRC (Cyclic Redundancy Check) used for error detection.
-
-The sender calculates a CRC value over the entire frame (excluding preamble and SFD) and appends it. The receiver recalculates the CRC and compares — if they don't match, the frame is **silently discarded**.
-
-FCS detects:
-• Bit flips from electrical noise
-• Truncated frames
-• Corrupted data in transit
-
-FCS does **not** detect or correct all errors — it's a best-effort check.
+সব মিলিয়ে একটা Ethernet ফ্রেম কমপক্ষে 64 বাইট এবং সর্বোচ্চ 1518 বাইট। এই ফরম্যাট ছাড়া ইথারনেটে ডেটা পাঠানো যায় না।

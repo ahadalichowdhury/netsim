@@ -1,82 +1,75 @@
 ---
-name: IPv6
-description: The next generation — 128-bit addresses for the future
-category: Networking Fundamentals
-order: 32
+name: "IPv6"
+description: "IPv6 128-বিট ঠিকানা ব্যবস্থা — কেন দরকার, ফরম্যাট, ফিচার, ডুয়াল স্ট্যাক।"
 ---
 
-## Step 1: Why IPv6? [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: কেন IPv6 দরকার?
 
-IPv4 provides only **4.3 billion** addresses (2^32). With the explosion of devices — smartphones, IoT, servers — the world is **running out of IPv4 addresses**.
+IPv4 এখনো ইন্টারনেটে ব্যবহৃত হচ্ছে, তবে সমস্যা হলো — IPv4 ঠিকানা শেষ হয়ে আসছে।
 
-Workarounds like **NAT** and **private IP ranges** have extended IPv4's life, but they add complexity and break the end-to-end principle.
+IPv4 মাত্র **32-বিট** — মোট প্রায় 4.3 বিলিয়ন ঠিকানা। এক সময় মনে হতো যথেষ্ট, কিন্তু এখন প্রতিটা ফোন, ল্যাপটপ, স্মার্ট টিভি, IoT ডিভাইস — সবার IP দরকার।
 
-**IPv6** solves this with **128-bit addresses** — providing 3.4×10^38 addresses. That's enough to give every atom on Earth its own IP address.
+NAT দিয়ে একটু সময় কাটানো গেছে, তবে IPv6 হলো আসল সমাধান। IPv6 **128-বিট** — মোট প্রায় 3.4 × 10^38 ঠিকানা। পৃথিবীর প্রতিটা দানা-কণায় IP দিলেও শেষ হবে না।
 
-## Step 2: IPv4 vs IPv6 [বাংলা অনুবাদ প্রয়োজন]
+## Step 2: IPv4 বনাম IPv6
 
-**IPv4:**
-• 32-bit address (4 octets)
-• Dotted decimal: `192.168.1.10`
-• ~4.3 billion addresses
-• Header: 20-60 bytes (variable)
-• Checksum required
+পার্থক্যগুলো পর্যবেক্ষণ করো:
 
-**IPv6:**
-• 128-bit address (8 groups of 16 bits)
-• Colon-hex: `2001:0db8:85a3::8a2e:0370:7334`
-• 3.4×10^38 addresses
-• Header: fixed 40 bytes
-• No checksum (relying on link-layer CRC)
+```
+IPv4: 192.168.1.10           (32-বিট, ডটে ভাগা)
+IPv6: 2001:0db8:85a3::8a2e:0370:7334  (128-বিট, কোলনে ভাগা)
+```
 
-## Step 3: IPv6 Address Format [বাংলা অনুবাদ প্রয়োজন]
+| বৈশিষ্ট্য | IPv4 | IPv6 |
+|-----------|------|------|
+| দৈর্ঘ্য | 32-বিট | 128-বিট |
+| ফরম্যাট | ডেসিমাল | হেক্সাডেসিমাল |
+| হেডার | ভেরিয়েবল (20-60B) | ফিক্সড (40B) |
+| Checksum | আছে | নেই |
+| NAT | প্রয়োজন | প্রয়োজন নেই |
+| Broadcast | আছে | নেই (Multicast) |
 
-An IPv6 address is written as **8 groups of 4 hexadecimal digits**, separated by colons:
+## Step 3: IPv6 ঠিকানা ফরম্যাট
 
-`2001:0db8:85a3:0000:0000:8a2e:0370:7334`
+IPv6 ঠিকানা 8টা **হেক্সাডেসিমাল গ্রুপে** ভাগা, প্রতিটা 16 বিট:
 
-**Compression rules:**
-• Leading zeros in a group can be omitted: `0db8` → `db8`
-• One consecutive group of all zeros can be replaced with `::`
-• `2001:0db8:85a3::8a2e:0370:7334`
+```
+2001:0db8:85a3:0000:0000:8a2e:0370:7334
+```
 
-**Special addresses:**
-• `::1` — loopback (like 127.0.0.1)
-• `::` — unspecified (like 0.0.0.0)
-• `fe80::/10` — link-local range
+**শর্টকাট নিয়ম:**
 
-## Step 4: IPv6 Features [বাংলা অনুবাদ প্রয়োজন]
+1. লিডিং জিরো বাদ দাও:
+   `0db8` → `db8`
 
-IPv6 introduces several improvements over IPv4:
+2. ক্রমাগত জিরো গ্রুপ `::` দিয়ে বদলাও (একবারই):
+   `2001:0db8:0000:0000:8a2e:0370:7334`
+   → `2001:db8::8a2e:370:7334`
 
-**No NAT needed:**
-• Every device can have a globally unique address
-• Restores end-to-end connectivity
+**লক্ষ্য করো:** `::` একবারই ব্যবহার করা যায়, নাহলে কনফিউজ হয়ে যাবে।
 
-**SLAAC (Stateless Address Auto-configuration):**
-• Devices automatically configure their own IPv6 address
-• No DHCP server required (though DHCPv6 exists)
+## Step 4: IPv6-এর ফিচার
 
-**Built-in IPSec:**
-• Originally mandatory in IPv6 (now recommended)
-• Provides authentication and encryption at the network layer
+IPv6-এ কিছু মজার ফিচার আছে:
 
-**Simplified header:**
-• Fixed 40-byte header (faster processing)
-• No checksum (rely on link-layer and upper-layer checksums)
+**SLAAC (Stateless Address Autoconfiguration)**: ডিভাইস নিজেই IPv6 ঠিকানা তৈরি করতে পারে — DHCP ছাড়াই। রাউটার থেকে নেটওয়ার্ক প্রিফিক্স পায়, তারপর নিজের ইন্টারফেস ID যোগ করে।
 
-## Step 5: Dual Stack [বাংলা অনুবাদ প্রয়োজন]
+**IPSec**: IPv6-তে IPSec বিল্ট-ইন — মানে এনক্রিপশন ও অথেনটিকেশন ডিফল্টে সাপোর্টেড।
 
-The transition from IPv4 to IPv6 is happening **gradually** through **dual stack** operation.
+**No Broadcast**: IPv6-তে Broadcast নেই — বদলে **Multicast** ও **Anycast** ব্যবহার হয়। এতে নেটওয়ার্ক ট্রাফিক কমে।
 
-During the transition period:
-• Devices run **both IPv4 and IPv6** simultaneously
-• Applications try IPv6 first, fall back to IPv4
-• Networks carry both protocol types on the same infrastructure
+**Simplified Header**: IPv6 হেডার সিম্পল — ফিক্সড সাইজ, ফাস্ট প্রসেসিং। IPv4-এর মতো Options নেই।
 
-**Transition mechanisms:**
-• **Dual Stack** — run both protocols (most common)
-• **Tunneling** — encapsulate IPv6 in IPv4 packets (6to4, Teredo)
-• **NAT64/DNS64** — translate between IPv4 and IPv6
+## Step 5: Dual Stack
 
-IPv6 adoption is growing — over 40% of Google traffic now comes over IPv6.
+এখন সব জায়গায় IPv6 চলে না — তাই **Dual Stack** পদ্ধতি ব্যবহৃত হয়। মানে একটা ডিভাইসে IPv4 ও IPv6 দুটোই একসাথে চলে:
+
+```
+সার্ভার
+├── IPv4: 192.168.1.10
+└── IPv6: 2001:db8::10
+```
+
+ব্রাউজার চেষ্টা করে IPv6 দিয়ে কানেক্ট করতে — কারণ IPv6 দ্রুত। না হলে IPv4-তে ফলব্যাক করে। ধীরে ধীরে সব কিছু IPv6-এ শিফট হবে, তবে Dual Stack এখনো প্রয়োজন।
+
+IPv6 শিখতে গেলে প্রথমে IPv4 ভালো করে বুঝো — তারপর IPv6 সিম্পল লাগবে।

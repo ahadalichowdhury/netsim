@@ -1,95 +1,88 @@
 ---
-name: iptables Firewall
-description: Linux packet filtering with iptables chains
-category: Linux Core Networking
-order: 25
+name: "iptables ফায়ারওয়াল"
+description: "iptables ফায়ারওয়াল কীভাবে কাজ করে — চেইন, প্রাইভেটিং, ফরওয়ার্ডিং, ড্রপিং।"
 ---
 
-## Step 1: Firewall has iptables rules on 3 chains [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: ফায়ারওয়ালের ৩টি চেইন
 
-The Linux firewall uses **iptables** with three built-in chains:
+iptables-এ মূলত ৩টি চেইন আছে — প্রতিটা একটা নির্দিষ্ট ধাপে কাজ করে:
 
-**INPUT** — packets destined for the firewall itself
-**OUTPUT** — packets originating from the firewall
-**FORWARD** — packets passing through the firewall (not destined for it)
+- **INPUT**: ইনকামিং প্যাকেট তোমার সার্ভারে পৌঁছানোর আগে
+- **FORWARD**: প্যাকেট তোমার সার্ভার দিয়ে অন্য জায়গায় যাচ্ছে
+- **OUTPUT**: তোমার সার্ভার থেকে বের হওয়া প্যাকেট
 
-Incoming packets from the internet first hit the **PREROUTING** chain, then are routed to INPUT or FORWARD.
+প্রতিটা চেইনে রুল থাকে — প্যাকেট আসলে প্রথম থেকে শেষ পর্যন্ত চেক করা হয়। যদি কোনো রুল ম্যাচ করে, সেই অ্যাকশন নেওয়া হয়।
 
-**Prerequisite:** Understand **Linux Gateway** (ip forwarding) and **Route Table** first.
+## Step 2: PREROUTING চেইনে ইনকামিং প্যাকেট আসে
 
-## Step 2: Incoming packet from internet hits PREROUTING [বাংলা অনুবাদ প্রয়োজন]
+ইনকামিং প্যাকেট যখন সার্ভারের নেটওয়ার্ক কার্ডে পৌঁছায়, তখন সেটা প্রথমে **PREROUTING** চেইন দিয়ে যায়। এই চেইনে মূলত **DNAT (Destination NAT)** রুল থাকে।
 
-A legitimate HTTP request (port 80) arrives from the internet.
+```
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination 192.168.1.10
+```
 
-The packet enters the **PREROUTING** chain — the first stop for all incoming packets. PREROUTING handles DNAT (Destination NAT) rules before routing decisions are made.
+এই রুল বলে — পোর্ট 80-এ আসা সব প্যাকেট `192.168.1.10`-তে পাঠাও। কিন্তু ধরো এই রুল নেই — তাহলে কী হবে?
 
-## Step 3: PREROUTING: No DNAT rule — continue [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: DNAT নেই তাহলে কী হয়
 
-The PREROUTING chain processes the packet.
+যদি PREROUTING-এ DNAT রুল না থাকে, প্যাকেট তার অরিজিনাল ডেস্টিনেশনে যাওয়ার চেষ্টা করবে। যদি সেটা তোমার সার্ভারের IP হয়, তাহলে প্যাকেট **INPUT** চেইনে যাবে। যদি অন্য IP হয়, তাহলে **FORWARD** চেইনে যাবে।
 
-**No DNAT rules match** — the destination IP remains unchanged. The kernel now performs a routing decision to determine whether the packet is for this host (INPUT) or needs to be forwarded (FORWARD).
+## Step 4: FORWARD চেইনে চেক
 
-## Step 4: Packet destined for server — use FORWARD chain [বাংলা অনুবাদ প্রয়োজন]
+যদি প্যাকেট তোমার সার্ভারের দিকে না আসে বরং অন্য জায়গায় যাচ্ছে (মানে সার্ভার রাউটার হিসেবে কাজ করছে), তাহলে সেটা **FORWARD** চেইনে যায়।
 
-The routing decision determines the packet is **not destined for the firewall itself** (destination 10.0.0.100 ≠ firewall IP).
+```
+iptables -A FORWARD -p tcp --dport 80 -j ACCEPT
+iptables -A FORWARD -j DROP
+```
 
-The packet is sent to the **FORWARD chain** for processing.
+প্রথম রুল বলে — পোর্ট 80-এর সব প্যাকেট ALLOW করো। দ্বিতীয় রুল বলে — বাকি সব DROP করো।
 
-## Step 5: FORWARD chain: Check rule — ACCEPT if port 80 [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: পোর্ট 80-এর রুল ACCEPT চেক করা হয়
 
-The FORWARD chain evaluates its rules against the packet:
+FORWARD চেইনে প্যাকেট আসলে, প্রথম রুল চেক হয় — কোনো পোর্ট 80-এর প্যাকেট কি না। হ্যাঁ তাহলে `ACCEPT` অ্যাকশন নেওয়া হয়।
 
-**Rule 1:** `-p tcp --dport 80 -j ACCEPT`
-Match? **YES** — destination port is 80.
+## Step 6: প্যাকেট ALLOW করা হয়
 
-Target: **ACCEPT** — the packet is allowed through the firewall.
+`ACCEPT` মানে প্যাকেটটা ফরওয়ার্ড করে দাও। প্যাকেট আরো প্রসেস হয় না, সরাসরি ডেস্টিনেশনের দিকে যায়।
 
-## Step 6: Rule matched! ALLOW through firewall [বাংলা অনুবাদ প্রয়োজন]
+## Step 7: POSTROUTING চেইনে যায়
 
-The ACCEPT target is reached — the firewall **allows** the packet to continue through the FORWARD chain.
+ফরওয়ার্ড করার আগে প্যাকেট **POSTROUTING** চেইন দিয়ে যায়। এখানে মূলত **SNAT (Source NAT)** বা **MASQUERADE** রুল থাকে:
 
-No further rules are evaluated. The packet proceeds to POSTROUTING.
+```
+iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+```
 
-## Step 7: POSTROUTING: No MASQUERADE — continue [বাংলা অনুবাদ প্রয়োজন]
+এই রুল বলে — বের হওয়া প্যাকেটের Source IP বদলে দাও রাউটারের IP-তে।
 
-The packet reaches the **POSTROUTING** chain — the last stop before leaving the firewall.
+## Step 8: সুইচে প্যাকেট পাঠানো হয়
 
-**No MASQUERADE or SNAT rules match** — the packet exits with its original source IP intact.
+POSTROUTING-এর পর প্যাকেট সরাসরি নেটওয়ার্ক ইন্টারফেস থেকে বের হয় এবং **Switch**-এ পৌঁছায়।
 
-## Step 8: Packet: Firewall → Switch [বাংলা অনুবাদ প্রয়োজন]
+## Step 9: সুইচ সার্ভারে পাঠায়
 
-The firewall forwards the allowed packet to the Switch.
+Switch MAC ঠিকানা চেক করে এবং প্যাকেট সঠিক পোর্টের সার্ভারে পাঠায়। Switch-এর IP চেক করার কোনো প্রয়োজন নেই।
 
-The packet is now on its way to the server — the firewall has done its job of filtering.
+## Step 10: ম্যালিশিয়াস প্যাকেট পোর্ট 22-এ আসে
 
-## Step 9: Switch forwards to server [বাংলা অনুবাদ প্রয়োজন]
+ধরো একটা সন্দেহজনক প্যাকেট আসছে পোর্ট 22 (SSH)-তে। এটা হতে পারে ব্রুট ফোর্স অ্যাটাক বা অননুমোদিত অ্যাক্সেস।
 
-The Switch receives the packet and forwards it to the Server (10.0.0.100). The HTTP request is delivered successfully.
+## Step 11: DROP রুল চেক করা হয়
 
-## Step 10: Now a MALICIOUS packet arrives (port 22) [বাংলা অনুবাদ প্রয়োজন]
+ফায়ারওয়ালে আছে:
 
-A new packet arrives from the internet — this time attempting an **SSH connection** (port 22) to the server.
+```
+iptables -A INPUT -p tcp --dport 22 -s 10.0.0.0/8 -j ACCEPT
+iptables -A INPUT -p tcp --dport 22 -j DROP
+```
 
-This is a common attack vector. The firewall must evaluate its rules again.
+প্রথম রুল বলে — শুধু `10.0.0.0/8` থেকে SSH ALLOW করো। দ্বিতীয় রুল বলে — বাকি সব SSH DROP করো।
 
-## Step 11: FORWARD chain: DROP rule matches port 22 [বাংলা অনুবাদ প্রয়োজন]
+যদি ম্যালিশিয়াস প্যাকেট `10.0.0.0/8` থেকে না আসে, তাহলে প্রথম রুল ম্যাচ করবে না।
 
-The FORWARD chain evaluates its rules:
+## Step 12: প্যাকেট ড্রপ হয়ে যায়
 
-**Rule 1:** `--dport 80 -j ACCEPT`
-Match? NO — port is 22, not 80.
+দ্বিতীয় রুল ম্যাচ করে — `DROP` অ্যাকশন নেওয়া হয়। প্যাকেটটা সম্পূর্ণ বাদ দেওয়া হয় — না ফিরিয়ে দেওয়া হয়, না কোনো মেসেজ পাঠানো হয়। সেন্ডার কিছুই জানে না — শুধু টাইমআউট হয়।
 
-**Rule 2:** `--dport 22 -j DROP`
-Match? **YES** — destination port is 22.
-
-Target: **DROP** — the packet is silently discarded.
-
-## Step 12: Packet DROPPED! Never reaches server [বাংলা অনুবাদ প্রয়োজন]
-
-The firewall **drops** the malicious SSH packet. It is silently discarded — no response is sent to the attacker.
-
-The server never receives the packet. The attack is blocked.
-
-**Key takeaway:** iptables evaluates rules in order. The first matching rule determines the action (ACCEPT or DROP). Packets that match no rules fall through to the chain's **default policy** (often DROP for FORWARD).
-
-`iptables -L -v` shows the rules with hit counters.
+এভাবেই iptables কাজ করে — প্রতিটা প্যাকেট চেইন দিয়ে যায়, রুল চেক হয়, এবং ACCEPT, DROP, REJECT বা অন্য কোনো অ্যাকশন নেওয়া হয়।

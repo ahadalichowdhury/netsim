@@ -1,55 +1,64 @@
 ---
-name: MTU
-description: Maximum Transmission Unit — the largest packet the network allows
-category: Components
-order: 10
+name: MTU - সর্বোচ্চ ট্রান্সমিশন ইউনিট
+description: MTU কী, সাধারণ MTU মান, Fragmentation কীভাবে হয়, Path MTU Discovery — সব বাংলায়
 ---
 
-## Step 1: What is MTU? [বাংলা অনুবাদ প্রয়োজন]
+# MTU — সর্বোচ্চ ট্রান্সমিশন ইউনিট
 
-**MTU (Maximum Transmission Unit)** is the largest Layer 2 payload size that can be transmitted without fragmentation.
+আজ দেখবো MTU (Maximum Transmission Unit) কী এবং এটা নেটওয়ার্কিং-এ কেন গুরুত্বপূর্ণ।
 
-Common MTU values:
-• **Ethernet:** 1500 bytes (standard)
-• **Jumbo frames:** 9000 bytes (data centers)
-• **Loopback:** 65535 bytes (Linux)
-• **PPP over Ethernet (PPPoE):** 1492 bytes (2 bytes reserved)
+## Step 1: MTU কী
 
-If a packet exceeds the MTU, it must be fragmented or dropped.
+MTU হলো একটা নেটওয়ার্ক লিংক যে সর্বোচ্চ পরিমাণ ডেটা একসাথে পাঠাতে পারে। মানে, একটা Ethernet ফ্রেমের সর্বোচ্চ মান।
 
-## Step 2: Common MTUs [বাংলা অনুবাদ প্রয়োজন]
+সহজ কথায় — যদি MTU 1500 বাইট হয়, তাহলে তুমি একবারে 1500 বাইটের বেশি ডেটা পাঠাতে পারবে না। বেশি হলে ভাঙতে হবে।
 
-Different network technologies have different MTU limits:
+## Step 2: সাধারণ MTU মান
 
-`Ethernet:     1500 bytes`
-`Jumbo Frame:  9000 bytes`
-`PPPoE:        1492 bytes`
-`Wi-Fi:        2304 bytes (802.11)`
-`Loopback:     65535 bytes (Linux)`
+বিভিন্ন নেটওয়ার্কে ভিন্ন MTU আছে:
 
-The standard Ethernet MTU of 1500 bytes is the most common limit you'll encounter. Jumbo frames are used in data centers for high-throughput storage and clustering traffic.
+| নেটওয়ার্ক টাইপ | MTU |
+|---|---|
+| Ethernet | 1500 বাইট |
+| Jumbo Ethernet | 9000 বাইট |
+| PPPoE (DSL) | 1492 বাইট |
+| VPN (WireGuard) | 1420 বাইট |
+| Loopback | 65536 বাইট |
 
-## Step 3: Fragmentation [বাংলা অনুবাদ প্রয়োজন]
+সবচেয়ে সাধারণ হলো Ethernet-এর 1500 বাইট। বেশিরভাগ ক্ষেত্রে তুমি এটাই দেখবে।
 
-When a packet exceeds the MTU, it must be **fragmented** into smaller pieces.
+## Step 3: Fragmentation কী হয়
 
-A 4000-byte packet must be split to fit the 1500-byte Ethernet MTU:
-• **Fragment 1:** 1500 bytes (offset 0)
-• **Fragment 2:** 1500 bytes (offset 1500)
-• **Fragment 3:** 1000 bytes (offset 3000)
+যদি তোমার প্যাকেট MTU-র চেয়ে বড় হয়, তাহলে **fragmentation** হয় — মানে প্যাকেটকে ছোট ছোট টুকরো ভাগ করা হয়।
 
-Each fragment is an independent packet with its own IP header. The receiver reassembles them using the **Identification**, **Fragment Offset**, and **More Fragments (MF)** flags.
+উদাহরণ:
+- তোমার প্যাকেট: 3000 বাইট
+- MTU: 1500 বাইট
+- ফলাফল: ২টা ফ্র্যাগমেন্ট (1500 + 1500)
 
-Fragmentation adds overhead and can cause performance issues.
+প্রতিটা ফ্র্যাগমেন্ট আলাদা করে পাঠানো হয় এবং ডেস্টিনেশনে গিয়ে আবার জোড়া লাগানো হয় (reassembly)।
 
-## Step 4: Path MTU Discovery [বাংলা অনুবাদ প্রয়োজন]
+Fragmentation **কম কাম্য** — কারণ:
+- প্রতিটা ফ্র্যাগমেন্টে IP header লাগে
+- একটা ফ্র্যাগমেন্ট হারিয়ে গেলে পুরো প্যাকেট হারিয়ে যায়
+- রিসিভারের কাজ বাড়ে
 
-**Path MTU Discovery (PMTUD)** finds the largest MTU along the entire path without fragmentation.
+## Step 4: Path MTU Discovery
 
-How it works:
-1. Sender sets the **DF (Don't Fragment)** bit in the IP header
-2. If a router can't forward the packet (too large, DF=1), it drops it and sends an **ICMP Fragmentation Needed** message (Type 3, Code 4)
-3. The sender reduces the packet size and retries
-4. This continues until the packet reaches the destination
+**Path MTU Discovery (PMTUD)** হলো পুরো পথে সর্বোচ্চ MTU খুঁজে বের করার পদ্ধতি।
 
-PMTUD avoids fragmentation entirely, improving performance. It's the preferred approach for TCP applications.
+কীভাবে কাজ করে:
+1. Sender প্যাকেট পাঠায়, DF (Don't Fragment) bit সেট করে
+2. যদি কোনো router-এর MTU ছোট হয় → router ICMP "Fragmentation Needed" message পাঠায়
+3. Sender প্যাকেট ছোট করে আবার পাঠায়
+4. এভাবে পুরো পথে সবচেয়ে ছোট MTU খুঁজে বের হয়
+
+Linux-এ `ping` দিয়ে PMTUD চেষ্টা করতে পারো:
+
+```bash
+ping -M do -s 1472 8.8.8.8
+```
+
+এখানে `-M do` DF bit সেট করে এবং `-s 1472` payload size (1472 + 28 IP/ICMP header = 1500)।
+
+**সারসংক্ষেপ:** MTU হলো একসাথে পাঠানো সর্বোচ্চ ডেটা। 1500 বাইট সাধারণ। বেশি হলে fragmentation হয় — যা এড়ানো উচিত। PMTUD দিয়ে পুরো পথের সঠিক MTU খুঁজে নাও।

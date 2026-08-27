@@ -1,84 +1,78 @@
 ---
-name: MAC Address
-description: Physical address — the unique ID burned into every NIC
-category: Components
-order: 0
+name: MAC Address - ভৌত ঠিকানা
+description: MAC Address কী, কেমন তৈরি হয়, Unicast/Broadcast/Multicast কী — সব বাংলায় সহজ করে বোঝানো হয়েছে
 ---
 
-## Step 1: What is a MAC Address? [বাংলা অনুবাদ প্রয়োজন]
+# MAC Address — ভৌত ঠিকানা
 
-A **MAC (Media Access Control)** address is the **physical address** burned into every Network Interface Card (NIC) by the manufacturer.
+আজ দেখবো MAC Address কী এবং এটা নেটওয়ার্কিং-এ কেন এত গুরুত্বপূর্ণ।
 
-It operates at **Layer 2** (Data Link layer) of the OSI model and is used to identify devices on a local network segment.
+## Step 1: MAC Address কী
 
-Unlike IP addresses (which are logical and can change), a MAC address is a **permanent hardware identifier** — though it can be spoofed in software.
+MAC (Media Access Control) Address হলো তোমার Network Interface Card (NIC)-র ভৌত ঠিকানা। এটা তৈরি হয় ফ্যাক্টরিতে — এবং সাধারণত পরিবর্তন হয় না। যদি তোমার laptop-এ WiFi adapter এবং Ethernet port দুটো আছে, তাহলে দুটোরই আলাদা MAC address আছে।
 
-## Step 2: MAC Address Format [বাংলা অনুবাদ প্রয়োজন]
+## Step 2: MAC Address-এর Format
 
-A MAC address is a **48-bit (6-byte)** number written in hexadecimal:
+MAC address দেখতে এরকম হয়:
 
-`AA:BB:CC:DD:EE:FF`
+```
+AA:BB:CC:DD:EE:FF
+```
 
-Each pair of hex digits represents one byte. The first 3 bytes identify the **vendor (OUI)**, and the last 3 bytes identify the **specific device**.
+- ৬টা হেক্সাডেসিমাল গ্রুপ (মোট ১২ অক্ষর)
+- প্রতিটা গ্রুপ ২ বাইট (৮ বিট)
+- মোট ৪৮ বিট — 281 ট্রিলিয়ন+ সম্ভাব্য এড্রেস!
 
-## Step 3: OUI — Vendor Identifier [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: OUI — কোম্পানির চিহ্ন
 
-The first **3 bytes (24 bits)** of a MAC address form the **OUI (Organizationally Unique Identifier)**.
+MAC address-এর প্রথম ৩টা গ্রুপ (৬ অক্ষর) হলো **OUI (Organizationally Unique Identifier)**। এটা বলে দেয় কোন কোম্পানি এই NIC তৈরি করেছে।
 
-`AA:BB:CC` ← OUI identifies the manufacturer
+উদাহরণ:
+- `00:50:56` → VMware
+- `08:00:27` → Oracle (VirtualBox)
+- `B8:27:EB` → Raspberry Pi
 
-The IEEE (Institute of Electrical and Electronics Engineers) assigns OUIs to companies. For example:
-• Intel: `00:1B:21`
-• Cisco: `00:1A:A0`
-• Apple: `3C:22:FB`
+তুমি যদি MAC `08:00:27:AA:BB:CC` দেখো, তাহলে জানো এটা VirtualBox-এর VM।
 
-## Step 4: NIC ID — Device Identifier [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: NIC ID — শেষ ৩টা গ্রুপ
 
-The last **3 bytes (24 bits)** form the **NIC ID** — a unique identifier assigned by the manufacturer.
+MAC address-এর শেষ ৩টা গ্রুপ (৬ অক্ষর) হলো **NIC Identifier** — এটা নির্দিষ্ট NIC-র জন্য বিশেষ। কোম্পানি প্রতিটা NIC-কে একটা অনন্য ID দেয়। দুটো NIC-র একই MAC address হওয়ার সম্ভাবনা অনেক কম।
 
-`DD:EE:FF` ← NIC ID (device-specific)
+## Step 5: Unicast MAC
 
-Combined with the OUI, this creates a globally unique address. With 2²⁴ (16.7 million) possible NIC IDs per OUI, manufacturers rarely run out.
+**Unicast** মানে একটা source থেকে একটা destination-এ প্যাকেট যায়। MAC address-এর প্রথম বিট 0 হলে এটা unicast।
 
-## Step 5: Unicast MAC [বাংলা অনুবাদ প্রয়োজন]
+উদাহরণ: `AA:BB:CC:DD:EE:01` → শেষ বিট `01` — binary `00000001`, প্রথম বিট 0 = Unicast।
 
-A **unicast** MAC address identifies a **single device** on the network.
+সুইচ যখন জানে MAC address কোন পোর্টে আছে, তখন শুধু সেই পোর্টে প্যাকেট পাঠায় — এটাই unicast।
 
-The **least significant bit** of the first byte is **even (0)**:
-`AA:BB:CC:DD:EE:02` → Unicast
+## Step 6: Broadcast MAC
 
-When a frame is sent to a unicast address, only the device with that MAC will accept it. This is the most common type of MAC address.
+**Broadcast** মানে প্যাকেটটা নেটওয়ার্কের সবাই পাবে। Broadcast MAC address হলো:
 
-## Step 6: Broadcast MAC [বাংলা অনুবাদ প্রয়োজন]
+```
+FF:FF:FF:FF:FF:FF
+```
 
-The **broadcast** MAC address is `FF:FF:FF:FF:FF:FF` — all bits set to 1.
+সব বিট 1। সুইচ broadcast ফ্রেমটাকে সব পোর্টে পাঠায়। ARP Request, DHCP Discover — এগুলো broadcast হয়।
 
-When a frame is sent to this address, **every device** on the local network segment will process it.
+## Step 7: Multicast MAC
 
-Broadcast MAC is used for:
-• ARP requests ("Who has this IP?")
-• DHCP discovery ("I need an IP!")
-• Network announcements
+**Multicast** হলো একটা গ্রুপ অফ ডিভাইসকে প্যাকেট পাঠানো — সবাইকে নয়, শুধু নির্দিষ্ট গ্রুপকে। MAC address-এর প্রথম বিট 1 এবং শেষ বিট 1 হলে multicast।
 
-## Step 7: Multicast MAC [বাংলা অনুবাদ প্রয়োজন]
+উদাহরণ: `01:00:5E:00:00:01` — এটা IPv4 multicast এড্রেস।
 
-A **multicast** MAC address identifies a **group of devices**.
+Multicast ব্যবহার হয় ভিডিও স্ট্রিমিং, অনলাইন গেমিং — যেখানে একটা source থেকে অনেকে একসাথে ডেটা পায়।
 
-The **least significant bit** of the first byte is **odd (1)**:
-`01:00:5E:xx:xx:xx` → IPv4 Multicast
-`33:33:xx:xx:xx:xx` → IPv6 Multicast
+## Step 8: সারসংক্ষেপ
 
-Multicast allows one sender to reach multiple receivers efficiently — without broadcasting to everyone.
+MAC Address-এর মূল কথা:
 
-## Step 8: MAC Address Summary [বাংলা অনুবাদ প্রয়োজন]
+- **ভৌত ঠিকানা:** NIC-র ফ্যাক্টরি-সেট এড্রেস
+- **Format:** ১২ হেক্সাডেসিমাল অক্ষর (`AA:BB:CC:DD:EE:FF`)
+- **OUI:** প্রথম ৩ গ্রুপ — কোম্পানির চিহ্ন
+- **Unicast:** একটা ↔ একটা (সবচেয়ে সাধারণ)
+- **Broadcast:** সবাইকে (`FF:FF:FF:FF:FF:FF`)
+- **Multicast:** একটা গ্রুপকে
 
-**Key takeaway:** MAC addresses are the foundation of Layer 2 communication.
-
-• **48-bit** hexadecimal address (e.g., AA:BB:CC:DD:EE:FF)
-• **OUI** (first 3 bytes) = vendor identifier
-• **NIC ID** (last 3 bytes) = device identifier
-• **Unicast** = single device (first byte even)
-• **Broadcast** = all devices (FF:FF:FF:FF:FF:FF)
-• **Multicast** = group of devices (first byte odd)
-
-Switches use MAC addresses to forward frames. ARP maps IP addresses to MAC addresses.
+Layer 2-তে ডেটা পাঠানোর জন্য MAC address ছাড়া চলে না!

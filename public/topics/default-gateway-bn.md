@@ -1,82 +1,78 @@
 ---
-name: Default Gateway
-description: How hosts use 0.0.0.0/0 default route to reach the internet
-category: Networking Fundamentals
-order: 12
+name: ডিফল্ট গেটওয়ে
+description: 0.0.0.0/0 রুট — কীভাবে তোমার কম্পিউটার লোকাল নেটওয়ার্কের বাইরে যায়
 ---
 
-## Step 1: PC wants to reach Google (8.8.8.8) [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: PC গুগলে যেতে চায়
 
-**PC** (192.168.1.10) wants to access Google at `8.8.8.8`.
+ধরো, তুমি তোমার কম্পিউটার থেকে google.com ওপেন করতে চাও। তোমার PC-র IP 192.168.1.10। গুগলের সার্ভার অনেক দূরে — তুমি লোকাল নেটওয়ার্কের বাইরে যেতে চাও। কিন্তু কীভাবে?
 
-The destination is on the **internet** — far beyond the local network. The PC needs a way to route traffic outside its own subnet.
+## Step 2: রুটিং টেবিল চেক করো
 
-**Prerequisite:** You should first understand **ARP** (how MAC addresses are discovered) and **Layer 2** (how switches forward frames).
+PC প্রথমে তার রুটিং টেবিল দেখে:
 
-**How does PC know 8.8.8.8?** The user typed `ping 8.8.8.8` or a DNS server resolved a hostname to this IP. See **How Networks Start** for the full journey.
+```
+Destination     Gateway         Genmask         Flags   Metric
+192.168.1.0     0.0.0.0         255.255.255.0   U       0
+0.0.0.0         192.168.1.1     0.0.0.0         UG      0
+```
 
-**See also:** **Subnetting** topic to understand why different subnets need a gateway.
+প্রথম লাইনে দেখো 192.168.1.0/24 নেটওয়ার্ক সরাসরি সংযুক্ত। দ্বিতীয় লাইনে `0.0.0.0/0` আছে — এটাই ডিফল্ট রুট। মানে, যেকোনো ডেস্টিনেশন যা 192.168.1.0/24 এর বাইরে, সেটা 192.168.1.1 (গেটওয়ে) দিয়ে যাবে।
 
-## Step 2: PC checks routing table — no specific route for 8.8.8.8 [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: ডিফল্ট গেটওয়ে কি?
 
-PC checks its **routing table** for a route to 8.8.8.8.
+ডিফল্ট গেটওয়ে হলো সেই রাউটার যার মাধ্যমে তোমার PC লোকাল নেটওয়ার্কের বাইরে যায়। ধরো, তোমার রাউটারের IP 192.168.1.1 এবং MAC `11:22:33:44:55:66`। তুমি যখন গুগলে যাও, তখন PC প্যাকেটটা প্রথমে এই রাউটারকে দেবে।
 
-There is no specific route for this IP. But there IS a **default route**:
-`0.0.0.0/0 → 192.168.1.1 (Gateway)`
+## Step 4: PC গেটওয়ের MAC-এ ফ্রেম তৈরি করে
 
-The `0.0.0.0/0` entry is a **wildcard** — it matches ANY destination that doesn't have a more specific route.
+PC জানে ডিফল্ট গেটওয়ে 192.168.1.1। কিন্তু ফ্রেম তৈরি করতে হলে MAC এড্রেস লাগে। PC ARP টেবিল চেক করে এবং গেটওয়ের MAC `11:22:33:44:55:66` পায়। তারপর সে একটা ইথারনেট ফ্রেম তৈরি করে:
 
-## Step 3: PC uses default gateway (0.0.0.0/0 matches everything) [বাংলা অনুবাদ প্রয়োজন]
+- Source MAC: `AA:AA:AA:AA:00:01` (PC-র MAC)
+- Destination MAC: `11:22:33:44:55:66` (গেটওয়ের MAC)
+- Destination IP: 142.250.185.78 (গুগলের IP)
 
-The default route `0.0.0.0/0` is like saying "send **everything else** to this gateway."
+## Step 5: Switch ফ্রেমটা গেটওয়ের দিকে পাঠায়
 
-It's the network equivalent of a **catch-all**. Any traffic not destined for the local subnet gets forwarded to the Default Gateway (192.168.1.1), which knows how to reach the internet.
+PC ফ্রেমটা Switch-কে দেয়। Switch দেখে ডেস্টিনেশন MAC `11:22:33:44:55:66`। Switch তার MAC টেবিল চেক করে এবং দেখে এই MAC কোন পোর্টে আছে। তারপর শুধু সেই পোর্টে ফ্রেমটা পাঠায়।
 
-## Step 4: PC sends frame to Gateway MAC [বাংলা অনুবাদ প্রয়োজন]
+## Step 6: গেটওয়ে রুটিং টেবিল চেক করে
 
-PC builds an Ethernet frame addressed to the **Gateway's MAC**:
+রাউটার (গেটওয়ে) ফ্রেম পায়। সে দেখে ডেস্টিনেশন IP 142.250.185.78 — এটা লোকাল নেটওয়ার্কে নেই। তাই রাউটার তার রুটিং টেবিল চেক করে।
 
-`Src MAC: AA:BB:CC:DD:EE:01 (PC)`
-`Dst MAC: AA:BB:CC:DD:EE:FF (Gateway)`
+## Step 7: রুটিং টেবিলে সঠিক পথ খুঁজে পায়
 
-The IP packet inside targets `8.8.8.8`, but the frame is for local delivery to the Gateway.
+রাউটারের রুটিং টেবিলে আছে:
 
-## Step 5: Switch forwards to Gateway [বাংলা অনুবাদ প্রয়োজন]
+```
+Destination     Gateway         Interface
+142.250.0.0/16  10.0.0.1        eth1
+```
 
-The Switch receives the frame and looks up the destination MAC — found on the port connected to the Default Gateway.
+মানে 142.250.x.x নেটওয়ার্কের জন্য নেক্সট-হপ 10.0.0.1 এবং ইন্টারফেস eth1।
 
-It **forwards** the frame directly to the Gateway.
+## Step 8: গেটওয়ে নতুন ফ্রেম তৈরি করে
 
-## Step 6: Gateway receives, checks routing table [বাংলা অনুবাদ প্রয়োজন]
+রাউটার একটা নতুন ফ্রেম তৈরি করে:
 
-The Default Gateway receives the frame, strips the Ethernet header, and examines the IP destination: `8.8.8.8`.
+- Source MAC: `22:33:44:55:66:77` (eth1-র MAC)
+- Destination MAC: `33:44:55:66:77:88` (নেক্সট-হপের MAC)
+- Source IP: 192.168.1.10 (তোমার PC-র IP)
+- Destination IP: 142.250.185.78 (গুগলের IP)
 
-It checks its **routing table** and finds a route to the internet via its **eth1 interface** (WAN side).
+রাউটার আইপি এড্রেস পরিবর্তন করে না — শুধু MAC এড্রেস পরিবর্তন করে।
 
-## Step 7: Gateway has route to internet via eth1 [বাংলা অনুবাদ প্রয়োজন]
+## Step 9: ইন্টারনেট থেকে রিপ্লাই আসে
 
-The Gateway's routing table shows:
-`192.168.1.0/24 → eth0 (LAN side)`
-`0.0.0.0/0 → eth1 (WAN → ISP)`
+গুগলের সার্ভার প্যাকেটটা পায় এবং রিপ্লাই পাঠায়। রিপ্লাই প্যাকেটটা আসে তোমার রাউটারের কাছে। Destination IP 192.168.1.10। রাউটার দেখে এই IP তার লোকাল নেটওয়ার্কে আছে।
 
-The default route on the WAN side means "send all non-local traffic to the **ISP**." The Gateway decrements the TTL and builds a new frame for the internet.
+## Step 10: রাউটার PC-কে রিপ্লাই দেয়
 
-## Step 8: Gateway forwards to Internet [বাংলা অনুবাদ প্রয়োজন]
+রাউটার নতুন ফ্রেম তৈরি করে:
 
-The Gateway sends the packet out its **WAN interface** (eth1) toward the Internet.
+- Source MAC: `11:22:33:44:55:66` (রাউটারের MAC)
+- Destination MAC: `AA:AA:AA:AA:00:01` (PC-র MAC)
+- Destination IP: 142.250.185.78
 
-It may also perform **NAT** (replacing the private source IP with its public IP), but the key idea is that the Gateway knows how to reach the internet because of its default route.
+Switch ফ্রেমটা PC-র দিকে পাঠায়। PC প্যাকেটটা গ্রহণ করে এবং ব্রাউজারে গুগল লোড হয়।
 
-## Step 9: Internet responds — Gateway translates back [বাংলা অনুবাদ প্রয়োজন]
-
-Google (8.8.8.8) responds and the reply reaches the Gateway.
-
-The Gateway looks up its **NAT table** (or routing table) and translates the destination back to the PC's private IP: `192.168.1.10`.
-
-## Step 10: Default Gateway delivers reply to PC [বাংলা অনুবাদ প্রয়োজন]
-
-The Gateway builds a new frame and sends the reply through the Switch to the PC.
-
-**Key takeaway:** A **default gateway** is the exit door from a local network. The `0.0.0.0/0` route is the most important route on any host — it tells the device "if you don't know where to send a packet, send it here."
-
-Every device on a network needs a default gateway to reach the internet. Without it, the PC could only communicate with devices on its own subnet (192.168.1.0/24).
+**ডিফল্ট গেটওয়ে ছাড়া** তোমার PC শুধু 192.168.1.0/24 নেটওয়ার্কেই যোগাযোগ করতে পারবে। ইন্টারনেট ব্যবহার সম্ভব হবে না।

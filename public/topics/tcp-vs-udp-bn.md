@@ -1,70 +1,52 @@
 ---
-name: TCP vs UDP
-description: The tradeoff — reliability vs speed
-category: Networking Fundamentals
-order: 31
+name: TCP বনাম UDP
+description: দুটো ট্রান্সপোর্ট প্রোটোকলের পার্থক্য — নির্ভরযোগ্য বনাম দ্রুত
 ---
 
-## Step 1: TCP — Reliable [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: TCP নির্ভরযোগ্য
 
-**TCP (Transmission Control Protocol)** provides **reliable, ordered** delivery.
+**TCP (Transmission Control Protocol)** নির্ভরযোগ্য। মানে:
 
-Key features:
-• **Connection-oriented** — 3-way handshake before data transfer
-• **Ordered delivery** — sequence numbers ensure data arrives in order
-• **Retransmission** — lost packets are automatically resent
-• **Flow control** — prevents overwhelming the receiver
-• **Congestion control** — adapts to network conditions
+- প্রতিটা প্যাকেট সার্ভারে পৌঁছায়
+- প্যাকেট হারিলে রিট্রান্সমিশন হয়
+- সব প্যাকেট সঠিক অর্ডারে জোড়া লাগে
+- Flow Control আছে — সার্ভার ব্যস্ত থাকলে ক্লায়েন্ট ধীরে পাঠায়
 
-TCP guarantees that every byte arrives intact and in order — but this comes with overhead.
+কিন্তু এই সব গ্যারান্টি দেওয়ার জন্য TCP-কে বেশি কাজ করতে হয়, তাই এটা **বেশি ধীর**।
 
-## Step 2: TCP Use Cases [বাংলা অনুবাদ প্রয়োজন]
+## Step 2: TCP-র ব্যবহার
 
-TCP is used when **data integrity is critical**:
+TCP ব্যবহার হয় যেখানে **ডেটা ইন্টিগ্রিটি** গুরুত্বপূর্ণ:
 
-**HTTP/HTTPS (Web):**
-• Web pages must load completely — no missing images or broken HTML
+- **ওয়েব ব্রাউজিং** — HTTP/HTTPS
+- **ইমেইল** — SMTP, IMAP
+- **ফাইল ট্রান্সফার** — FTP, SCP
+- **SSH** — রিমোট অ্যাক্সেস
 
-**Email (SMTP/IMAP):**
-• An email can't arrive with missing words
+যদি একটা প্যাকেট হারিয়ে যায়, ওয়েব পেজ ভেঙে যাবে। তাই TCP দরকার।
 
-**File Transfer (FTP/SFTP):**
-• A corrupted file could be catastrophic
+## Step 3: UDP দ্রুত
 
-**SSH:**
-• Remote commands must execute exactly as typed
+**UDP (User Datagram Protocol)** দ্রুত। মানে:
 
-In short: if losing even one byte would break the application, use TCP.
+- কোনো handshake নেই — সরাসরি পাঠাও
+- প্যাকেট হারিলে কিছু হয় না — রিট্রান্সমিশন নেই
+- অর্ডার গ্যারান্টি নেই
+- Flow Control নেই
 
-## Step 3: UDP — Fast [বাংলা অনুবাদ প্রয়োজন]
+কিন্তু এর সুবিধা হলো — UDP **খুবই দ্রুত**।
 
-**UDP (User Datagram Protocol)** provides **fast, connectionless** delivery.
+## Step 4: কখন কী ব্যবহার করবে
 
-Key characteristics:
-• **Connectionless** — no handshake, just send
-• **No ordering** — packets may arrive out of order
-• **No retransmission** — lost packets are gone
-• **8-byte header** — minimal overhead
-• **No flow/congestion control** — sends at full speed
+**TCP ব্যবহার করো** যখন:
+- ডেটা হারানো যাবে না (ওয়েব, ইমেইল, ফাইল)
+- সঠিক অর্ডার দরকার
+- রিট্রান্সমিশন দরকার
 
-UDP is the "fire and forget" protocol — ideal when speed matters more than perfection.
+**UDP ব্যবহার করো** যখন:
+- **গেমিং** — ল্যাটেন্সি কম দরকার
+- **ভিডিও স্ট্রিমিং** — কিছু ফ্রেম হারিলেও চলে
+- **DNS** — ছোট অনুরোধ, দ্রুত উত্তর দরকার
+- **VoIP** — কথা বলার সময় ডিলে চলবে না
 
-## Step 4: When to Use Which [বাংলা অনুবাদ প্রয়োজন]
-
-**Decision guide:**
-
-`Protocol    | Use TCP?  | Use UDP?`
-`HTTP/HTTPS  | YES       | No`
-`DNS         | Rarely    | YES (default)`
-`Gaming      | No        | YES`
-`Email       | YES       | No`
-`Video       | Streaming | Live YES`
-`VoIP        | No        | YES`
-`File Trans  | YES       | No`
-`DHCP        | No        | YES`
-
-**Rule of thumb:**
-• Every byte must arrive? → **TCP**
-• Speed matters more? → **UDP**
-• Small query/response? → **UDP**
-• Large data transfer? → **TCP**
+সংক্ষেপে: TCP = নির্ভরযোগ্য কিন্তু ধীর, UDP = দ্রুত কিন্তু ঝুঁকিপূর্ণ।

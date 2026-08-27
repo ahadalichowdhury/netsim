@@ -1,77 +1,88 @@
 ---
-name: Linux Bridges
-description: Connecting VMs/containers with Linux bridge (brctl)
-category: Linux Core Networking
-order: 27
+name: Linux ব্রিজ
+description: brctl দিয়ে ভার্চুয়াল স্যুইচ তৈরি — কীভাবে VM-গুলো একে অপরের সাথে যোগাযোগ করে
 ---
 
-## Step 1: Linux bridge acts like a virtual switch [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: ব্রিজ হলো ভার্চুয়াল স্যুইচ
 
-A **Linux bridge** is a kernel-level virtual switch. It works just like a physical switch — it learns MAC addresses and forwards frames.
+Linux-এ `brctl` দিয়ে একটা ব্রিজ তৈরি করা যায়। ব্রিজ মূলত একটা ভার্চুয়াল স্যুইচ — যেটা একাধিক নেটওয়ার্ক ইন্টারফেসকে এক সাথে যুক্ত করে। যেমন, তোমার মেশিনে তিনটা VM আছে এবং সবাইকে একই নেটওয়ার্কে রাখতে হলে ব্রিজ ব্যবহার করো।
 
-Created with:
-`ip link add br0 type bridge`
-`brctl show br0`
+```bash
+brctl addbr br0
+ip link set br0 up
+```
 
-The bridge has ports where VMs/containers attach, and an uplink to the outside network.
+## Step 2: VM-গুলো ব্রিজের সাথে সংযুক্ত
 
-**Prerequisite:** Understand **Network Namespaces** and **Layer 2** (MAC learning) first.
+প্রতিটা VM-কে একটা virtual ethernet (veth) দেওয়া হয় এবং সেটাকে ব্রিজের সাথে যুক্ত করা হয়। যেমন:
 
-## Step 2: VM-1 and VM-2 both connected to br0 [বাংলা অনুবাদ প্রয়োজন]
+- VM-1: `veth-vm1` → `br0`
+- VM-2: `veth-vm2` → `br0`
+- VM-3: `veth-vm3` → `br0`
 
-Both VMs are attached to bridge br0 via their virtual NICs:
-`brctl addif br0 tap-vm1`
-`brctl addif br0 tap-vm2`
+এখন তিনটা VMই একই ব্রিজে যুক্ত — মানে একটা ভার্চুয়াল স্যুইচে যুক্ত।
 
-The bridge's **Forwarding Database (FDB)** is currently empty — it hasn't learned any MAC addresses yet.
+## Step 3: VM-1 ARP ব্রডকাস্ট পাঠায়
 
-## Step 3: VM-1 sends ARP broadcast [বাংলা অনুবাদ প্রয়োজন]
+VM-1 (192.168.1.10) চায় VM-2 (192.168.1.20) এর সাথে কথা বলতে। কিন্তু VM-1-র কাছে VM-2-র MAC এড্রেস নেই। তাই VM-1 ARP Request প্যাকেট তৈরি করে:
 
-VM-1 wants to communicate with VM-2 but doesn't know its MAC address. It sends an **ARP broadcast**:
-`"Who has VM-2? Tell VM-1"`
+- Source MAC: `AA:AA:AA:AA:00:01`
+- Destination MAC: `FF:FF:FF:FF:FF:FF`
+- Message: "192.168.1.20 তোমার MAC কি?"
 
-The broadcast frame enters the bridge on the vm-1 port.
+## Step 4: ব্রিজ ARP ব্রডকাস্ট ফ্লাড করে
 
-## Step 4: Bridge floods to VM-2 [বাংলা অনুবাদ প্রয়োজন]
+ব্রিজ (br0) VM-1 থেকে ARP Request পায়। যেহেতু ডেস্টিনেশন MAC হলো `FF:FF:FF:FF:FF:FF` (ব্রডকাস্ট), ব্রিজ সবাইকে প্যাকেটটা পাঠায় — শুধু VM-1 ছাড়া। মানে VM-2 এবং VM-3 দুজনই ARP Request পাবে।
 
-The bridge receives the broadcast and **floods** it out all ports except the source — including the port connected to VM-2.
+## Step 5: শুধু VM-2 রিপ্লাই দেবে
 
-VM-2 receives the ARP request and recognizes its own IP.
+VM-3 ARP Request পায় কিন্তু দেখে ডেস্টিনেশন IP 192.168.1.20 আমার না। তাই সে প্যাকেটটা ডিসকার্ড করে। কিন্তু VM-2 বুঝতে পারে "এই IP তো আমার!" এবং ARP Reply তৈরি করে:
 
-## Step 5: VM-2 replies (unicast) [বাংলা অনুবাদ প্রয়োজন]
+- Source MAC: `BB:BB:BB:BB:00:02`
+- Destination MAC: `AA:AA:AA:AA:00:01`
+- Message: "আমার MAC হলো BB:BB:BB:BB:00:02"
 
-VM-2 sends an **ARP Reply** — this time a **unicast** frame addressed to VM-1's MAC.
+## Step 6: ব্রিজ MAC এড্রেস শিখে ফেলে
 
-The bridge receives the reply and **learns** VM-2's MAC address from the source field. It adds an entry to its FDB.
+ব্রিজ ARP Reply পাঠানোর সাথে সাথে দুটো কাজ করে:
 
-## Step 6: Bridge learns VM-1 MAC, adds to FDB [বাংলা অনুবাদ প্রয়োজন]
+1. **VM-1 থেকে ARP Request আসার সময়:** ব্রিজ দেখে VM-1-র MAC `AA:AA:AA:AA:00:01` কোন পোর্টে আছে। সে এই ম্যাপিংটা তার FDB (Forwarding Database) টেবিলে রাখে।
 
-The bridge now forwards the ARP reply toward VM-1. When VM-1's frame arrives, the bridge also **learns VM-1's MAC** from the source.
+2. **VM-2 থেকে ARP Reply আসার সময়:** ব্রিজ দেখে VM-2-র MAC `BB:BB:BB:BB:00:02` কোন পোর্টে আছে। সে এটাও FDB-তে রাখে।
 
-The FDB now has entries for **both VMs**. Future unicast frames won't need flooding.
+## Step 7: FDB এন্ট্রি তৈরি হয়
 
-## Step 7: VM-1 sends data to VM-2 (unicast) [বাংলা অনুবাদ প্রয়োজন]
+FDB (Forwarding Database) টেবিলে এখন দুটো এন্ট্রি আছে:
 
-Now that ARP is resolved, VM-1 sends a **data frame** to VM-2.
+| MAC Address | Port |
+|-------------|------|
+| AA:AA:AA:AA:00:01 | veth-vm1 |
+| BB:BB:BB:BB:00:02 | veth-vm2 |
 
-The frame enters the bridge with VM-1 as the source (already learned) and VM-2 as the destination.
+ব্রিজ এখন জানে প্রতিটা MAC এড্রেস কোন পোর্টে আছে।
 
-## Step 8: Bridge looks up FDB — forwards to VM-2 [বাংলা অনুবাদ প্রয়োজন]
+## Step 8: এখন ইউনিকাস্ট ফরোয়ার্ডিং সম্ভব
 
-The bridge checks its FDB for VM-2's MAC — **found on the vm-2 port**.
+FDB-তে MAC এন্ট্রি থাকার পর, ব্রিজের আর ফ্লাড করার দরকার নেই। যখন VM-1 VM-2-কে ডেটা পাঠায়, ব্রিজ শুধু FDB দেখে এবং শুধু veth-vm2 পোর্টে প্যাকেটটা পাঠায়। এটাই unicast forwarding — যা অনেক দক্ষ।
 
-It forwards the frame directly to VM-2. No flooding needed — the bridge learned the MAC addresses earlier.
+## Step 9: রাউটারের সাথে আপলিংক
 
-## Step 9: VM-1 sends to internet (not local) [বাংলা অনুবাদ প্রয়োজন]
+ব্রিজ শুধু VM-দের মধ্যে যোগাযোগ করে না। তুমি ব্রিজকে একটা রাউটারের সাথেও যুক্ত করতে পারো। যেমন, যদি VM-রা ইন্টারনেট ব্যবহার করতে চায়, তাহলে ব্রিজকে একটা ফিজিক্যাল ইন্টারফেস (eth0) এর সাথে যুক্ত করো।
 
-VM-1 now sends a packet destined for the **internet** (outside the local bridge network).
+```bash
+brctl addif br0 eth0
+```
 
-The bridge receives the frame, but the destination MAC belongs to the **Router** (next hop), not a local VM.
+এখন VM-রা রাউটারের মাধ্যমে ইন্টারনেটে যেতে পারবে।
 
-## Step 10: Bridge forwards to router (uplink) [বাংলা অনুবাদ প্রয়োজন]
+## Step 10: সারসংক্ষেপ
 
-The bridge looks up the destination MAC — it belongs to the **Router**, connected on the uplink port.
+Linux ব্রিজ হলো একটা শক্তিশালী টুল:
 
-The frame is forwarded to the Router, which will route it to the internet.
+- **ভার্চুয়াল স্যুইচ:** একাধিক VM-কে একই নেটওয়ার্কে যুক্ত করে
+- **MAC লার্নিং:** ARP থেকে MAC শিখে FDB-তে রাখে
+- **ফ্লাডিং:** নতুন MAC দেখালে সবাইকে পাঠায়
+- **ইউনিকাস্ট:** MAC জানলে শুধু সঠিক পোর্টে পাঠায়
+- **আপলিংক:** রাউটারের সাথে যুক্ত হয়ে ইন্টারনেট দেয়
 
-**Key takeaway:** A Linux bridge works exactly like a physical switch — it learns MAC addresses in its FDB and forwards unicast frames directly. It floods broadcasts and unknown unicast. Combined with a router on the uplink, it provides full network connectivity for VMs and containers.
+brctl ছাড়া Linux-এ নেটওয়ার্কিং অসম্ভব।

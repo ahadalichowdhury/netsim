@@ -1,81 +1,81 @@
 ---
-name: Linux Gateway
-description: Linux as a gateway with ip forwarding enabled
-category: Linux Core Networking
-order: 24
+name: Linux Gateway - ip forwarding
+description: Linux-এ ip forwarding দিয়ে দুটো নেটওয়ার্ক কীভাবে সংযুক্ত হয় — ধাপে ধাপে বাংলায়
 ---
 
-## Step 1: Linux box connects two networks [বাংলা অনুবাদ প্রয়োজন]
+# Linux Gateway — `ip forwarding`
 
-A Linux box sits between two networks:
-`Network 1 (br0): 192.168.1.0/24`
-`Network 2 (br1): 10.0.0.0/24`
+আজ দেখবো একটা Linux box কীভাবে দুটো আলাদা নেটওয়ার্ককে সংযুক্ত করতে পারে — `ip forwarding` ব্যবহার করে।
 
-The Linux box has two bridges (br0, br1) and **ip forwarding enabled**, acting as a gateway between them.
+## Step 1: Linux Box দুটো নেটওয়ার্কে সংযুক্ত
 
-**Prerequisite:** Understand **Default Gateway (Linux)** and **Network Namespaces** first.
+ধরো তোমার Linux box-এ দুটো নেটওয়ার্ক আছে:
 
-## Step 2: ip_forward is enabled in kernel [বাংলা অনুবাদ প্রয়োজন]
+- **br0:** `10.0.0.1/24` — এখানে Web Namespace (app1)
+- **br1:** `10.0.1.1/24` — এখানে DB Namespace (app2)
 
-IP forwarding is checked:
-`cat /proc/sys/net/ipv4/ip_forward`
+Linux box দুটো bridge-এর মাঝখানে আছে — যেন একটা রাউটার।
 
-Output: `1` (enabled)
+## Step 2: ip_forward এনাবল আছে
 
-When enabled, the Linux kernel can **route packets between interfaces** instead of dropping them. This turns the Linux box into a router/gateway.
+Linux-এ `ip_forward` কি এনাবল আছে চেক করো:
 
-## Step 3: Web namespace sends packet to 10.0.0.20 [বাংলা অনুবাদ প্রয়োজন]
+```bash
+cat /proc/sys/net/ipv4/ip_forward
+```
 
-The web namespace (NS: web) wants to reach the DB namespace (10.0.0.20) on a different subnet.
+যদি `1` দেখায়, তাহলে Linux box প্যাকেট forward করতে পারবে। যদি `0` দেখায়, তাহলে দরকার:
 
-The packet is sent through **veth1** toward br0 (192.168.1.1).
+```bash
+echo 1 > /proc/sys/net/ipv4/ip_forward
+```
 
-## Step 4: Packet reaches br0 (192.168.1.1) [বাংলা অনুবাদ প্রয়োজন]
+এটা ছাড়া Linux box প্যাকেট forward করবে না।
 
-The packet travels from veth1 to **bridge br0**.
+## Step 3: Web Namespace থেকে প্যাকেট বের হয়
 
-br0 is the gateway for the 192.168.1.0/24 network. The kernel processes the packet and checks the routing table.
+Web Namespace (app1, IP: `10.0.0.2`) থেকে DB Namespace (`10.0.1.2`)-তে প্যাকেট পাঠাতে হবে। app1 প্যাকেটটা তৈরি করে:
 
-## Step 5: Kernel routing table: 10.0.0.0/24 via br1 [বাংলা অনুবাদ প্রয়োজন]
+- **Source IP:** `10.0.0.2`
+- **Destination IP:** `10.0.1.2`
+- **Next Hop:** `10.0.0.1` (gateway — যেটা Linux box-র br0)
 
-The kernel checks its routing table:
-`192.168.1.0/24 dev br0`
-`10.0.0.0/24 dev br1`
+## Step 4: প্যাকেট br0-তে পৌঁছায়
 
-Destination 10.0.0.20 matches the 10.0.0.0/24 route — forward to **br1**.
+app1 প্যাকেটটা veth-a (যেটা br0-র সাথে সংযুক্ত) দিয়ে পাঠায়। প্যাকেটটা bridge `br0`-তে পৌঁছায়।
 
-## Step 6: Kernel forwards packet to br1 [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: Routing Table চেক হয়
 
-Since ip_forward is enabled, the kernel **forwards the packet** from br0 to br1.
+Linux kernel `br0`-তে প্যাকেট পেয়ে routing table চেক করে। Destination IP `10.0.1.2` — এটা `10.0.1.0/24` সাবনেটে। Kernel জানে যে `10.0.1.0/24` `br1` ইন্টারফেসের সাথে সংযুক্ত। তাই kernel প্যাকেটটা `br1`-এর দিকে forward করবে।
 
-The packet crosses the gateway — moving from one network to another.
+## Step 6: Kernel প্যাকেটটা br1-এ forward করে
 
-## Step 7: Packet reaches veth2-ns [বাংলা অনুবাদ প্রয়োজন]
+Kernel `ip_forward` এনাবল থাকায় প্যাকেটটা `br0` থেকে `br1`-এ forward করে। এটাই আসল কাজ — Linux box একটা নেটওয়ার্ক থেকে আরেকটা নেটওয়ার্কে প্যাকেট পাঠাচ্ছে।
 
-The packet arrives at **br1 (10.0.0.1)** and is forwarded to **veth2-ns** on the 10.0.0.0/24 network.
+## Step 7: প্যাকেট veth2-তে পৌঁছায়
 
-## Step 8: DB namespace receives packet [বাংলা অনুবাদ প্রয়োজন]
+`br1` প্যাকেটটা গ্রহণ করে এবং DB Namespace-এর সাথে সংযুক্ত veth2 ইন্টারফেস দিয়ে পাঠায়। প্যাকেটটা DB Namespace-এ পৌঁছায়।
 
-The DB namespace (NS: db) receives the packet on **veth2-ns**.
+## Step 8: DB Namespace প্যাকেট গ্রহণ করে
 
-Destination IP 10.0.0.20 matches — the packet is accepted.
+DB Namespace (app2, IP: `10.0.1.2`) প্যাকেটটা পায়। ডেস্টিনেশন IP মেলে — `10.0.1.2`। গ্রহণ করে এবং reply তৈরি করে।
 
-## Step 9: Reply flows back through gateway [বাংলা অনুবাদ প্রয়োজন]
+## Step 9: Reply ফিরে যায়
 
-The DB namespace sends a reply back to the web namespace. The reply follows the reverse path through the Linux gateway.
+app2 reply প্যাকেট তৈরি করে:
 
-## Step 10: Linux Gateway summary! [বাংলা অনুবাদ প্রয়োজন]
+- **Source IP:** `10.0.1.2`
+- **Destination IP:** `10.0.0.2`
 
-**Key takeaway:** Linux can act as a **network gateway** using IP forwarding.
+Reply প্যাকেটটা ঠিক উল্টো দিকে যায় — veth2 → br1 → Linux kernel → br0 → veth-a → app1।
 
-How it worked:
-1. **ip_forward=1** enables packet forwarding between interfaces
-2. Web namespace sends to 10.0.0.20 (remote subnet)
-3. Kernel checks **routing table** → route via br1
-4. Kernel **forwards packet** from br0 to br1
-5. DB namespace receives the packet
-6. Reply flows back through the gateway
+## Step 10: সারসংক্ষেপ
 
-Enable with:
-`echo 1 > /proc/sys/net/ipv4/ip_forward`
-`sysctl -w net.ipv4.ip_forward=1`
+Linux Gateway কীভাবে কাজ করে:
+
+- **ip_forward এনাবল:** Linux kernel-কে permission দেয় প্যাকেট forward করার
+- **bridge (br0, br1):** নেটওয়ার্ককে virtual switch হিসেবে কাজ করে
+- **Routing Table:** Kernel জানে কোন নেটওয়ার্ক কোন ইন্টারফেসে আছে
+- **Forward:** Kernel প্যাকেটটা একটা bridge থেকে আরেকটায় পাঠায়
+
+একটা Linux box-কে সহজেই রাউটার বানানো যায় — শুধু `ip_forward` এনাবল করো এবং সঠিক routes সেট করো!

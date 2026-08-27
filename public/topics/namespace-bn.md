@@ -1,94 +1,92 @@
 ---
-name: Network Namespaces
-description: Linux network isolation with namespaces and veth pairs
-category: Linux Core Networking
-order: 26
+name: Network Namespaces - Linux আইসোলেশন
+description: Linux-এ Network Namespaces কীভাবে কাজ করে — আলাদা নেটওয়ার্ক স্ট্যাক, veth pairs, bridge — সব বাংলায়
 ---
 
-## Step 1: Two isolated network namespaces: app1 and app2 [বাংলা অনুবাদ প্রয়োজন]
+# Network Namespaces — Linux আইসোলেশন
 
-**Linux network namespaces** provide complete network stack isolation. Each namespace has its own interfaces, routes, and iptables rules.
+আজ দেখবো Linux-এ Network Namespaces কী এবং এটা দিয়ে কীভাবে আলাদা আলাদা নেটওয়ার্ক তৈরি করা যায়।
 
-We've created two namespaces:
-`ip netns add app1`
-`ip netns add app2`
+## Step 1: দুটো আলাদা Namespace
 
-They are completely invisible to each other — like two separate machines.
+ধরো তোমার Linux machine-এ দুটো আলাদা Network Namespace আছে:
 
-**Prerequisite:** Understand **Network Interface (NIC)** and **Network Stack** first.
+- **ns-app1:** app1 চলছে এখানে (IP: `10.0.0.2`)
+- **ns-app2:** app2 চলছে এখানে (IP: `10.0.1.2`)
 
-## Step 2: Each namespace has its own network stack [বাংলা অনুবাদ প্রয়োজন]
+প্রতিটা namespace সম্পূর্ণ আলাদা — একটার নেটওয়ার্ক আরেকটা দেখতে পায় না।
 
-Each namespace runs its own independent **network stack**:
-• Its own **loopback** (lo) interface
-• Its own **routing table**
-• Its own **iptables/nftables** rules
-• Its own set of **sockets**
+## Step 2: প্রতিটার নিজের Network Stack
 
-If you run `ip netns exec app1 ip addr`, you'll see only the lo interface — no eth0, no bridge, nothing else.
+প্রতিটা namespace-র নিজের আলাদা network stack আছে:
 
-## Step 3: Veth pairs connect namespaces to bridge [বাংলা অনুবাদ প্রয়োজন]
+- নিজের IP address
+- নিজের routing table
+- নিজের firewall rules
+- নিজের network interfaces
 
-**Veth pairs** are virtual Ethernet cables — what goes in one end comes out the other.
+মনে করো দুটো আলাদা মেশিন — শুধু একটাই Linux kernel।
 
-We create two veth pairs:
-`ip link add veth-a type veth peer name veth-a-br`
-`ip link add veth-b type veth peer name veth-b-br`
+## Step 3: Veth Pairs দিয়ে সংযোগ
 
-Then move one end into each namespace and attach the other to the bridge:
-`ip link set veth-a netns app1`
-`ip link set veth-b netns app2`
-`brctl addif br0 veth-a-br`
-`brctl addif br0 veth-b-br`
+দুটো namespace-কে সংযুক্ত করতে **veth pairs** ব্যবহার হয়। Veth pair মানে হলো ভার্চুয়াল Ethernet ক্যাবল — এক পাশে একটা interface, অন্য পাশে আরেকটা।
 
-## Step 4: app1 sends a packet to the outside world [বাংলা অনুবাদ প্রয়োজন]
+```bash
+# ns-app1-এর জন্য
+ip link add veth-a type veth peer name veth-b
+ip link set veth-b netns ns-app1
 
-Namespace **app1** sends a packet destined for the internet.
+# ns-app2-এর জন্য
+ip link add veth-c type veth peer name veth-d
+ip link set veth-d netns ns-app2
+```
 
-Inside the namespace, the packet travels through **veth-a** — the veth pair acts as a virtual cable, delivering the frame out to the bridge.
+`veth-a` এবং `veth-c` host-এ থাকে, `veth-b` এবং `veth-d` নিজের namespace-তে চলে যায়।
 
-## Step 5: Veth-a forwards to bridge br0 [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: app1 প্যাকেট পাঠায়
 
-The other end of the veth pair delivers the frame to **bridge br0**.
+app1 (ns-app1, `10.0.0.2`) app2 (`10.0.1.2`)-তে প্যাকেট পাঠাতে চায়। app1 routing table-এ লেখা `10.0.1.0/24`-র জন্য gateway `10.0.0.1`। app1 প্যাকেটটা `veth-b` দিয়ে পাঠায়।
 
-The bridge receives the frame on the port connected to veth-a and begins standard bridge processing: learning the source MAC and looking up the destination.
+## Step 5: Veth-a-তে পৌঁছায়
 
-## Step 6: Bridge forwards to internet [বাংলা অনুবাদ প্রয়োজন]
+veth pair দিয়ে যা ns-app1-তে `veth-b`, সেটা host-তে `veth-a`। প্যাকেটটা `veth-a`-তে পৌঁছায়।
 
-The bridge looks up the destination — it's not local, so it forwards the frame out its **uplink port** toward the internet.
+## Step 6: Bridge-এ পৌঁছায়
 
-The packet has successfully left app1's namespace, traversed the veth pair, been bridged, and reached the outside world.
+Host-এ একটা **bridge** (যেমন `br0`) আছে যেটা দুটো namespace-কে সংযুক্ত করে। `veth-a` bridge-এর সাথে সংযুক্ত। bridge প্যাকেটটা গ্রহণ করে।
 
-## Step 7: Now app2 tries to send — but namespace is isolated [বাংলা অনুবাদ প্রয়োজন]
+```bash
+# Bridge তৈরি
+brctl addbr br0
+brctl addif br0 veth-a
+brctl addif br0 veth-c
+```
 
-Namespace **app2** also wants to send a packet. But here's the key: app2 and app1 are in **completely separate network namespaces**.
+## Step 7: Bridge Forward করে
 
-App2 cannot see app1's interfaces, ARP table, or routing table. They are isolated at the kernel level.
+Bridge দেখে ডেস্টিনেশন IP `10.0.1.2` — এটা `veth-c`-র পাশে। তাই bridge প্যাকেটটা `veth-c`-র দিকে forward করে।
 
-However, app2 *can* reach the bridge through its own veth pair (veth-b), because the bridge is a shared resource outside both namespaces.
+## Step 8: app2 প্যাকেট পায়
 
-## Step 8: app2 packet reaches bridge [বাংলা অনুবাদ প্রয়োজন]
+app2 (ns-app2) `veth-d`-তে প্যাকেট পায়। ডেস্টিনেশন IP মেলে — `10.0.1.2`। গ্রহণ করে।
 
-App2 sends a packet through **veth-b**, which delivers it to the bridge.
+## Step 9: Reply ফিরে যায়
 
-The bridge now sees traffic from a **second namespace**. It learns app2's MAC on the veth-b-br port. Both namespaces share the same bridge but remain isolated from each other.
+app2 reply তৈরি করে:
 
-## Step 9: Bridge can forward — namespaces share the bridge [বাংলা অনুবাদ প্রয়োজন]
+- **Source IP:** `10.0.1.2`
+- **Destination IP:** `10.0.0.2`
 
-The bridge forwards app2's packet to the internet, just like it did for app1.
+Reply প্যাকেটটা ঠিক উল্টো দিকে যায়:
+`veth-d` → `veth-c` → bridge → `veth-a` → `veth-b` → app1
 
-**Key insight:** Both namespaces are isolated from *each other*, but they can both reach the **shared bridge** and communicate with the outside world.
+## Step 10: সারসংক্ষেপ
 
-This is how containers (Docker, Podman) provide network isolation while still allowing internet access.
+Network Namespaces দিয়ে যা করা যায়:
 
-## Step 10: Network namespace summary [বাংলা অনুবাদ প্রয়োজন]
+- **আলাদা Namespace:** প্রতিটা সম্পূর্ণ আলাদা নেটওয়ার্ক স্ট্যাক পায়
+- **Veth Pairs:** দুটো namespace-কে ভার্চুয়াল ক্যাবল দিয়ে সংযুক্ত করে
+- **Bridge:** একাধিক namespace-কে একসাথে সংযুক্ত করে (ভার্চুয়াল switch)
+- **Routing:** Kernel routing table দিয়ে প্যাকেট সঠিক namespace-তে পৌঁছায়
 
-**Key takeaway:** Linux network namespaces provide **complete network isolation** at the kernel level.
-
-How it works:
-1. Each namespace has its own **network stack** (interfaces, routes, iptables)
-2. **Veth pairs** connect namespaces to the outside (like virtual Ethernet cables)
-3. A **bridge** can connect multiple namespaces and provide internet access
-4. Namespaces are **isolated from each other** — they can't see each other's traffic
-
-Used by: Docker, Podman, Kubernetes, LXC/LXD, network function virtualization (NFV).
+Docker, Kubernetes, Podman — সবই এই network namespace ব্যবহার করে কন্টেইনারদের আলাদা নেটওয়ার্ক দিতে!

@@ -1,125 +1,85 @@
 ---
-name: Layer 3
-description: Routing between different networks via a router
-category: Networking Fundamentals
-order: 15
+name: Layer 3 - রাউটিং
+description: Layer 3-এ রাউটার কীভাবে ভিন্ন সাবনেটে প্যাকেট রাউট করে — ধাপে ধাপে বাংলায় বোঝানো হয়েছে
 ---
 
-## Step 1: PC-A wants to reach PC-C (different subnet) [বাংলা অনুবাদ প্রয়োজন]
+# Layer 3 — রাউটিং
 
-PC-A (192.168.1.10) wants to send data to PC-C (192.168.2.10).
+আজ দেখবো যখন দুটো PC ভিন্ন সাবনেটে থাকে, তখন একটা থেকে আরেকটায় প্যাকেট কীভাবে যায়। পুরো প্রসেস ধাপে ধাপে দেখো।
 
-PC-A checks its subnet mask: `255.255.255.0`. The destination 192.168.2.10 is **not** in the 192.168.1.0/24 network.
+## Step 1: PC-A, PC-C-কে ডেটা পাঠাতে চায়
 
-**Key rule:** When the destination is on a different subnet, the frame must go to the **default gateway** (Router) — never directly to the destination.
+ধরো PC-A (IP: `10.0.0.10`, MAC: `AA:AA:AA:AA:AA:01`) থেকে PC-C (IP: `10.0.1.10`, MAC: `CC:CC:CC:CC:CC:01`)-কে প্যাকেট পাঠাতে হবে। দুটো PCই ভিন্ন সাবনেটে — PC-A আছে `10.0.0.0/24` এবং PC-C আছে `10.0.1.0/24`। একটা রাউটার দুটো নেটওয়ার্ককে সংযুক্ত করে আছে।
 
-**Prerequisite:** Understand **ARP** (how MAC addresses are discovered) and **Gateway** (how routers connect networks) first.
+## Step 2: ডেস্টিনেশন চেক করো
 
-**See also:** **Routing Table** and **IP Address** topics for routing decisions and address structure.
+PC-A তার রাউটিং টেবিল দেখে। IP এড্রেস `10.0.1.10` — এটা কি তার নিজের সাবনেটে? না! তাহলে প্যাকেটটা সরাসরি ডেস্টিনেশনে যাবে না। Default Gateway-এর মাধ্যমে পাঠাতে হবে। PC-A-র Default Gateway হলো `10.0.0.1` (রাউটারের ইন্টারফেস)।
 
-## Step 2: PC-A checks: destination not in my subnet [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: ARP রিকোয়েস্ট — Gateway-এর MAC খুঁজো
 
-PC-A performs the subnet check:
+PC-A জানে Gateway IP `10.0.0.1`, কিন্তু MAC এড্রেস জানে না। Layer 2-তে কাজ করতে হলে MAC দরকার। তাই PC-A একটা ARP Request পাঠায়: "Who has `10.0.0.1`? Tell `10.0.0.10`"। এই ARP Request broadcast হয় — সবাই পায়।
 
-`Destination: 192.168.2.10`
-`My subnet: 192.168.1.0/24`
+## Step 4: রাউটার ARP Reply দেয়
 
-The first three octets don't match — the destination is **remote**. PC-A must forward to its **default gateway** (Router at 192.168.1.1).
+রাউটার ARP Request পেয়ে `10.0.0.1` নিজের IP বুঝতে পারে। তাই রাউটার ARP Reply পাঠায়: "`10.0.0.1` is at `RR:RR:RR:RR:RR:01`"। এখন PC-A-র কাছে Gateway-র MAC এড্রেস এসে গেছে।
 
-But PC-A needs the Router's **MAC address** to build the Ethernet frame. It only has the IP — time to ARP!
+## Step 5: নতুন ফ্রেম তৈরি করো
 
-## Step 3: PC-A ARPs for default gateway (192.168.1.1) [বাংলা অনুবাদ প্রয়োজন]
+PC-A এখন আসল প্যাকেটটাকে একটা Ethernet ফ্রেমে জড়িয়ে দেয়:
 
-PC-A sends an **ARP Request** broadcast:
-`"Who has 192.168.1.1? Tell 192.168.1.10"`
+- **Destination MAC:** `RR:RR:RR:RR:RR:01` (রাউটার)
+- **Source MAC:** `AA:AA:AA:AA:AA:01` (PC-A)
+- **Source IP:** `10.0.0.10`
+- **Destination IP:** `10.0.1.10`
 
-The broadcast reaches Switch 1, which floods it to all ports — including the Router's eth0 interface.
+লক্ষ্য করো — Destination MAC হলো রাউটারের, কিন্তু Destination IP এখনো PC-C-র।
 
-## Step 4: Router replies with its MAC [বাংলা অনুবাদ প্রয়োজন]
+## Step 6: ফ্রেম Switch 1-এ পৌঁছায়
 
-The Router recognizes the ARP query for its eth0 IP (192.168.1.1) and sends an **ARP Reply**:
-`"192.168.1.1 is at AA:BB:CC:DD:EE:FF"`
+ফ্রেমটা সুইচ 1-এর Port 1-এ পৌঁছায়। সুইচ 1 সোর্স MAC `AA:AA:AA:AA:AA:01` থেকে শেখে যে PC-A Port 1-এ আছে।
 
-PC-A now has the Router's MAC address and can build a proper frame.
+## Step 7: সুইচ 1 ডেস্টিনেশন MAC খুঁজে পায়
 
-## Step 5: PC-A builds frame (dst MAC = Router) [বাংলা অনুবাদ প্রয়োজন]
+সুইচ 1 ডেস্টিনেশন MAC `RR:RR:RR:RR:RR:01` খুঁজে তার MAC Table-ে পায় — Port 2-তে। তাই সুইচ 1 ফ্রেমটা শুধু Port 2-তে unicast করে দেয়। Flood লাগে না।
 
-PC-A constructs the Ethernet frame with the **Router's MAC** as the Layer 2 destination — even though the final destination is PC-C.
+## Step 8: রাউটার L2 স্ট্রিপ করে
 
-**Layer 2:** PC-A → Router (local delivery)
-**Layer 3:** PC-A → PC-C (end-to-end)
+রাউটার ফ্রেমটা পায়। রাউটার Layer 3 ডিভাইস, তাই সে Ethernet হেডার (L2) বাদ দিয়ে দেয়। শুধু IP প্যাকেটটা নেয়। রাউটার দেখে — Destination IP `10.0.1.10`, এটা তার অন্য পাশের নেটওয়ার্ক `10.0.1.0/24`-তে। এখন রাউটারকে নতুন ফ্রেম বানাতে হবে।
 
-## Step 6: Frame: PC-A → Switch 1 [বাংলা অনুবাদ প্রয়োজন]
+## Step 9: রাউটার ARP করে PC-C-র জন্য
 
-The frame travels from PC-A to Switch 1 via **link-a-sw1**.
+রাউটারের Port 2 (IP: `10.0.1.1`) থেকে PC-C (`10.0.1.10`)-র MAC এড্রেস খুঁজতে ARP Request পাঠায়: "Who has `10.0.1.10`? Tell `10.0.1.1`"।
 
-The frame header:
-`Src MAC: AA:BB:CC:DD:EE:01 (PC-A)`
-`Dst MAC: AA:BB:CC:DD:EE:FF (Router)`
+## Step 10: PC-C ARP Reply পাঠায়
 
-The IP packet inside:
-`Src IP: 192.168.1.10 (PC-A)`
-`Dst IP: 192.168.2.10 (PC-C)`
+PC-C ARP Request পেয়ে জানতে পারে যে রাউটার `10.0.1.1`-র MAC `RR:RR:RR:RR:RR:02`। PC-C ARP Reply পাঠায়: "`10.0.1.10` is at `CC:CC:CC:CC:CC:01`"।
 
-## Step 7: Switch 1 learns PC-A, forwards to Router [বাংলা অনুবাদ প্রয়োজন]
+## Step 11: নতুন ফ্রেম তৈরি হয়
 
-Switch 1 receives the frame and:
-1. **Learns** PC-A's MAC on port 1 from the source address
-2. Looks up the destination MAC (AA:BB:CC:DD:EE:FF) — **found** on port 2
-3. **Forwards** the frame directly to the Router — no flooding needed
+রাউটার এখন নতুন করে একটা Ethernet ফ্রেম তৈরি করে:
 
-## Step 8: Router strips L2 header, checks routing table [বাংলা অনুবাদ প্রয়োজন]
+- **Destination MAC:** `CC:CC:CC:CC:CC:01` (PC-C)
+- **Source MAC:** `RR:RR:RR:RR:RR:02` (রাউটারের অন্য পোর্ট)
+- **Source IP:** `10.0.0.10` (বদলায় না)
+- **Destination IP:** `10.0.1.10` (বদলায় না)
 
-The Router receives the frame on eth0 and performs Layer 3 processing:
+লক্ষ্য করো — MAC এড্রেস বদলেছে, কিন্তু IP এড্রেস অপরিবর্তিত থেকেছে!
 
-**1.** Strips the Ethernet header (Hop 1 L2 is discarded)
-**2.** Reads the IP destination: `192.168.2.10`
-**3.** Checks its **routing table**: 192.168.2.0/24 → eth1
-**4.** Decrements **TTL** (64 → 63)
-**5.** Needs to build a **new** L2 frame for eth1
+## Step 12: ফ্রেম Switch 2-তে যায়
 
-## Step 9: Router ARPs for PC-C on eth1 [বাংলা অনুবাদ প্রয়োজন]
+নতুন ফ্রেমটা সুইচ 2-তে পৌঁছায়। সুইচ 2 সোর্স MAC `RR:RR:RR:RR:RR:02` থেকে শেখে এবং ডেস্টিনেশন MAC `CC:CC:CC:CC:CC:01` খুঁজে সঠিক পোর্টে পাঠায়।
 
-The Router needs PC-C's MAC address to send the frame on the 192.168.2.0/24 network.
+## Step 13: PC-C প্যাকেট গ্রহণ করে
 
-It sends an **ARP Request** broadcast from its eth1 interface:
-`"Who has 192.168.2.10? Tell 192.168.2.1"`
+PC-C ফ্রেমটা পায়, ডেস্টিনেশন MAC মেলে, গ্রহণ করে। পুরো যাত্রা শেষ!
 
-## Step 10: PC-C replies with its MAC [বাংলা অনুবাদ প্রয়োজন]
+## Step 14: সারসংক্ষেপ
 
-PC-C receives the ARP Request and sends an **ARP Reply**:
-`"192.168.2.10 is at AA:BB:CC:DD:EE:02"`
+Layer 3 রাউটিং-এ যা ঘটে:
 
-The Router now has PC-C's MAC address in its ARP cache.
+- **PC-A:** Gateway-কে ARP করে, MAC পায়, ফ্রেম বানায়
+- **সুইচ 1:** MAC Table চেক করে, রাউটারে পাঠায়
+- **রাউটার:** L2 স্ট্রিপ করে, IP দেখে, নতুন ARP করে, নতুন ফ্রেম বানায়
+- **সুইচ 2:** নতুন ফ্রেমটা PC-C-তে পৌঁছায়
 
-## Step 11: Router builds NEW frame (dst MAC = PC-C) [বাংলা অনুবাদ প্রয়োজন]
-
-The Router constructs a **brand-new** Ethernet frame for the second hop:
-
-`Src MAC: AA:BB:CC:DD:EE:FF (Router eth1)`
-`Dst MAC: AA:BB:CC:DD:EE:02 (PC-C)`
-
-**Crucial:** The L2 header is completely new, but the L3 IP addresses remain unchanged — `192.168.1.10 → 192.168.2.10`.
-
-## Step 12: Frame: Router → Switch 2 [বাংলা অনুবাদ প্রয়োজন]
-
-The Router sends the new frame out eth1 via **link-r-sw2** to Switch 2.
-
-The frame now carries the Router as source and PC-C as destination at Layer 2.
-
-## Step 13: Switch 2 forwards to PC-C [বাংলা অনুবাদ প্রয়োজন]
-
-Switch 2 receives the frame, looks up the destination MAC (AA:BB:CC:DD:EE:02) — found on the port connected to PC-C.
-
-It **forwards** the frame directly. PC-C receives it, checks the destination IP — it matches! The packet is accepted.
-
-## Step 14: Layer 3 routing complete! [বাংলা অনুবাদ প্রয়োজন]
-
-PC-C accepts the frame — the destination IP matches its own.
-
-**Key takeaway:** At every Layer 3 hop, the **Layer 2 frame is stripped and rebuilt** with new MAC addresses, but the **Layer 3 IP addresses stay the same** from source to destination.
-
-Hop 1: PC-A → Router (MAC changes, IP same)
-Hop 2: Router → PC-C (MAC changes again, IP still same)
-
-This is the fundamental difference between Layer 2 (local delivery via MAC) and Layer 3 (end-to-end delivery via IP).
+মূল কথা — **MAC এড্রেস প্রতিটা hop-এ বদলায়, কিন্তু IP এড্রেস সবসময় থাকে।**

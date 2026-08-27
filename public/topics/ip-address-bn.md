@@ -1,93 +1,100 @@
 ---
-name: IP Address
-description: Logical address — how devices are identified across networks
-category: Components
-order: 1
+name: "IP ঠিকানা"
+description: "IP ঠিকানা কী, IPv4 ফরম্যাট, ক্লাস A/B/C, প্রাইভেট ও পাবলিক ঠিকানা।"
 ---
 
-## Step 1: What is an IP Address? [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: IP ঠিকানা কী?
 
-An **IP (Internet Protocol)** address is a **logical address** assigned to devices for routing across networks.
+IP ঠিকানা হলো নেটওয়ার্কের একটা ডিভাইসের পরিচয় — ঠিক যেমন তোমার বাসার ঠিকানা। ছাড়া এই ঠিকানা ছাড়া ইন্টারনেটে ডেটা পাঠানো যায় না।
 
-Unlike MAC addresses (which are burned into hardware), IP addresses are **configured by software** — via DHCP or manual assignment.
+**IP (Internet Protocol)** নিশ্চিত করে যে প্রতিটা ডিভাইস নেটওয়ার্কে ইউনিকভাবে চেনাশোনা হয়। এটা নেটওয়ার্ক লেয়ারের প্রোটোকল — যেটা প্যাকেট রাউটিং ও এড্রেসিং করে।
 
-IP addresses operate at **Layer 3** (Network layer) and enable communication across different networks.
+## Step 2: IPv4 ফরম্যাট
 
-## Step 2: IPv4 Format [বাংলা অনুবাদ প্রয়োজন]
+IPv4 ঠিকানা **32-বিট** দৈর্ঘ্যের — এটা 4টা ডিসিমাল নম্বর দিয়ে লেখা হয়, প্রতিটা 0-255 এর মধ্যে:
 
-An **IPv4 address** is a **32-bit** number written in **dotted decimal** notation:
+```
+192.168.1.10
+```
 
-`192.168.1.10`
+প্রতিটা নম্বর 8 বিট — মোট 4 × 8 = 32 বিট। প্রতিটা ডটের মাঝে একটা **অক্টেট** বা **ওয়ার্ড** বলে।
 
-Each number (octet) represents 8 bits, ranging from 0 to 255. With 32 bits, IPv4 provides approximately **4.3 billion** unique addresses.
+বাইনারিতে এরকম দেখতে:
+```
+192.168.1.10 = 11000000.10101000.00000001.00001010
+```
 
-## Step 3: Class A Networks [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: ক্লাস A ঠিকানা
 
-**Class A** networks use the first octet for the network and the remaining three for hosts:
+ক্লাস A ঠিকানা বড় নেটওয়ার্কের জন্য। প্রথম 8 বিট হলো নেটওয়ার্ক আর বাকি 24 বিট হলো হোস্ট:
 
-`Network.Host.Host.Host`
-`1.0.0.0 — 126.255.255.255`
+```
+1.0.0.0 - 126.255.255.255
+Subnet Mask: 255.0.0.0 (/8)
+```
 
-Prefix: `/8` (subnet mask 255.0.0.0)
-Hosts per network: **16.7 million** (2²⁴)
+নেটওয়ার্ক পার্ট: `1` থেকে `126` (0 এবং 127 সংরক্ষিত)
+প্রতিটা নেটওয়ার্কে সর্বোচ্চ 16 মিলিয়ন হোস্ট থাকতে পারে!
 
-Class A is designed for **very large networks** — originally assigned to major corporations and governments.
+## Step 4: ক্লাস B ও ক্লাস C
 
-## Step 4: Class B Networks [বাংলা অনুবাদ প্রয়োজন]
+**ক্লাস B**: মাঝারী সাইজের নেটওয়ার্ক। প্রথম 16 বিট নেটওয়ার্ক, বাকি 16 বিট হোস্ট:
 
-**Class B** networks use the first two octets for the network and two for hosts:
+```
+128.0.0.0 - 191.255.255.255
+Subnet Mask: 255.255.0.0 (/16)
+```
 
-`Network.Network.Host.Host`
-`128.0.0.0 — 191.255.255.255`
+প্রতিটা নেটওয়ার্কে সর্বোচ্চ 65,534 হোস্ট।
 
-Prefix: `/16` (subnet mask 255.255.0.0)
-Hosts per network: **65,536** (2¹⁶)
+**ক্লাস C**: ছোট নেটওয়ার্কের জন্য। প্রথম 24 বিট নেটওয়ার্ক, বাকি 8 বিট হোস্ট:
 
-Class B is suitable for **medium to large organizations** — universities, large companies.
+```
+192.0.0.0 - 223.255.255.255
+Subnet Mask: 255.255.255.0 (/24)
+```
 
-## Step 5: Class C Networks [বাংলা অনুবাদ প্রয়োজন]
+প্রতিটা নেটওয়ার্কে সর্বোচ্চ 254 হোস্ট — যেটা ছোট অফিস বা বাসার জন্য পারফেক্ট।
 
-**Class C** networks use the first three octets for the network and one for hosts:
+## Step 5: প্রাইভেট ঠিকানা পরিসীমা
 
-`Network.Network.Network.Host`
-`192.0.0.0 — 223.255.255.255`
+কিছু IP ঠিকানা **প্রাইভেট** — মানে সরাসরি ইন্টারনেটে ব্যবহার করা যায় না:
 
-Prefix: `/24` (subnet mask 255.255.255.0)
-Hosts per network: **254** (2⁸ - 2)
+- **ক্লাস A**: `10.0.0.0 - 10.255.255.255` (1 নম্বর নেটওয়ার্ক)
+- **ক্লাস B**: `172.16.0.0 - 172.31.255.255` (16 থেকে 31 পর্যন্ত)
+- **ক্লাস C**: `192.168.0.0 - 192.168.255.255` (254 নম্বর নেটওয়ার্ক)
 
-Class C is used for **small networks** — small businesses, home networks.
+এই ঠিকানাগুলো তোমার বাসার রাউটার, অফিসের নেটওয়ার্কে ব্যবহৃত হয়। বাইরের মানুষ এগুলো সরাসরি এক্সেস করতে পারে না।
 
-## Step 6: Private IP Ranges [বাংলা অনুবাদ প্রয়োজন]
+## Step 6: পাবলিক বনাম প্রাইভেট
 
-**Private IP addresses** (defined in RFC 1918) are not routable on the public internet:
+**পাবলিক IP**: ইন্টারনেটে তোমার বাসার ঠিকানা। ISP থেকে পাওয়া যায়। ওয়েবসাইট ভিজিট করতে হলে পাবলিক IP লাগে।
 
-`Class A: 10.0.0.0 — 10.255.255.255` (10.0.0.0/8)
-`Class B: 172.16.0.0 — 172.31.255.255` (172.16.0.0/12)
-`Class C: 192.168.0.0 — 192.168.255.255` (192.168.0.0/16)
+**প্রাইভেট IP**: বাসার ভেতরের ডিভাইসগুলোর ঠিকানা। তোমার ফোন, ল্যাপটপ, সব প্রাইভেট IP পায়।
 
-These addresses can be used freely within private networks but must be **translated (NAT)** before reaching the internet.
+```
+ইন্টারনেট ←→ [রাউটার: পাবলিক IP] ←→ প্রাইভেট নেটওয়ার্ক
+                         ↕
+                    ফোন: 192.168.1.10
+                    ল্যাপটপ: 192.168.1.20
+                    প্রিন্টার: 192.168.1.30
+```
 
-## Step 7: Public vs Private [বাংলা অনুবাদ প্রয়োজন]
+রাউটার **NAT (Network Address Translation)** ব্যবহার করে প্রাইভেট ঠিকানাগুলোকে একটা পাবলিক IP-তে রূপান্তর করে — যাতে সবাই একটাই পাবলিক IP দিয়ে ইন্টারনেট ব্যবহার করতে পারে।
 
-**Public IPs** are globally unique and routable on the internet — assigned by ISPs.
+## Step 7: CIDR ও সাবনেটিং
 
-**Private IPs** are used within local networks and are not routable externally.
+আধুনিক নেটওয়ার্কিং-এ ক্লাস A/B/C এর বদলে **CIDR (Classless Inter-Domain Routing)** ব্যবহৃত হয়:
 
-**NAT (Network Address Translation)** allows many devices with private IPs to share a single public IP:
+```
+192.168.1.0/24    → 254 হোস্ট
+10.0.0.0/8        → 16 মিলিয়ন হোস্ট
+172.16.0.0/16     → 65,534 হোস্ট
+192.168.1.0/28    → 14 হোস্ট (ছোট সাবনেট)
+```
 
-`192.168.1.10 → NAT → 203.0.113.1 (public)`
+`/24` মানে প্রথম 24 বিট নেটওয়ার্ক, বাকি হোস্ট। এটা আরো ফ্লেক্সিবল এবং স্কেলেবল।
 
-This is how most home and office networks access the internet.
+## Step 8: সারসংক্ষেপ
 
-## Step 8: IP Address Summary [বাংলা অনুবাদ প্রয়োজন]
-
-**Key takeaway:** IP addresses are the foundation of Layer 3 routing.
-
-• **32-bit** dotted decimal (e.g., 192.168.1.10)
-• **Class A:** /8 prefix, 16.7M hosts (large networks)
-• **Class B:** /16 prefix, 65K hosts (medium networks)
-• **Class C:** /24 prefix, 254 hosts (small networks)
-• **Private ranges:** 10.x / 172.16-31.x / 192.168.x
-• **Public IPs** are routable on the internet; **private IPs** need NAT
-
-IP addresses enable routing between different networks — the core function of Layer 3.
+IP ঠিকানা হলো ইন্টারনেটের ঠিকানা ব্যবস্থা। IPv4 32-বিট, চারটা নম্বর, প্রতিটা 0-255। প্রাইভেট IP বাসার ভেতরে, পাবলিক IP বাইরে। CIDR দিয়ে সাবনেটিং করে নেটওয়ার্ক অপ্টিমাইজ করা হয়। এটা না বুঝলে নেটওয়ার্কিং শেখা সম্ভব নয়।

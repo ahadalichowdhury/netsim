@@ -1,69 +1,36 @@
 ---
 name: VXLAN
-description: Virtual Extensible LAN — overlay networking for data centers
-category: Advanced Networking
-order: 44
+description: ওভারলে নেটওয়ার্কিং — একটা নেটওয়ার্কের উপরে আরেকটা নেটওয়ার্ক
 ---
 
-## Step 1: VTEPs — Tunnel Endpoints [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: VTEPs
 
-**VTEPs (VXLAN Tunnel Endpoints)** are the devices that encapsulate and decapsulate VXLAN packets.
+**VTEP (VXLAN Tunnel Endpoint)** হলো VXLAN টানেলের দুই প্রান্ত। প্রতিটা VTEP একটা এনক্যাপসুলেশন/ডিক্যাপসুলেশন পয়েন্ট।
 
-**What they do:**
-• **Encapsulate:** Take an original Ethernet frame and wrap it in a VXLAN/UDP/IP header
-• **Decapsulate:** Strip the outer headers and deliver the original frame
+VTEP হতে পারে একটা সুইচ, রাউটার, বা হোস্ট। VTEP IP এড্রেস থাকে এবং সে VXLAN টানেলের মাধ্যমে একে অপরের সাথে কথা বলে।
 
-VTEPs can be:
-• Physical switches (hardware VTEPs)
-• Hypervisors (software VTEPs in VMware, KVM)
-• Linux hosts (using `ip link` or OVS)
+## Step 2: আন্ডারলে নেটওয়ার্ক
 
-Each VTEP has both a **VXLAN VTEP IP** (outer) and connects to **virtual networks** (inner).
+VXLAN একটা **আন্ডারলে নেটওয়ার্ক**-এর উপরে কাজ করে। আন্ডারলে হলো ফিজিক্যাল বা ভার্চুয়াল নেটওয়ার্ক যেটা VXLAN প্যাকেট বহন করে।
 
-## Step 2: Underlay Network [বাংলা অনুবাদ প্রয়োজন]
+যেমন, তোমার ডেটা সেন্টারের সুইচগুলো আন্ডারলে নেটওয়ার্ক। এর উপরে VXLAN একটা ভার্চুয়াল নেটওয়ার্ক তৈরি করে।
 
-The **underlay network** is the physical IP fabric that carries VXLAN traffic.
+## Step 3: VNI
 
-**Key characteristics:**
-• Standard IP routing — the underlay doesn't know about VXLAN
-• Could be a simple L3 network or a complex spine-leaf fabric
-• Each VTEP is reachable via its underlay IP
+**VNI (VXLAN Network Identifier)** হলো VXLAN-র VLAN-এর মতো। একটা 24-বিট নম্বর যেটা নির্ধারণ করে প্যাকেটটা কোন ভার্চুয়াল নেটওয়ার্কের।
 
-**Overlay vs Underlay:**
-• **Overlay** — the virtual network (VXLAN segments)
-• **Underlay** — the physical network (IP fabric)
+VLAN-তে 12-বিট ছিল (4096 VLAN সম্ভব), VXLAN-তে 24-বিট (16 মিলিয়ন VNI সম্ভব)। এতে ডেটা সেন্টারে লক্ষ লক্ষ ভার্চুয়াল নেটওয়ার্ক তৈরি করা যায়।
 
-The underlay just routes outer IP packets between VTEPs. It doesn't care what's inside the VXLAN tunnel — it treats them as normal UDP packets.
+## Step 4: এনক্যাপসুলেশন
 
-## Step 3: VNI — VXLAN Network Identifier [বাংলা অনুবাদ প্রয়োজন]
+VXLAN প্রতিটা লেয়ার 2 ফ্রেমকে একটা **লেয়ার 3 UDP প্যাকেটের** ভেতরে প্যাক করে। এটাকে বলে **এনক্যাপসুলেশন**।
 
-The **VNI (VXLAN Network Identifier)** is a 24-bit segment ID that identifies the virtual network.
+```
+[UDP Header][VXLAN Header (8 bytes)][Original Ethernet Frame]
+```
 
-**Why VNI matters:**
-• **24-bit** → supports up to **16,777,216 segments** (16 million)
-• Compare to VLANs: only **4,096** possible VLANs (12-bit)
-• VNI is the VLAN equivalent in the overlay world
+- VXLAN Header-তে VNI থাকে
+- UDP Port: 4789
+- বাইরের IP Header দিয়ে আন্ডারলে নেটওয়ার্কে প্যাকেট ট্রাভেল করে
 
-**How it works:**
-• Each VNI maps to a virtual network (like a VLAN)
-• VMs in the same VNI can communicate directly
-• VMs in different VNIs are isolated (need a router)
-
-VXLAN solves the VLAN scalability problem — large cloud providers need millions of network segments, not just 4,096.
-
-## Step 4: Encapsulation — The VXLAN Packet [বাংলা অনুবাদ প্রয়োজন]
-
-When VTEP 1 sends a frame to VTEP 2, it **encapsulates** the original frame:
-
-**Encapsulation stack:**
-`Original Ethernet Frame`
-`  → VXLAN Header (8 bytes, includes VNI)`
-`    → UDP Header (src port, dst port 4789)`
-`      → Outer IP Header (VTEP IPs)`
-`        → Outer Ethernet Header`
-
-**Port 4789** is the IANA-assigned UDP port for VXLAN.
-
-The underlay network only sees a normal UDP packet. The VXLAN header is invisible to physical switches and routers.
-
-At the receiving VTEP, the outer headers are stripped and the original frame is delivered to the destination VM.
+এভাবেই VXLAN একটা নেটওয়ার্কের উপরে আরেকটা নেটওয়ার্ক তৈরি করে — যাকে বলে **ওভারলে**।

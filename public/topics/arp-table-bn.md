@@ -1,79 +1,57 @@
 ---
-name: ARP Table
-description: The mapping cache — IP to MAC address translations
-category: Components
-order: 4
+name: ARP টেবিল
+description: ARP ক্যাশে — কীভাবে IP-MAC ম্যাপিং সংরক্ষিত থাকে এবং কীভাবে এটি পরিচালনা করবে
 ---
 
-## Step 1: What is an ARP Table? [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: ARP টেবিল কি?
 
-An **ARP table** (also called an ARP cache) is a local mapping stored on each device that translates **IP addresses to MAC addresses**.
+ARP টেবিল হলো তোমার কম্পিউটারের একটা ছোট টেবিল যেখানে IP এড্রেস আর MAC এড্রেসের ম্যাপিং সংরক্ষিত থাকে। যখন তুমি কাউকে বারবার মেসেজ পাঠাও, তখন ARP প্রতিবার রিকোয়েস্ট পাঠানোর দরকার নেই। একবার খুঁজে পেলে, ARP টেবিলে রেখে দেওয়া হয়। পরের বার সরাসরি ব্যবহার করা যায়।
 
-Since Ethernet frames require MAC addresses (not IPs), every device needs this mapping to communicate at Layer 2. The ARP table is the result of ARP requests and replies that have occurred on the local network.
+## Step 2: ডায়নামিক এন্ট্রি — স্বয়ংক্রিয়ভাবে যোগ হয়
 
-Without an ARP table, every single packet would require a new ARP broadcast — incredibly inefficient.
+ARP টেবিলের বেশিরভাগ এন্ট্রি হলো ডায়নামিক। মানে, যখন তোমার কম্পিউটার অন্য কোনো ডিভাইসের সাথে যোগাযোগ করে এবং ARP Reply পায়, তখন সে এই ম্যাপিংটা নিজেই টেবিলে যোগ করে। তোমার কিছু করার দরকার নেই — সব অটোমেটিক।
 
-## Step 2: Dynamic Entries [বাংলা অনুবাদ প্রয়োজন]
+উদাহরণ:
+```
+arp -a
+? (192.168.1.20) at BB:BB:BB:BB:00:02 on en0 ifscope [ethernet]
+? (192.168.1.30) at CC:CC:CC:CC:00:03 on en0 ifscope [ethernet]
+```
 
-Most ARP table entries are **dynamic** — they are learned automatically through the ARP request/reply process.
+## Step 3: স্ট্যাটিক এন্ট্রি — হাতে করে যোগ করতে হয়
 
-When a device needs to send data to an IP on the same subnet, it broadcasts an ARP request: `"Who has 192.168.1.20?"`. The target replies with its MAC address, and the asking device **caches the mapping** in its ARP table.
+কখনো কখনো তোমাকে একটা IP-MAC ম্যাপিং স্থায়ীভাবে টেবিলে রাখতে হতে পারে। এটাকে বলে static ARP entry। যেমন, যদি তোমার নেটওয়ার্কে কোনো সার্ভার থাকে যার MAC এড্রেস কখনো পরিবর্তন হয় না, তাহলে তুমি স্ট্যাটিক এন্ট্রি দিতে পারো।
 
-Dynamic entries have a **timeout** (typically 300 seconds) and are removed if not refreshed.
+কমান্ড:
+```bash
+arp -s 192.168.1.20 BB:BB:BB:BB:00:02
+```
 
-## Step 3: Static Entries [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: ARP ক্যাশে টাইমআউট — কতক্ষণ থাকে
 
-You can also create **static ARP entries** manually using the `arp -s` command:
+ARP টেবিলের ডায়নামিক এন্ট্রি সবসময় থাকে না। একটা নির্দিষ্ট সময় পর এটা মুছে যায় — এটাকে বলে ARP cache timeout। সাধারণত macOS/Linux-এ 20 মিনিট থেকে 1 ঘণ্টা পর্যন্ত থাকে। এই সময় শেষ হলে ARP entry ডিলিট হয়ে যায়। পরের বার আবার ARP Request পাঠাতে হবে।
 
-`arp -s 192.168.1.20 AA:BB:CC:DD:EE:02`
+## Step 5: ARP টেবিল কীভাবে দেখবে
 
-Static entries:
-• **Never expire** — they persist until manually removed
-• **Override dynamic** — if both exist, static takes priority
-• **Used for security** — prevent ARP spoofing attacks
-• **Used for reliability** — critical infrastructure (gateways, DNS servers)
+তোমার ARP টেবিল দেখার জন্য কিছু কমান্ড আছে:
 
-View with `arp -a` — static entries are marked differently from dynamic ones.
+**macOS/Linux:**
+```bash
+arp -a
+```
 
-## Step 4: ARP Cache Timeout [বাংলা অনুবাদ প্রয়োজন]
+**Windows:**
+```cmd
+arp -a
+```
 
-Dynamic ARP entries are **temporary** and expire after a configurable timeout.
+এই কমান্ড চালালে দেখবে IP এড্রেস, MAC এড্রেস, এবং কোন ইন্টারফেসে ম্যাপিংটা আছে।
 
-On Linux, the default timeout is **300 seconds (5 minutes)**. After this period, the entry is removed and the next packet will trigger a new ARP request.
+## Step 6: ARP টেবিল — সারসংক্ষেপ
 
-Why the timeout?
-• Devices can **change IPs** (DHCP reassignment)
-• Devices can **leave the network** (laptop disconnects)
-• NICs can **change** (hardware replacement)
-• Prevents **stale entries** from causing communication failures
+ARP টেবিল হলো তোমার কম্পিউটারের মেমরির একটা অংশ যেখানে IP-MAC ম্যাপিং রাখা হয়। এটা দুই ধরনের হতে পারে:
 
-The timeout is configurable: `sysctl net.ipv4.neigh.default.gc_stale_time`
+- **ডায়নামিক:** ARP Reply থেকে অটো যোগ হয়, টাইমআউট হলে মুছে যায়
+- **স্ট্যাটিক:** হাতে করে যোগ করতে হয়, মুছতে হলে হাতে করে মুছতে হয়
 
-## Step 5: Viewing ARP Table [বাংলা অনুবাদ প্রয়োজন]
-
-Use the `arp -a` command to view the ARP cache:
-
-`arp -a`
-`? (192.168.1.20) at AA:BB:CC:DD:EE:02 [ether] on eth0`
-`? (192.168.1.1) at AA:BB:CC:DD:EE:FF [ether] on eth0`
-
-On Linux, you can also use:
-`ip neigh show`
-`ip neigh show dev eth0`
-
-The output shows the IP address, MAC address, interface, and entry type (dynamic/static).
-
-## Step 6: ARP Table Summary [বাংলা অনুবাদ প্রয়োজন]
-
-**Key takeaway:** The ARP table is a local cache that maps IP addresses to MAC addresses on the same subnet.
-
-**Entry types:**
-• **Dynamic** — learned via ARP request/reply, expires after 300s
-• **Static** — manually configured, never expires
-
-**Commands:**
-• `arp -a` — view ARP cache
-• `arp -s &lt;ip&gt; &lt;mac&gt;` — add static entry
-• `arp -d &lt;ip&gt;` — delete entry
-
-The ARP table is essential for Layer 2 communication. Without it, devices cannot build the Ethernet frames needed to send data on the local network.
+ARP টেবিল না থাকলে প্রতিবার ARP Request পাঠাতে হবে, যা অনেক ধীর এবং নেটওয়ার্কে অতিরিক্ত ট্রাফিক তৈরি করবে।

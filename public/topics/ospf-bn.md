@@ -1,67 +1,67 @@
 ---
 name: OSPF
-description: Link-state routing — fast convergence within an enterprise
+description: লিংক-স্টেট রুটিং — এন্টারপ্রাইজের মধ্যে দ্রুত কনভার্জেন্স
 category: Advanced Networking
 order: 40
 ---
 
-## Step 1: OSPF Areas [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: OSPF এলাকা
 
-OSPF divides the network into **areas** to limit the scope of routing updates.
+OSPF নেটওয়ার্ককে **এলাকায়** ভাগ করে রুটিং আপডেটের পরিসর সীমিত করতে।
 
-**Area 0 (Backbone)** is the core — all other areas must connect to it. This hierarchy reduces the size of link-state databases and speeds convergence.
+**এলাকা ০ (ব্যাকবোন)** হলো কোর — অন্য সব এলাকাকে এর সাথে সংযুক্ত হতে হবে। এই হায়ারার্কি লিংক-স্টেট ডাটাবেসের আকার কমায় এবং কনভার্জেন্স দ্রুত করে।
 
-**Key points:**
-• Area 0 is mandatory (the backbone)
-• Each area maintains its own LSDB
-• Inter-area routing goes through the backbone
+**মূল পয়েন্ট:**
+• এলাকা ০ বাধ্যতামূলক (ব্যাকবোন)
+• প্রতিটা এলাকা তার নিজের LSDB বজায় রাখে
+• আন্তঃ-এলাকা রুটিং ব্যাকবোন দিয়ে যায়
 
-## Step 2: Area Border Routers [বাংলা অনুবাদ প্রয়োজন]
+## Step 2: এলাকা বর্ডার রাউটার
 
-An **ABR (Area Border Router)** connects one or more areas to the backbone.
+একটা **ABR (Area Border Router)** এক বা একাধিক এলাকাকে ব্যাকবোনের সাথে সংযুক্ত করে।
 
-The ABR summarizes routes between areas, reducing the amount of LSA flooding. It maintains separate link-state databases for each area it connects.
+ABR এলাকার মধ্যে রুট সংক্ষিপ্ত করে, LSA ফ্লাডিংয়ের পরিমাণ কমায়। সে প্রতিটা সংযুক্ত এলাকার জন্য আলাদা লিংক-স্টেট ডাটাবেস বজায় রাখে।
 
-**Key points:**
-• Connects areas to the backbone
-• Summarizes routes between areas
-• Reduces LSA flooding scope
+**মূল পয়েন্ট:**
+• এলাকাকে ব্যাকবোনের সাথে সংযুক্ত করে
+• এলাকার মধ্যে রুট সংক্ষিপ্ত করে
+• LSA ফ্লাডিংয়ের পরিসর কমায়
 
-## Step 3: LSA Flooding [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: LSA ফ্লাডিং
 
-OSPF routers exchange **LSAs (Link-State Advertisements)** to build a complete topology map.
+OSPF রাউটাররা একটা সম্পূর্ণ টপোলজি ম্যাপ তৈরি করতে **LSA (Link-State Advertisement)** বিনিময় করে।
 
-Each router advertises its directly connected links, costs, and neighbors. LSAs are flooded to all routers within an area, ensuring everyone has the same view of the network.
+প্রতিটা রাউটার তার সরাসরি সংযুক্ত লিংক, খরচ এবং কমশিয়ার বিজ্ঞাপন দেয়। LSA একটা এলাকার সব রাউটারে ফ্লাড করা হয়, যাতে সবার কাছে নেটওয়ার্কের একই দৃষ্টিভঙ্গি থাকে।
 
-**LSA Types:**
-• Type 1 (Router LSA) — each router generates
-• Type 2 (Network LSA) — broadcast networks
-• Type 3 (Summary LSA) — ABR summarizes routes
+**LSA টাইপ:**
+• টাইপ ১ (Router LSA) — প্রতিটা রাউটার তৈরি করে
+• টাইপ ২ (Network LSA) — ব্রডকাস্ট নেটওয়ার্ক
+• টাইপ ৩ (Summary LSA) — ABR রুট সংক্ষিপ্ত করে
 
-## Step 4: SPF Calculation [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: SPF হিসাব
 
-After receiving all LSAs, each router runs **Dijkstra's SPF algorithm** to compute the shortest path tree.
+সব LSA পেয়ে গেলে, প্রতিটা রাউটার **ডিজকস্ট্রার SPF অ্যালগরিদম** চালায় সেরা পাথ ট্রি গণনা করতে।
 
-The algorithm considers link costs (bandwidth-based) to determine the best path to each destination. Each router builds its own routing table from the SPF tree.
+অ্যালগরিদমটা লিংক খরচ (ব্যান্ডউইথ-ভিত্তিক) বিবেচনা করে প্রতিটা ডেস্টিনেশনের জন্য সেরা পাথ নির্ধারণ করে। প্রতিটা রাউটার SPF ট্রি থেকে তার নিজের রুটিং টেবিল তৈরি করে।
 
-**Key points:**
-• Dijkstra algorithm finds shortest paths
-• Cost = reference bandwidth / interface bandwidth
-• Lowest cost = best path
-• Only direct neighbors are in the SPF tree
+**মূল পয়েন্ট:**
+• ডিজকস্ট্রা অ্যালগরিদম সেরা পাথ খুঁজে বের করে
+• খরচ = রেফারেন্স ব্যান্ডউইথ / ইন্টারফেস ব্যান্ডউইথ
+• সবচেয়ে কম খরচ = সেরা পাথ
+• শুধু সরাসরি কমশিয়াররাই SPF ট্রিতে থাকে
 
-## Step 5: OSPF Summary [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: OSPF সারসংক্ষেপ
 
-**Key takeaway:** OSPF is a fast-converging link-state routing protocol for enterprise networks.
+**মূল কথা:** OSPF হলো এন্টারপ্রাইজ নেটওয়ার্কের জন্য একটা দ্রুত কনভার্জিং লিংক-স্টেট রুটিং প্রোটোকল।
 
-**Structure:**
-• **Areas** — hierarchical design, Area 0 is backbone
-• **ABRs** — connect areas, summarize routes
-• **LSAs** — link-state advertisements, full topology map
-• **SPF** — Dijkstra algorithm, shortest path tree
+**গঠন:**
+• **এলাকা** — হায়ারার্কিক্যাল ডিজাইন, এলাকা ০ ব্যাকবোন
+• **ABR** — এলাকা সংযুক্ত করে, রুট সংক্ষিপ্ত করে
+• **LSA** — লিংক-স্টেট বিজ্ঞাপন, সম্পূর্ণ টপোলজি ম্যাপ
+• **SPF** — ডিজকস্ট্রা অ্যালগরিদম, সেরা পাথ ট্রি
 
-**Use cases:**
-• Enterprise campus networks
-• Data center fabrics
-• ISP internal routing
-• Multi-area designs for scalability
+**ব্যবহার:**
+• এন্টারপ্রাইজ ক্যাম্পাস নেটওয়ার্ক
+• ডাটা সেন্টার ফ্যাব্রিক
+• ISP ইন্টারনাল রুটিং
+• স্কেলেবিলিটির জন্য মাল্টি-এলাকা ডিজাইন

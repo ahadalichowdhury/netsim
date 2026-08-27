@@ -1,80 +1,72 @@
 ---
-name: Default Gateway (Linux)
-description: Configuring default gateway with ip route on Linux
-category: Linux Core Networking
-order: 23
+name: Default Gateway Linux - ip route
+description: Linux-এ ip route দিয়ে Default Gateway কীভাবে কাজ করে — ধাপে ধাপে বাংলায়
 ---
 
-## Step 1: Linux host wants to reach 8.8.8.8 [বাংলা অনুবাদ প্রয়োজন]
+# Default Gateway Linux — `ip route`
 
-The Linux host wants to ping **8.8.8.8** (Google DNS) on the internet.
+আজ দেখবো Linux-এ `ip route` কমান্ড দিয়ে default gateway কীভাবে কাজ করে। যখন একটা Linux host বাইরের নেটওয়ার্কে প্যাকেট পাঠায়, তখন কী হয়।
 
-It needs to determine how to reach this destination — time to check the **routing table**.
+## Step 1: Linux Host 8.8.8.8-তে প্যাকেট পাঠাতে চায়
 
-**Prerequisite:** Understand **Route Table** (ip route basics) and **Default Gateway** (concept) first.
+ধরো তোমার Linux machine থেকে Google DNS `8.8.8.8`-তে ping করতে চাও। কমান্ড:
 
-## Step 2: Check local routing table [বাংলা অনুবাদ প্রয়োজন]
+```bash
+ping 8.8.8.8
+```
 
-The kernel checks the routing table for a match:
-`ip route show`
+এখন Linux kernel-কে বুঝতে হবে এই প্যাকেটটা কোথায় পাঠাতে হবে।
 
-The routing table contains connected routes and any static routes. The host looks for a route to 8.8.8.8.
+## Step 2: Routing Table চেক করো
 
-## Step 3: No specific route for 8.8.8.8 — use default [বাংলা অনুবাদ প্রয়োজন]
+Kernel তার routing table দেখে। `ip route show` দিয়ে দেখতে পারো:
 
-The routing table has no specific entry for 8.8.8.8.
+```bash
+ip route show
+```
 
-The kernel falls back to the **default route** (0.0.0.0/0) — a catch-all that matches any destination not covered by a more specific route.
+আউটপুটে কিছু এরকম দেখবে:
 
-## Step 4: Default route: via 192.168.1.1 dev eth0 [বাংলা অনুবাদ প্রয়োজন]
+```
+default via 192.168.1.1 dev eth0
+192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.100
+```
 
-The default route specifies:
-`default via 192.168.1.1 dev eth0`
+## Step 3: নির্দিষ্ট রুট নেই — Default Route ব্যবহার হয়
 
-This means: send all unmatched traffic to **192.168.1.1** (the Router) through interface **eth0**.
+Kernel দেখে `8.8.8.8`-এর জন্য কোনো নির্দিষ্ট রুট আছে কিনা। `192.168.1.0/24`-র জন্য রুট আছে, কিন্তু `8.8.8.8` সেই সাবনেটে পড়ে না। তাই kernel `default` রুট ব্যবহার করবে — যেটা বলছে "সবকিছু `192.168.1.1`-এর মাধ্যমে পাঠাও, `eth0` ইন্টারফেস দিয়ে।"
 
-## Step 5: Packet: Host → eth0 [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: Default Route হলো Gateway
 
-The kernel builds the ICMP Echo packet and passes it to **eth0** for transmission.
+Default route মানে হলো সেই রাউটার বা gateway যার কাছে সব অজানা প্যাকেট পাঠাতে হয়। এখন আমাদের case-এ default gateway হলো `192.168.1.1`, এবং ইন্টারফেস হলো `eth0`।
 
-The frame is addressed to the Router's MAC (ARP resolved for 192.168.1.1).
+## Step 5: প্যাকেট eth0-তে পাঠাও
 
-## Step 6: eth0 sends to Router (192.168.1.1) [বাংলা অনুবাদ প্রয়োজন]
+Kernel `eth0` ইন্টারফেসের মাধ্যমে প্যাকেটটা পাঠায়। `eth0`-র IP হলো `192.168.1.100`। প্যাকেটের সোর্স IP `192.168.1.100`, ডেস্টিনেশন IP `8.8.8.8`। কিন্তু Layer 2-তে destination MAC হবে `192.168.1.1`-র — যেটা রাউটারের।
 
-The packet travels from eth0 to the **Router** (default gateway).
+## Step 6: eth0 প্যাকেটটা রাউটারে পাঠায়
 
-The Router receives the packet on its LAN interface (192.168.1.1) and checks the destination IP.
+`eth0` ইন্টারফেস প্যাকেটটাকে Ethernet ফ্রেমে জড়িয়ে রাউটার (`192.168.1.1`)-এর দিকে পাঠায়। রাউটার প্যাকেটটা গ্রহণ করে।
 
-## Step 7: Router forwards to Internet [বাংলা অনুবাদ প্রয়োজন]
+## Step 7: রাউটার ফরোয়ার্ড করে
 
-The Router receives the packet and performs **NAT** (Network Address Translation), replacing the private source IP with its public IP.
+রাউটার দেখে ডেস্টিনেশন IP `8.8.8.8`। রাউটারের নিজের routing table-এ `8.8.8.8`-এর জন্য রুট আছে — হয়তো ISP-র দিকে। রাউটার প্যাকেটটা আরেকটা hop-এ পাঠায়।
 
-It then forwards the packet toward the Internet.
+## Step 8: Reply ফিরে আসে
 
-## Step 8: Reply comes back [বাংলা অনুবাদ প্রয়োজন]
+`8.8.8.8` (Google DNS) থেকে reply প্যাকেট আসে। Destination IP হলো `192.168.1.100` (তোমার machine)। রাউটার প্যাকেটটা `eth0`-র দিকে পাঠায়।
 
-The Internet host (8.8.8.8) replies to the Router's public IP.
+## Step 9: NAT ট্রান্সলেট করে
 
-The Router receives the reply and looks up its NAT table to translate back to the private IP.
+তোমার machine হয়তো private IP `192.168.1.100` ব্যবহার করছে। রাউটার NAT (Network Address Translation) করে — মানে প্যাকেটের সোর্স IP বদলে তার public IP করে দেয়। Reply এলে সেটা আবার বদলিয়ে `192.168.1.100`-তে পাঠায়।
 
-## Step 9: Router NAT translates, sends to Host [বাংলা অনুবাদ প্রয়োজন]
+## Step 10: সারসংক্ষেপ
 
-The Router performs reverse NAT:
-`Public IP → 192.168.1.10`
+পুরো প্রসেস:
 
-It forwards the translated reply to the Linux Host via eth0.
+- **Routing Table:** Kernel দেখে `8.8.8.8`-র জন্য নির্দিষ্ট রুট নেই
+- **Default Route:** `via 192.168.1.1 dev eth0` — সব অজানা প্যাকেট gateway-তে যায়
+- **Gateway:** রাউটার প্যাকেটটা বাইরের দিকে forward করে
+- **Reply:** ফিরে এসে NAT দিয়ে তোমার machine-এ পৌঁছায়
 
-## Step 10: Default gateway routing complete! [বাংলা অনুবাদ প্রয়োজন]
-
-**Key takeaway:** The default gateway is the **fallback route** for any destination not in the local routing table.
-
-How it worked:
-1. Host checks routing table for 8.8.8.8 — **no match**
-2. Falls back to **default route** (0.0.0.0/0)
-3. Default via **192.168.1.1** (Router)
-4. Packet sent to Router → NAT → Internet
-5. Reply comes back through NAT
-
-Configure with:
-`ip route add default via 192.168.1.1`
-`ip route show`
+`ip route` দিয়ে তুমি routing table দেখতে এবং default gateway পরিবর্তন করতে পারো। Default gateway ছাড়া তোমার machine শুধু local network-এই থাকবে!

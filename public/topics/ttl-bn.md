@@ -1,68 +1,54 @@
 ---
-name: TTL & Hop Limit
-description: Why packets die — prevents infinite loops in the network
-category: Components
-order: 9
+name: TTL ও হপ লিমিট
+description: প্যাকেট কতদূর যেতে পারে — একটা লাইফসাফটি মিটার
 ---
 
-## Step 1: What is TTL? [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: TTL কী?
 
-**TTL (Time To Live)** is an 8-bit field in the IPv4 header (called **Hop Limit** in IPv6).
+**TTL (Time To Live)** হলো IP হেডারের একটা ফিল্ড। এটা নির্ধারণ করে একটা প্যাকেট নেটওয়ার্কে কতদূর ভ্রমণ করতে পারে।
 
-It's a counter that prevents packets from circulating forever in a network loop. Every time a packet passes through a router, the TTL is decremented by 1. When it reaches 0, the packet is dropped.
+আসলে "Time To Live" নামটা একটু বিভ্রান্তিকর — এটা আসলে **সময়** মাপে না। এটা একটা **কাউন্টার**। প্রতিটা রাউটার (হপ) প্যাকেট পাস করার সময় এই কাউন্টার এক কমায়।
 
-Without TTL, a misconfigured routing loop could cause packets to circulate indefinitely, consuming bandwidth and CPU until the network collapses.
+## Step 2: প্রাথমিক মান
 
-## Step 2: Initial Value [বাংলা অনুবাদ প্রয়োজন]
+TTL-এর প্রাথমিক মান OS অনুযায়ী ভিন্ন:
 
-When a host sends a packet, it sets the **initial TTL value**. Common defaults:
+- **Linux**: 64
+- **Windows**: 128
+- **macOS**: 255
 
-• **Linux:** 64
-• **Windows:** 128
-• **Cisco IOS:** 255
-• **macOS:** 64
+যখন তুমি `ping` চালাও, TTL দেখতে পারো। যেমন `TTL=56` মানে প্যাকেটটা প্রায় 8টা হপ (64-56=8) পাস করে এসেছে।
 
-The choice is somewhat arbitrary — the important thing is that it's large enough to reach any destination in the internet, but small enough to catch loops.
+## Step 3: প্রতিটা হপে ডিক্রিমেন্ট
 
-## Step 3: Decrement at Each Hop [বাংলা অনুবাদ প্রয়োজন]
+প্রতিটা রাউটার প্যাকেট রিসিভ করলে TTL এক কমায় এবং পরের রাউটারকে পাঠায়।
 
-Each router **decrements the TTL by 1** before forwarding the packet.
+ধরো, TTL=64 দিয়ে শুরু করেছো। প্রথম রাউটার TTL=63 করে, দ্বিতীয় TTL=62 করে, এভাবে চলতে থাকে।
 
-The packet starts with TTL=64 and passes through:
-• Router 1: TTL becomes 63
-• Router 2: TTL becomes 62
-• Router 3: TTL becomes 61
+## Step 4: IP হেডারে TTL ফিল্ড
 
-If the path has many hops, TTL continues to decrease. This is the core mechanism that prevents infinite loops.
+IP হেডারে TTL ফিল্ড 8 বিটের। মানে সর্বোচ্চ 255। এটা IP হেডারের একটা অংশ, TCP/UDP না।
 
-## Step 4: TTL Field in IP Header [বাংলা অনুবাদ প্রয়োজন]
+```
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Time to Live  |   Protocol    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+```
 
-The TTL field is located in the **IPv4 header** at byte offset 8:
+প্রোটোকল ফিল্ডে থাকে TCP (6), UDP (17), ICMP (1) ইত্যাদি।
 
-`0                   1                   2`
-`0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3`
-`+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+`
-`|  Ver  |  IHL  |     TTL     |  Protocol  |`
+## Step 5: TTL শূন্য হলে কী হয়?
 
-In IPv6, this field is called **Hop Limit** and works identically — decremented by each router, dropped at 0.
+যখন TTL শূন্য হয়, রাউটার প্যাকেট **ডিসকার্ড** করে এবং সোর্সকে একটা **ICMP Time Exceeded** মেসেজ পাঠায়।
 
-## Step 5: TTL Reaches Zero [বাংলা অনুবাদ প্রয়োজন]
+এটাই "রাউটিং লুপ" ধরার পদ্ধতি। যদি কোনো প্যাকেট অসীমভাবে ঘুরতে থাকে, TTL শূন্য হলে সেটা থেমে যাবে। নাহলে নেটওয়ার্ক জ্যাম হয়ে যেত।
 
-When a router receives a packet with **TTL=1**, it decrements to 0 and **drops the packet**.
+## Step 6: Traceroute TTL ব্যবহার করে
 
-The router then sends an **ICMP Time Exceeded** message (Type 11, Code 0) back to the sender, informing them the packet was discarded.
+**traceroute** টুল আসলে TTL ব্যবহার করে কাজ করে:
 
-This is how **traceroute** works — it intentionally sends packets with low TTL values to map the path to a destination.
+1. TTL=1 দিয়ে প্যাকেট পাঠায় → প্রথম রাউটার ICMP Time Exceeded পাঠায় → প্রথম হপ জানা গেল!
+2. TTL=2 দিয়ে পাঠায় → দ্বিতীয় রাউটার ICMP Time Exceeded পাঠায় → দ্বিতীয় হপ জানা গেল!
+3. এভাবে ধাপে ধাপে পুরো পাথ ম্যাপ করে।
 
-## Step 6: Traceroute Uses TTL [বাংলা অনুবাদ প্রয়োজন]
-
-**traceroute** maps the path to a destination by exploiting TTL:
-
-1. Send packet with **TTL=1** → Router 1 drops it, sends ICMP Time Exceeded
-2. Send packet with **TTL=2** → Router 1 decrements, Router 2 drops it
-3. Send packet with **TTL=3** → Router 1→2, Router 3 drops it
-4. Continue until you reach the destination
-
-Each ICMP reply reveals a router on the path. This is one of the most fundamental network diagnostic tools.
-
-`traceroute example.com`
+এভাবেই TTL একটা সিম্পল কাউন্টার হয়ে গিয়ে নেটওয়ার্ক ডায়াগনস্টিকের শক্তিশালী টুল হয়ে ওঠে।

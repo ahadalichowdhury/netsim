@@ -1,102 +1,68 @@
 ---
-name: Layer 2
-description: How switches forward frames using MAC addresses
-category: Networking Fundamentals
-order: 10
+name: Layer 2 - সুইচ ফরোয়ার্ডিং
+description: Layer 2-এ সুইচ কীভাবে Ethernet ফ্রেম ফরোয়ার্ড করে এবং MAC এড্রেস শেখে — পুরো প্রসেস বাংলায়
 ---
 
-## Step 1: PC-A wants to send data to PC-B [বাংলা অনুবাদ প্রয়োজন]
+# Layer 2 — সুইচ ফরোয়ার্ডিং
 
-**PC-A** has data to send to **PC-B** (192.168.1.20). Both are on the same subnet (192.168.1.0/24), so PC-A can send directly via Layer 2.
+আজ দেখবো Layer 2-এ সুইচ কীভাবে কাজ করে। ধাপে ধাপে বুঝি যখন একটা PC আরেকটা PC-তে ডেটা পাঠায়, তখন মাঝখানে কী কী ঘটে।
 
-But first, PC-A needs to build an **Ethernet frame** with PC-B's MAC address as the destination.
+## Step 1: PC-A, PC-B-কে ডেটা পাঠাতে চায়
 
-**How does PC-A know PC-B's MAC?**
-PC-A uses **ARP** (Address Resolution Protocol) to discover it. Before this step, PC-A sent an ARP broadcast: "Who has 192.168.1.20?" and PC-B replied with its MAC. See the **ARP topic** for the full process.
+ধরো PC-A (MAC: `AA:AA:AA:AA:AA:01`) থেকে PC-B (MAC: `BB:BB:BB:BB:BB:01`)-কে একটা প্যাকেট পাঠাতে হবে। দুটো PCই একই সুইচের সাথে সংযুক্ত। PC-A জানে যে ডেস্টিনেশন MAC হলো `BB:BB:BB:BB:BB:01`। এখন শুরু হলো পুরো প্রসেস।
 
-**How does PC-A know PC-B's IP?** The user or application provided it — either directly (ping 192.168.1.20) or via DNS resolution (ping pc-b.local). See **How Networks Start** for the complete chain.
+## Step 2: Ethernet ফ্রেম তৈরি করো
 
-**See also:** **MAC Address** and **MAC Table** topics for how switches learn and forward.
+PC-A তখন একটা Ethernet ফ্রেম তৈরি করে। ফ্রেমের মধ্যে থাকে:
 
-## Step 2: PC-A builds Ethernet frame [বাংলা অনুবাদ প্রয়োজন]
+- **Destination MAC:** `BB:BB:BB:BB:BB:01`
+- **Source MAC:** `AA:AA:AA:AA:AA:01`
+- **Payload:** আসল ডেটা
 
-PC-A creates an **Ethernet II frame**:
-`Src MAC: AA:BB:CC:DD:EE:01`
-`Dst MAC: AA:BB:CC:DD:EE:02`
+এই ফ্রেমটাই এখন সুইচের দিকে যাবে।
 
-Inside the Ethernet payload is an **IPv4 packet** carrying the data. The frame is now ready to be sent to the Switch.
+## Step 3: ফ্রেম সুইচে পৌঁছায়
 
-## Step 3: Frame travels: PC-A → Switch [বাংলা অনুবাদ প্রয়োজন]
+PC-A থেকে Ethernet ক্যাবল ধরে ফ্রেমটা সুইচের Port 1-এ পৌঁছায়। সুইচ এই ফ্রেমটা রিসিভ করে এবং এখন বুঝতে হবে এটা কোথায় পাঠাতে হবে।
 
-The Ethernet frame travels from **PC-A** to the **Switch** over the physical cable.
+## Step 4: সুইচ MAC শিখছে
 
-The Switch receives the frame on **port 1** and begins processing it.
+সুইচ ফ্রেমটা দেখে — সোর্স MAC হলো `AA:AA:AA:AA:AA:01`। সুইচ তার MAC Address Table-এ চেক করে এবং শিখে নেয় যে Port 1-এ `AA:AA:AA:AA:AA:01` আছে। এটাই সুইচের learning। এখন থেকে সুইচ জানে যে এই MAC এড্রেসটা Port 1 দিয়ে পাওয়া যায়।
 
-## Step 4: Switch learns PC-A's MAC address [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: ডেস্টিনেশন MAC চেক করো
 
-The Switch inspects the frame's **source MAC address** (AA:BB:CC:DD:EE:01).
+সুইচ এখন ডেস্টিনেশন MAC দেখে — `BB:BB:BB:BB:BB:01`। এই MAC এড্রেসটা কি তার MAC Address Table-এ আছে? এখন নতুন সুইচে হয়তো এই MAC এড্রেসটা নেই। তাহলে কী হবে? দেখো পরের ধাপে।
 
-It creates an entry in its **MAC address table**:
-`AA:BB:CC:DD:EE:01 → Port 1 (PC-A)`
+## Step 6: Unknown Destination — Flood করো
 
-This is the **learning** phase — the switch now knows where to find PC-A.
+সুইচের MAC Address Table-ে `BB:BB:BB:BB:BB:01` নেই। তাহলে সুইচ ফ্রেমটাকে সব পোর্টে (Port 1 বাদ দিয়ে) flood করে দেয়। মানে Port 2 এবং Port 3 — দুটোতেই ফ্রেমটা পাঠায়। এটাকেই বলে unknown unicast flooding।
 
-## Step 5: Switch checks MAC table — PC-B unknown [বাংলা অনুবাদ প্রয়োজন]
+## Step 7: PC-C-ও ফ্রেম পায়
 
-The Switch looks at the frame's **destination MAC** (AA:BB:CC:DD:EE:02) and searches its MAC table.
+সুইচ Port 3-এ flood করায় PC-C (MAC: `CC:CC:CC:CC:CC:01`)-ও ফ্রেমটা পায়। কিন্তু PC-C ফ্রেমটা দেখে ডেস্টিনেশন MAC `BB:BB:BB:BB:BB:01` — এটা তার নিজের MAC না। তাই PC-C ফ্রেমটা **ড্রপ** করে দেয়। শুধু নিজের MAC-এর ফ্রেমই গ্রহণ করে।
 
-**PC-B is not in the table.** The switch doesn't know which port leads to PC-B.
+## Step 8: PC-B ফ্রেম গ্রহণ করে এবং রিপ্লাই পাঠায়
 
-The only option: **flood** the frame out all ports except the one it came in on.
+PC-B ফ্রেমটা পায় এবং ডেস্টিনেশন MAC নিজের সাথে মেলে — `BB:BB:BB:BB:BB:01`। তাই PC-B ফ্রেমটা গ্রহণ করে এবং রিপ্লাই তৈরি করে। রিপ্লাই ফ্রেমে ডেস্টিনেশন MAC হবে `AA:AA:AA:AA:AA:01` এবং সোর্স MAC হবে `BB:BB:BB:BB:BB:01`।
 
-## Step 6: Switch floods frame to PC-B [বাংলা অনুবাদ প্রয়োজন]
+## Step 9: সুইচ PC-B-কেও শেখে
 
-The Switch floods the frame out **all ports except port 1**.
+PC-B থেকে রিপ্লাই ফ্রেমটা সুইচের Port 2-তে পৌঁছায়। সুইচ সোর্স MAC দেখে — `BB:BB:BB:BB:BB:01`। এখন সুইচ তার MAC Address Table-এ আরেকটা এন্ট্রি যোগ করে: Port 2-তে `BB:BB:BB:BB:BB:01` আছে। দুটো PC-ই এখন শেখা হয়ে গেছে!
 
-The first copy travels to **PC-B** via port 2. This is called **unknown unicast flooding**.
+## Step 10: এবার সুইচ Unicast ফরোয়ার্ড করে
 
-## Step 7: Switch also floods to PC-C [বাংলা অনুবাদ প্রয়োজন]
+সুইচ রিপ্লাই ফ্রেমের ডেস্টিনেশন MAC চেক করে — `AA:AA:AA:AA:AA:01`। MAC Address Table-ে এই MAC Port 1-এ আছে। তাই সুইচ ফ্রেমটা শুধু Port 1-এ পাঠায় — flood নয়, unicast। এটাই সুইচের efficiency: প্রথমবার flood করে, কিন্তু পরের বার শুধু সঠিক পোর্টে পাঠায়।
 
-The Switch simultaneously sends a copy of the frame to **PC-C** via port 3.
+## Step 11: আগের দিকেও একই কাজ
 
-PC-C will examine the destination MAC and decide whether to accept or drop the frame.
+এখন PC-A-ও রিপ্লাই পায়। ডেস্টিনেশন MAC মেলে গেছে, তাই গ্রহণ করে। এই পুরো লেন-দেন শেষ। সুইচ শিখে ফেলেছে দুটো MAC এড্রেস কোন পোর্টে আছে।
 
-## Step 8: PC-C drops — wrong destination MAC [বাংলা অনুবাদ প্রয়োজন]
+## Step 12: সারসংক্ষেপ
 
-**PC-C** receives the flooded frame and checks the destination MAC.
+তো দেখলে — Layer 2-এ সুইচ কী করে:
 
-`Dst MAC: AA:BB:CC:DD:EE:02`
-`PC-C MAC: AA:BB:CC:DD:EE:03`
+- **শেখে (Learn):** সোর্স MAC থেকে MAC Address Table আপডেট করে
+- **শিখলে ফরোয়ার্ড করে (Forward):** MAC Table-ে ডেস্টিনেশন থাকলে unicast পাঠায়
+- **না শিখলে flood করে (Flood):** Unknown MAC থাকলে সব পোর্টে ছড়িয়ে দেয়
 
-The addresses don't match — **PC-C silently drops the frame**. It was never meant for PC-C.
-
-## Step 9: PC-B accepts and sends reply [বাংলা অনুবাদ প্রয়োজন]
-
-**PC-B** receives the frame and sees the destination MAC matches its own — it **accepts** the frame.
-
-PC-B processes the data and sends a **reply frame** back:
-`Src MAC: AA:BB:CC:DD:EE:02 (PC-B)`
-`Dst MAC: AA:BB:CC:DD:EE:01 (PC-A)`
-
-## Step 10: Switch learns PC-B's MAC [বাংলা অনুবাদ প্রয়োজন]
-
-The Switch receives the reply and inspects the **source MAC** (AA:BB:CC:DD:EE:02).
-
-It creates a new entry:
-`AA:BB:CC:DD:EE:02 → Port 2 (PC-B)`
-
-The MAC table now has entries for **both** PC-A and PC-B.
-
-## Step 11: Switch forwards unicast to PC-A [বাংলা অনুবাদ প্রয়োজন]
-
-The Switch checks the destination MAC (AA:BB:CC:DD:EE:01) in its table — **found! Port 1 = PC-A.**
-
-No flooding needed — the Switch forwards the frame **only to PC-A**. This is efficient **unicast forwarding**.
-
-## Step 12: Layer 2 switching complete! [বাংলা অনুবাদ প্রয়োজন]
-
-The Switch has now **learned** both PC-A and PC-B's MAC addresses.
-
-Future frames between PC-A and PC-B will be **forwarded directly** via unicast — no more flooding!
-
-**Key concept:** Switches learn by inspecting the **source MAC** of every frame. They forward by looking up the **destination MAC** in their MAC address table.
+এটাই Layer 2 switching-এর মূল কাজ — শেখা, মনে রাখা, এবং সঠিক পথে পাঠানো।

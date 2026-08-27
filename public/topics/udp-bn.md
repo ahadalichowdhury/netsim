@@ -1,75 +1,52 @@
 ---
-name: UDP
-description: Fast and simple — connectionless transport for speed
-category: Networking Fundamentals
-order: 30
+name: UDP (ইউজার ডেটাগ্রাম প্রোটোকল)
+description: দ্রুত ট্রান্সপোর্ট — কোনো গ্যারান্টি নেই, কিন্তু স্পিড আছে
 ---
 
-## Step 1: What is UDP? [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: UDP কী?
 
-**UDP (User Datagram Protocol)** is a **connectionless** transport protocol defined in RFC 768.
+**UDP (User Datagram Protocol)** হলো TCP-র ছোট ভাই। এটাও Layer 4 প্রোটোকল, কিন্তু TCP-র মতো গ্যারান্টি দেয় না।
 
-Unlike TCP, UDP:
-• Does **not establish a connection** (no handshake)
-• Does **not guarantee delivery** (packets may be lost)
-• Does **not guarantee ordering** (packets may arrive out of order)
-• Has **no retransmission** mechanism
+UDP সরাসরি প্যাকেট পাঠায় — কোনো handshake নেই, কোনো acknowledgment নেই, কোনো retransmission নেই। যা পাঠালে, সেটাই গেল।
 
-UDP is the "send and forget" protocol — it sends data and hopes for the best. This makes it **extremely fast** with minimal overhead.
+## Step 2: UDP হেডার
 
-## Step 2: UDP Header [বাংলা অনুবাদ প্রয়োজন]
+UDP হেডার TCP-র তুলনায় অনেক ছোট ও সিম্পল:
 
-The UDP header is incredibly simple — only **8 bytes** (compared to TCP's 20+ bytes):
+```
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     Source Port               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   Destination Port           |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     Length                    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     Checksum                  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+```
 
-`Source Port (16 bits)` — sender's port
-`Destination Port (16 bits)` — receiver's port
-`Length (16 bits)` — total segment size (header + data)
-`Checksum (16 bits)` — error detection (optional in IPv4)
+মাত্র 8 বাইট! TCP-র হেডার কমপক্ষে 20 বাইট। UDP-তে sequence number, acknowledgment number, flags — কিছুই নেই।
 
-That's it — no sequence numbers, no acknowledgments, no flow control. Just ports and a length.
+## Step 3: কখন UDP ব্যবহার হয়
 
-## Step 3: When UDP is Used [বাংলা অনুবাদ প্রয়োজন]
+UDP ব্যবহার হয় যেখানে **গতি** গুরুত্বপূর্ণ:
 
-UDP is the protocol of choice when **speed matters more than reliability**:
+- **DNS** — একটা ছোট অনুরোধ, একটা ছোট উত্তর। TCP হ্যান্ডশেক লাগানোর দরকার নেই
+- **VoIP** — কথা বলার সময় 100ms ডিলেও অসুবিধে করে
+- **অনলাইন গেমিং** — প্রতিটা ফ্রেম গুরুত্বপূর্ণ, রিট্রান্সমিশনে সময় যায় না
+- **স্ট্রিমিং** — ভিডিও/অডিও স্ট্রিমে কিছু ডেটা হারিলেও চলে
 
-**DNS queries:**
-• Small request/response — no need for TCP overhead
-• If the query fails, just send another one
+## Step 4: রিয়েল-টাইম অ্যাপ্লিকেশন
 
-**DHCP:**
-• Client has no IP yet — can't establish TCP connection
-• Broadcast discovery works better with UDP
+রিয়েল-টাইম অ্যাপ্লিকেশনে UDP এতই জনপ্রিয়:
 
-**SNMP (monitoring):**
-• Small, frequent status updates
-• Losing one update isn't critical
+- **Zoom/Teams** — ভিডিও কল
+- **Discord** — গেমিং ভয়েস চ্যাট
+- **Twitch** — লাইভ স্ট্রিমিং
+- **DHCP** — IP এড্রেস অ্যাসাইনমেন্ট
 
-## Step 4: Real-time Applications [বাংলা অনুবাদ প্রয়োজন]
+এসব ক্ষেত্রে TCP-র reliability লাগে না — একটা প্যাকেট হারিলে পরেরটা এসে যায়।
 
-UDP dominates **real-time applications** where latency is critical:
+## Step 5: সারসংক্ষেপ
 
-**Online Gaming:**
-• Player positions update 60+ times per second
-• A lost packet is meaningless — the next one has newer data
-• TCP retransmission would cause lag spikes
-
-**Video Streaming:**
-• Buffering handles occasional losses
-• Live streams can't wait for retransmissions
-
-**VoIP (Voice over IP):**
-• Real-time voice can't tolerate delays
-• Brief audio glitches are acceptable, lag is not
-
-## Step 5: UDP Summary [বাংলা অনুবাদ প্রয়োজন]
-
-**Key takeaway:** UDP trades reliability for speed.
-
-• **No handshake** — just send immediately
-• **No ordering** — packets may arrive out of order
-• **No retransmission** — lost packets are gone
-• **8-byte header** — minimal overhead
-• **Best for:** DNS, DHCP, gaming, streaming, VoIP
-
-**When to use UDP:**
-If your application can handle occasional lost packets and needs low latency, UDP is the right choice. If every byte must arrive, use TCP instead.
+UDP হলো "ফায়ার অ্যান্ড ফর্গেট"। TCP-র মতো নির্ভরযোগ্য না, কিন্তু অনেক দ্রুত। যেখানে স্পিড গুরুত্বপূর্ণ ও কিছু ডেটা হারানো সহনীয় — সেখানে UDP সেরা।

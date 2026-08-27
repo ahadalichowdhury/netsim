@@ -1,55 +1,73 @@
 ---
-name: Network Automation
-description: NetDevOps — Ansible, Terraform, programmable infrastructure
-category: Advanced Networking
-order: 52
+name: নেটওয়ার্ক অটোমেশন
+description: NetDevOps — কীভাবে নেটওয়ার্ক কনফিগারেশন কোডে লেখা এবং অটোমেটিকভাবে ডিপ্লয় করা যায়
 ---
 
-## Step 1: Config as Code [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: কনফিগারেশন অ্যাজ কোড
 
-**Configuration as Code** stores all network device configs in a **Git repository**.
+আগে নেটওয়ার্ক ডিভাইস কনফিগার করতে হলে CLI-তে হাতে করে কমান্ড দিতে হতো। এখন সেটা আর সেরকম প্রয়োজন নেই। তুমি তোমার নেটওয়ার্ক কনফিগারেশন একটা ফাইলে লিখতে পারো — যেমন YAML বা JSON। এটাকে বলে "কনফিগারেশন অ্যাজ কোড"।
 
-Instead of manually logging into devices and typing commands:
-• Every config change is a **Git commit**
-• Changes are **reviewed** via pull requests
-• History is **versioned** — easy rollback
-• Configs are **auditable** — who changed what, when
+উদাহরণ:
+```yaml
+interfaces:
+  - name: eth0
+    ip: 192.168.1.1/24
+    status: up
+  - name: eth1
+    ip: 10.0.0.1/24
+    status: up
+```
 
-This is the foundation of **NetDevOps**.
+এই ফাইলটা Git-এ রাখলে তুমি জানবে কখন কী পরিবর্তন হয়েছে, কে করেছে, এবং পুরোনো ভার্সনে ফিরে যেতে পারবে।
 
-## Step 2: CI/CD for Networks [বাংলা অনুবাদ প্রয়োজন]
+## Step 2: CI/CD ফর নেটওয়ার্ক
 
-**CI/CD pipelines** automate testing and deployment of network configs:
+Software development-তে CI/CD pipeline আছে — কোড লেখা, টেস্ট করা, ডিপ্লয় করা। একইভাবে নেটওয়ার্কেও এখন CI/CD ব্যবহার করা হয়।
 
-1. Engineer pushes config change to Git
-2. **CI pipeline** runs:
-   - Syntax validation (linting)
-   - Compliance checks
-   - Dry-run against test environment
-3. **CD pipeline** deploys to production after approval
+ধাপগুলো:
+1. কনফিগারেশন ফাইল Git-এ কমিট করো
+2. CI/CD টুল ফাইলটা চেক করে (লিন্ট, ভ্যালিডেশন)
+3. ল্যাবে টেস্ট করে
+4. প্রোডাকশনে ডিপ্লয় করে
 
-This catches errors **before** they reach production devices.
+এভাবে তুমি ম্যানুয়াল ভুল এড়িয়ে যেতে পারবে।
 
-## Step 3: Ansible [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: Ansible — অটোমেশন টুল
 
-**Ansible** is a push-based automation tool using **YAML playbooks**.
+Ansible হলো একটা জনপ্রিয় নেটওয়ার্ক অটোমেশন টুল। এটা agentless — মানে তোমাকে ডিভাইসে কোনো সফটওয়্যার ইনস্টল করতে হয় না। SSH-এর মাধ্যমে সরাসরি কাজ করে।
 
-Key characteristics:
-• **Idempotent** — running the same playbook twice produces the same result
-• **Agentless** — uses SSH/NETCONF, no software on devices
-• **Push-based** — controller pushes configs to devices
-• **Declarative** — describe the desired state, Ansible makes it happen
+Ansible Playbook দেখতে এরকম হয়:
+```yaml
+---
+- name: Configure Router
+  hosts: routers
+  tasks:
+    - name: Set hostname
+      ios_config:
+        lines:
+          - hostname Router1
+    - name: Configure eth0
+      ios_config:
+        lines:
+          - ip address 192.168.1.1 255.255.255.0
+          - no shutdown
+```
 
-Ansible is ideal for **configuration management** — ensuring devices stay in the desired state.
+Ansible দিয়ে তুমি একসাথে শত শত ডিভাইস কনফিগার করতে পারবে।
 
-## Step 4: Terraform [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: Terraform — ইনফ্রা অ্যাজ কোড
 
-**Terraform** is a declarative Infrastructure as Code (IaC) tool.
+Terraform মূলত ক্লাউড ইনফ্রাস্ট্রাকচার ম্যানেজ করার জন্য ব্যবহার হয়। কিন্তু এটা দিয়ে নেটওয়ার্ক রিসোর্সও তৈরি করা যায় — VPC, Subnet, Security Group ইত্যাদি।
 
-Key differences from Ansible:
-• **Declarative** — describe what you want, not how to get there
-• **State management** — tracks what exists vs what's desired
-• **Multi-vendor** — works with AWS, Azure, VMware, and network devices
-• **Plan/Apply** — preview changes before applying
+```hcl
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
 
-Terraform excels at **infrastructure provisioning** — creating and destroying resources.
+resource "aws_subnet" "public" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.1.0/24"
+}
+```
+
+Terraform-এর সুবিধা হলো, তুমি যা ডিক্লেয়ার করো, সেটাই প্রোভাইড হয়। কোনো কিছু ডিলিট করলে Terraform নিজেই জানে।

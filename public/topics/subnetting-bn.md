@@ -1,90 +1,73 @@
 ---
-name: Subnetting & CIDR
-description: How networks are divided — subnet masks, CIDR notation, IP ranges
-category: Components
-order: 2
+name: সাবনেটিং ও CIDR
+description: একটা বড় নেটওয়ার্ককে ছোট ছোট ভাগে ভাগ করা — সাবনেট মাস্ক দিয়ে
 ---
 
-## Step 1: What is Subnetting? [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: সাবনেটিং কী?
 
-**Subnetting** is the process of dividing a large network into smaller, more manageable **sub-networks (subnets)**.
+সাবনেটিং হলো একটা বড় নেটওয়ার্ককে ছোট ছোট **সাবনেটে** ভাগ করা। যেমন, 192.168.1.0/24 নেটওয়ার্ককে তুমি 192.168.1.0/25 ও 192.168.1.128/25 এ ভাগ করতে পারো। কেন করবে? নেটওয়ার্ক সিকিউরিটি, পারফরম্যান্স, বা অর্গানাইজেশনের জন্য।
 
-Each subnet is a separate broadcast domain. Subnetting improves:
-• **Security** — isolate traffic between groups
-• **Performance** — reduce broadcast domain size
-• **Management** — organize devices logically
+## Step 2: সাবনেট মাস্ক
 
-The key tool for subnetting is the **subnet mask**.
+সাবনেট মাস্ক বোঝায় IP এড্রেসের কোন অংশ **নেটওয়ার্ক** এবং কোন অংশ **হোস্ট**।
 
-## Step 2: Subnet Mask [বাংলা অনুবাদ প্রয়োজন]
+যেমন:
+- `255.255.255.0` → প্রথম 24 বিট নেটওয়ার্ক, শেষ 8 বিট হোস্ট
+- `255.255.0.0` → প্রথম 16 বিট নেটওয়ার্ক, শেষ 16 বিট হোস্ট
 
-A **subnet mask** determines which part of an IP address is the **network** and which is the **host**.
+তুমি `ip addr` দিয়ে দেখতে পারো: `inet 192.168.1.10/24` — এখানে `/24` মানে সাবনেট মাস্ক 255.255.255.0।
 
-`IP: 192.168.1.100`
-`Mask: 255.255.255.0`
+## Step 3: CIDR নোটেশন
 
-The mask performs a **bitwise AND** operation with the IP to extract the network address:
+**CIDR (Classless Inter-Domain Routing)** হলো IP এড্রেস + সাবনেট মাস্ক লেখার ছোট পদ্ধতি।
 
-`192.168.1.100 AND 255.255.255.0 = 192.168.1.0`
+- `192.168.1.0/24` → 24 বিট নেটওয়ার্ক পার্ট
+- `10.0.0.0/8` → 8 বিট নেটওয়ার্ক পার্ট
+- `172.16.0.0/16` → 16 বিট নেটওয়ার্ক পার্ট
 
-## Step 3: CIDR Notation [বাংলা অনুবাদ প্রয়োজন]
+সংখ্যা যত বড়, সাবনেট তত ছোট। /32 মানে একটা মাত্র হোস্ট, /0 মানে পুরো ইন্টারনেট।
 
-**CIDR (Classless Inter-Domain Routing)** notation uses a slash followed by the number of network bits:
+## Step 4: নেটওয়ার্ক এড্রেস
 
-`/24 = 255.255.255.0` (24 network bits)
-`/16 = 255.255.0.0` (16 network bits)
-`/8 = 255.0.0.0` (8 network bits)
+নেটওয়ার্ক এড্রেস হলো সাবনেটের **প্রথম IP**। এটা কোনো হোস্টকে বোঝায় না — এটা পুরো নেটওয়ার্কের নাম।
 
-CIDR replaced the old classful system, allowing **flexible** subnet sizes. A /20 network, for example, gives 4,094 hosts — between a /16 and a /24.
+192.168.1.0/24-র ক্ষেত্রে, নেটওয়ার্ক এড্রেস হলো `192.168.1.0`। এটাকে হোস্ট হিসেবে ব্যবহার করা যায় না।
 
-## Step 4: Network Address [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: ব্রডকাস্ট এড্রেস
 
-The **network address** is the **first address** in a subnet — where all host bits are set to 0.
+ব্রডকাস্ট এড্রেস হলো সাবনেটের **শেষ IP**। এই IP-তে পাঠানো প্যাকেট সাবনেটের সবাই পায়।
 
-`192.168.1.0` (for /24)
+192.168.1.0/24-র ক্ষেত্রে, ব্রডকাস্ট এড্রেস হলো `192.168.1.255`।
 
-This address **cannot** be assigned to a host. It identifies the network itself and is used in routing tables.
+## Step 6: ব্যবহারযোগ্য হোস্ট রেঞ্জ
 
-## Step 5: Broadcast Address [বাংলা অনুবাদ প্রয়োজন]
+নেটওয়ার্ক ও ব্রডকাস্ট ছাড়া বাকি IP গুলোই হোস্টের জন্য।
 
-The **broadcast address** is the **last address** in a subnet — where all host bits are set to 1.
+192.168.1.0/24-র ক্ষেত্রে:
+- নেটওয়ার্ক: 192.168.1.0
+- ব্যবহারযোগ্য রেঞ্জ: 192.168.1.1 — 192.168.1.254
+- ব্রডকাস্ট: 192.168.1.255
+- মোট হোস্ট: 254
 
-`192.168.1.255` (for /24)
+## Step 7: হোস্ট সংখ্যা গণনা
 
-When a frame is sent to this address, **every host** in the subnet receives it. This address also **cannot** be assigned to a host.
+একটা সূত্র আছে: **হোস্ট সংখ্যা = 2^(32 - CIDR প্রিফিক্স) - 2**
 
-## Step 6: Usable Host Range [বাংলা অনুবাদ প্রয়োজন]
+- /24 → 2^8 - 2 = 254 হোস্ট
+- /25 → 2^7 - 2 = 126 হোস্ট
+- /26 → 2^6 - 2 = 62 হোস্ট
+- /30 → 2^2 - 2 = 2 হোস্ট (পয়েন্ট-টু-পয়েন্ট লিঙ্কের জন্য)
 
-The **usable host range** includes all addresses between the network and broadcast addresses:
+-2 কেন? একটা নেটওয়ার্ক এড্রেস, আরেকটা ব্রডকাস্ট এড্রেস — এদুটো বাদ দিতে হয়।
 
-`First usable: 192.168.1.1`
-`Last usable: 192.168.1.254`
+## Step 8: সারসংক্ষেপ
 
-These are the addresses that **can** be assigned to devices. For a /24 subnet, that gives 254 usable addresses.
+সাবনেটিং ছাড়া আধুনিক নেটওয়ার্কিং অসম্ভব। মনে রাখো:
 
-## Step 7: Calculating Hosts [বাংলা অনুবাদ প্রয়োজন]
+- **সাবনেট মাস্ক** → নেটওয়ার্ক vs হোস্ট পার্ট ঠিক করে
+- **CIDR** → ছোট নোটেশন (/24, /16 ইত্যাদি)
+- **নেটওয়ার্ক এড্রেস** → প্রথম IP (ব্যবহার করা যায় না)
+- **ব্রডকাস্ট এড্রেস** → শেষ IP (সবাইকে পাঠানো হয়)
+- **হোস্ট রেঞ্জ** → বাকি সব IP
 
-The number of usable hosts in a subnet is calculated with:
-
-`2^(32 - prefix) - 2`
-
-For /24: 2^(32-24) - 2 = 2⁸ - 2 = **254 hosts**
-
-The **-2** accounts for the network and broadcast addresses (which can't be assigned).
-
-Common subnets:
-`/24 → 254 hosts`
-`/16 → 65,534 hosts`
-`/20 → 4,094 hosts`
-
-## Step 8: Subnetting Summary [বাংলা অনুবাদ প্রয়োজন]
-
-**Key takeaway:** Subnetting divides networks into manageable segments.
-
-• **Subnet mask** separates network bits from host bits
-• **CIDR notation** (/24, /16, etc.) is shorthand for the mask
-• **Network address** = first address (all host bits 0) — unusable
-• **Broadcast address** = last address (all host bits 1) — unusable
-• **Usable hosts** = 2^(host bits) - 2
-
-Understanding subnetting is essential for network design, IP allocation, and troubleshooting.
+সঠিক সাবনেটিং না করলে নেটওয়ার্ক এমনিতেই ব্রেক হয়ে যাবে!

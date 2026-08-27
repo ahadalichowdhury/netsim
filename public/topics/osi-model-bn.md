@@ -1,96 +1,96 @@
 ---
-name: OSI & TCP-IP Model
-description: The layered architecture — why networking is split into layers
+name: OSI এবং TCP-IP মডেল
+description: স্তরিত আর্কিটেকচার — নেটওয়ার্কিং কেন স্তরে ভাগ করা হয়
 category: Networking Fundamentals
 order: 28
 ---
 
-## Step 1: Why Layers? [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: কেন স্তর?
 
-Networking is complex — from physical cables to application protocols. To manage this complexity, the industry split networking into **layers**.
+নেটওয়ার্কিং জটিল — ফিজিক্যাল কেবল থেকে অ্যাপ্লিকেশন প্রোটোকল পর্যন্ত। এই জটিলতা ম্যানেজ করতে, ইন্ডাস্ট্রি নেটওয়ার্কিংকে **স্তরে** ভাগ করেছে।
 
-Each layer has **one specific job** and communicates with the layers directly above and below it. This is called **modularity**.
+প্রতিটা স্তরের একটা **নির্দিষ্ট কাজ** আছে এবং সে সরাসরি উপরের ও নিচের স্তরের সাথে যোগাযোগ করে। একে **মডুলারিটি** বলে।
 
-Benefits:
-• **Simpler design** — each layer only handles its own concerns
-• **Easier troubleshooting** — isolate problems to a specific layer
-• **Interoperability** — vendors can build products for one layer without worrying about others
-• **Flexibility** — swap one layer without changing the others
+সুবিধাগুলো:
+• **সিম্পলার ডিজাইন** — প্রতিটা স্তর শুধু তার নিজের বিষয় দেখে
+• **সহজ ট্রাবলশুটিং** — সমস্যাকে একটা নির্দিষ্ট স্তরে আলাদা করা যায়
+• **ইন্টারঅপারেবিলিটি** — ভেন্ডররা অন্য স্তর না ভেবে একটা স্তরের জন্য প্রোডাক্ট তৈরি করতে পারে
+• **ফ্লেক্সিবিলিটি** — অন্য স্তর না বদলেই একটা স্তর বদলানো যায়
 
-## Step 2: Physical Layer (Layer 1) [বাংলা অনুবাদ প্রয়োজন]
+## Step 2: ফিজিক্যাল লেয়ার (Layer 1)
 
-The **Physical Layer** deals with the raw transmission of **bits** over a physical medium.
+**ফিজিক্যাল লেয়ার** একটা ফিজিক্যাল মাধ্যমে **বিটের** সরল প্রেরণা নিয়ে কাজ করে।
 
-This includes:
-• **Cables** — copper (Cat5e/Cat6), fiber optic, coaxial
-• **Signals** — electrical voltage, light pulses, radio waves
-• **Connectors** — RJ-45, LC, SC
-• **Data rate** — 100 Mbps, 1 Gbps, 10 Gbps
+এতে আছে:
+• **কেবল** — কপার (Cat5e/Cat6), ফাইবার অপটিক, কোঅ্যাক্সিয়াল
+• **সিগনাল** — ইলেকট্রিক্যাল ভোল্টেজ, আলোর পালস, রেডিও ওয়েভ
+• **কানেক্টর** — RJ-45, LC, SC
+• **ডাটা রেট** — 100 Mbps, 1 Gbps, 10 Gbps
 
-At this layer, there are no addresses, no frames — just **1s and 0s** on the wire.
+এই লেয়ারে কোনো address নেই, কোনো ফ্রেম নেই — শুধু তারে **1 এবং 0**।
 
-## Step 3: Data Link Layer (Layer 2) [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: ডাটা লিংক লেয়ার (Layer 2)
 
-The **Data Link Layer** provides **reliable node-to-node** delivery on the same network.
+**ডাটা লিংক লেয়ার** একই নেটওয়ার্কে **নোড থেকে নোডে নির্ভরযোগ্য ডেলিভারি** প্রদান করে।
 
-Key concepts:
-• **MAC addresses** — physical hardware identifiers (AA:BB:CC:DD:EE:FF)
-• **Ethernet frames** — the data unit at this layer
-• **Switches** — forward frames using MAC address tables
-• **Error detection** — CRC/FCS checks
+মূল বিষয়গুলো:
+• **MAC address** — ফিজিক্যাল হার্ডওয়্যার আইডেন্টিফায়ার (AA:BB:CC:DD:EE:FF)
+• **Ethernet frame** — এই লেয়ারের ডাটা ইউনিট
+• **Switch** — MAC address টেবিল ব্যবহার করে ফ্রেম ফরওয়ার্ড করে
+• **এরর ডিটেকশন** — CRC/FCS চেক
 
-Layer 2 handles communication within a **single local network**. To reach a different network, you need Layer 3.
+Layer 2 একটা **একক লোকাল নেটওয়ার্কের** ভেতরে যোগাযোগ হ্যান্ডেল করে। আলাদা নেটওয়ার্কে পৌঁছাতে গেলে Layer 3 লাগবে।
 
-## Step 4: Network Layer (Layer 3) [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: নেটওয়ার্ক লেয়ার (Layer 3)
 
-The **Network Layer** handles **routing across different networks**.
+**নেটওয়ার্ক লেয়ার** আলাদা নেটওয়ার্কের মধ্যে **রুটিং** হ্যান্ডেল করে।
 
-Key concepts:
-• **IP addresses** — logical addresses (192.168.1.10)
-• **Routers** — forward packets between networks
-• **Packets** — the data unit at this layer
-• **Routing tables** — determine the best path
+মূল বিষয়গুলো:
+• **IP address** — লজিক্যাল address (192.168.1.10)
+• **রাউটার** — নেটওয়ার্কের মধ্যে প্যাকেট ফরওয়ার্ড করে
+• **প্যাকেট** — এই লেয়ারের ডাটা ইউনিট
+• **রাউটিং টেবিল** — সেরা পাথ নির্ধারণ করে
 
-Layer 3 enables communication across the internet by finding the best path from source to destination.
+Layer 3 সোর্স থেকে ডেস্টিনেশন পর্যন্ত সেরা পাথ খুঁজে ইন্টারনেট জুড়ে যোগাযোগ সম্ভব করে।
 
-## Step 5: Transport Layer (Layer 4) [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: ট্রান্সপোর্ট লেয়ার (Layer 4)
 
-The **Transport Layer** provides **end-to-end communication** between applications.
+**ট্রান্সপোর্ট লেয়ার** অ্যাপ্লিকেশনের মধ্যে **এন্ড-টু-এন্ড যোগাযোগ** প্রদান করে।
 
-Two main protocols:
-• **TCP** — reliable, ordered delivery with acknowledgments
-• **UDP** — fast, connectionless, no guarantees
+দুটো প্রধান প্রোটোকল:
+• **TCP** — নির্ভরযোগ্য, অ্যাকনলেজমেন্ট সহ অর্ডারড ডেলিভারি
+• **UDP** — দ্রুত, কানেকশনলেস, কোনো গ্যারান্টি নেই
 
-Key concepts:
-• **Port numbers** — identify specific services (80 = HTTP, 443 = HTTPS)
-• **Segments** — the data unit at this layer
-• **Flow control** — prevent overwhelming the receiver
+মূল বিষয়গুলো:
+• **পোর্ট নম্বর** — নির্দিষ্ট সার্ভিস চিহ্নিত করে (80 = HTTP, 443 = HTTPS)
+• **সেগমেন্ট** — এই লেয়ারের ডাটা ইউনিট
+• **ফ্লো কন্ট্রোল** — রিসিভারকে অতিরিক্ত চাপ থেকে রক্ষা করে
 
-## Step 6: Session/Presentation/Application (Layers 5-7) [বাংলা অনুবাদ প্রয়োজন]
+## Step 6: সেশন/প্রেজেন্টেশন/অ্যাপ্লিকেশন (Layer 5-7)
 
-The upper three layers handle **application-level concerns**:
+উপরের তিনটি লেয়ার **অ্যাপ্লিকেশন-লেভেলের** বিষয় দেখে:
 
-**Layer 5 — Session:**
-• Manages sessions between applications
-• Authentication and reconnection
+**Layer 5 — সেশন:**
+• অ্যাপ্লিকেশনের মধ্যে সেশন পরিচালনা করে
+• অথেনটিকেশন এবং রিকানেকশন
 
-**Layer 6 — Presentation:**
-• Data formatting, encryption, compression
-• SSL/TLS encryption happens here
+**Layer 6 — প্রেজেন্টেশন:**
+• ডাটা ফরম্যাটিং, এনক্রিপশন, কম্প্রেশন
+• SSL/TLS এনক্রিপশন এখানে হয়
 
-**Layer 7 — Application:**
-• The protocols users interact with directly
+**Layer 7 — অ্যাপ্লিকেশন:**
+• ব্যবহারকারীরা যেসব প্রোটোকল সরাসরি ব্যবহার করে
 • HTTP, DNS, SMTP, FTP, SSH
 
-In practice, the TCP/IP model merges these three into a single **Application layer**.
+প্র্যাকটিক্যালে, TCP/IP মডেল এই তিনটিকে একটা **অ্যাপ্লিকেশন লেয়ারে** একত্রিত করে।
 
-## Step 7: TCP/IP Model (4 Layers) [বাংলা অনুবাদ প্রয়োজন]
+## Step 7: TCP/IP মডেল (৪টি স্তর)
 
-The **TCP/IP model** is the practical, real-world model used on the internet today. It simplifies the OSI model into **4 layers**:
+**TCP/IP মডেল** হলো বাস্তব, প্র্যাকটিক্যাল মডেল যেটা আজকের ইন্টারনেটে ব্যবহৃত হয়। এটা OSI মডেলকে **৪টি স্তরে** সরল করে:
 
-• **Application** — HTTP, DNS, SMTP (combines OSI layers 5-7)
-• **Transport** — TCP, UDP (same as OSI layer 4)
-• **Internet** — IP, ICMP (same as OSI layer 3)
-• **Network Access** — Ethernet, WiFi (combines OSI layers 1-2)
+• **অ্যাপ্লিকেশন** — HTTP, DNS, SMTP (OSI এর Layer 5-7 একত্রিত)
+• **ট্রান্সপোর্ট** — TCP, UDP (OSI Layer 4 এর মতোই)
+• **ইন্টারনেট** — IP, ICMP (OSI Layer 3 এর মতোই)
+• **নেটওয়ার্ক অ্যাক্সেস** — Ethernet, WiFi (OSI এর Layer 1-2 একত্রিত)
 
-**Key takeaway:** Both models describe the same concepts — TCP/IP is just more practical. When people refer to "layers" in networking, they usually mean the TCP/IP model.
+**মূল কথা:** দুটো মডেলই একই ধারণা বর্ণনা করে — TCP/IP শুধু বেশি প্র্যাকটিক্যাল। নেটওয়ার্কিংয়ে "লেয়ার" বলতে সাধারণত TCP/IP মডেলকেই বোঝায়।

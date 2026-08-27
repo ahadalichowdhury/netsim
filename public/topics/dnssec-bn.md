@@ -1,75 +1,55 @@
 ---
-name: DNSSEC
-description: DNS Security Extensions — preventing cache poisoning and spoofing
-category: Advanced Networking
-order: 49
+name: "DNSSEC"
+description: "DNSSEC কীভাবে DNS কে নিরাপদ করে — চেইন অব ট্রাস্ট, DS রেকর্ড, RRSIG, DNSKEY।"
 ---
 
-## Step 1: Chain of Trust [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: DNSSEC কী এবং কেন দরকার?
 
-**DNSSEC** builds a **chain of trust** from the root zone down.
+DNS মূলত একটা বিশ্বাসের উপর চলে — তুমি DNS সার্ভারকে জিজ্ঞেস করো এবং সে যা বলে সেটাই মানো। কিন্তু সমস্যা হলো, কেউ মাঝখানে থেকে উত্তর পরিবর্তন করে দিলে কী হবে?
 
-**Root zone** (.) — the anchor:
-• Signed with a well-known Key Signing Key (KSK)
-• Published in IANA root key signing ceremony
-• Resolvers trust this key as the starting point
+মানে, তুমি `bank.com` খুঁজছো, কিন্তু হ্যাকার DNS রেসপন্স বদলে দিল — তোমাকে নকল সাইটে নিয়ে গেল। এটাকে বলে **DNS Spoofing** বা **Cache Poisoning**।
 
-**How it works:**
-1. Root zone signs the TLD zones
-2. TLD zones sign the domains under them
-3. Domains sign their own records
-4. Resolver verifies each signature up to the root
+DNSSEC এই সমস্যার সমাধান। এটা প্রমাণ করে যে DNS ডেটা আসল অথরিটি থেকে এসেছে এবং পথে কেউ পরিবর্তন করেনি।
 
-**Result:** If any record is tampered with, the signature chain breaks.
+## Step 2: চেইন অব ট্রাস্ট
 
-## Step 2: DS Records [বাংলা অনুবাদ প্রয়োজন]
+DNSSEC কাজ করে একটা **Chain of Trust**-এর উপর। ধরো তুমি `example.com` রিজল্ভ করছো:
 
-**DS (Delegation Signer)** records — parent signs child.
+```
+Root Zone (.)
+  └── .com Zone
+       └── example.com Zone
+```
 
-The parent zone (e.g., .com) contains a **DS record** that hashes the child zone's DNSKEY:
+প্রতিটা লেভেলে একটা **DS (Delegation Signer) রেকর্ড** থাকে যেটা নিচের লেভেলের কী সাথে ম্যাচ করে। এভাবে একটা নিরাপদ চেইন তৈরি হয়।
 
-`.com → DS: SHA-256 hash of example.com DNSKEY`
+## Step 3: RRSIG ও DNSKEY রেকর্ড
 
-**How it works:**
-1. Parent zone signs the DS record with its own key
-2. Resolver fetches the DS record from the parent
-3. Resolver verifies the hash matches the child's DNSKEY
+DNSSEC দুটো মূল রেকর্ড ব্যবহার করে:
 
-**Result:** The parent zone vouches for the child zone's key — extending the chain of trust.
+**DNSKEY**: এটা পাবলিক কী — যেটা দিয়ে সিগনেচার যাচাই করা হয়।
 
-## Step 3: RRSIG + DNSKEY [বাংলা অনুবাদ প্রয়োজন]
+```
+example.com.    IN    DNSKEY    257 3 13 AwEAAh...
+```
 
-**Resource records** are signed with **RRSIG**.
+**RRSIG**: এটা আসল সিগনেচার — যেটা প্রতিটা রিসোর্স রেকর্ডের সাথে থাকে।
 
-Each DNS record type has associated security records:
+```
+example.com.    IN    RRSIG    A 13 2 3600 20241201000000 20241101000000 12345 example.com. ...
+```
 
-**DNSKEY:**
-• Contains the public key used to verify signatures
-• Zone Signing Key (ZSK) — signs individual records
-• Key Signing Key (KSK) — signs the DNSKEY record itself
+যখন তুমি DNS রেসপন্স পাও, তখন রেজলভার DNSKEY দিয়ে RRSIG ভেরিফাই করে। ম্যাচ করলে ডেটা ভ্যালিড।
 
-**RRSIG:**
-• The cryptographic signature over the resource records
-• Contains: signature algorithm, expiration, original TTL
-• Generated using the zone's private key
+## Step 4: ভ্যালিডেশন প্রসেস
 
-**Query:** `dig example.com +dnssec`
+সম্পূর্ণ ভ্যালিডেশন প্রসেস এরকম:
 
-## Step 4: Validation [বাংলা অনুবাদ প্রয়োজন]
+1. **Resolver** `example.com`-এর জন্য DS রেকর্ড চায় `.com` সার্ভার থেকে
+2. `.com` সার্ভার DS রেকর্ড দেয় এবং RRSIG সিগনেচার
+3. Resolver `.com`-এর DNSKEY দিয়ে সিগনেচার ভেরিফাই করে
+4. তারপর `example.com` থেকে DS রেকর্ড নেয়
+5. সেটার DNSKEY দিয়ে ভেরিফাই করে
+6. শেষে আসল রেকর্ড ও RRSIG ভেরিফাই করে
 
-**Resolver verifies** the entire chain of trust.
-
-**Validation process:**
-1. Resolver receives a DNS response with RRSIG
-2. Fetches the zone's DNSKEY
-3. Verifies the RRSIG against the DNSKEY
-4. Checks the DS record from the parent zone
-5. Verifies the parent's DS matches the child's DNSKEY hash
-6. Continues up to the root zone (which it already trusts)
-
-**If any step fails:**
-• Signature mismatch → **SERVFAIL**
-• Expired signature → **SERVFAIL**
-• Missing signature → **SERVFAIL**
-
-**Result:** DNSSEC-validated responses are cryptographically proven authentic.
+যদি যেকোনো ধাপে ম্যাচ না হয়, রেজলভার সেই DNS ডেটা বিশ্বাস করবে না। এভাবেই DNSSEC ইন্টারনেটকে নিরাপদ রাখে।

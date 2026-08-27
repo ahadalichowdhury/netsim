@@ -1,84 +1,84 @@
 ---
-name: Route Table
-description: Linux routing decisions with ip route
+name: রুট টেবিল
+description: Linux রুটিং সিদ্ধান্ত ip route ব্যবহার করে
 category: Linux Core Networking
 order: 22
 ---
 
-## Step 1: Linux box has 2 interfaces, 2 route table entries [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: Linux বক্সে ২টি interface, ২টি রুট টেবিল এন্ট্রি
 
-The Linux box has two network interfaces:
+Linux বক্সে দুটি নেটওয়ার্ক interface আছে:
 `eth0: 192.168.1.1/24`
 `eth1: 10.0.0.1/24`
 
-The kernel maintains a **routing table** that determines where to send packets based on their destination IP.
+kernel একটা **রুটিং টেবিল** বজায় রাখে যেটা প্যাকেটের ডেস্টিনেশন IP অনুযায়ী সিদ্ধান্ত নেয় কোথায় পাঠাতে হবে।
 
-**Prerequisite:** Understand **Layer 3** (routing decisions) and **Gateway** (how routers connect networks) first.
+**আগে জানুন:** **Layer 3** (রুটিং সিদ্ধান্ত) এবং **Gateway** (রাউটার কিভাবে নেটওয়ার্ক সংযুক্ত করে) সম্পর্কে জানা ভালো।
 
-**See also:** **Routing Table** topic for the conceptual overview.
+**আরো দেখুন:** **Routing Table** টপিকে ধারণামূলক পরিচিতি পাওয়া যাবে।
 
-## Step 2: Packet arrives from PC-A (192.168.1.10) [বাংলা অনুবাদ প্রয়োজন]
+## Step 2: PC-A (192.168.1.10) থেকে প্যাকেট আসে
 
-PC-A (192.168.1.10) sends a packet destined for the Server (8.8.8.8).
+PC-A (192.168.1.10) Server (8.8.8.8) এর দিকে একটা প্যাকেট পাঠায়।
 
-The packet travels from PC-A to Switch A, which will forward it to the Linux box on eth0.
+প্যাকেটটা PC-A থেকে Switch A হয়ে যাচ্ছে, যেটা Linux বক্সের eth0 তে ফরওয়ার্ড করবে।
 
-## Step 3: Packet arrives at eth0 [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: প্যাকেট eth0 তে পৌঁছায়
 
-Switch A forwards the packet to eth0 on the Linux box.
+Switch A প্যাকেটটা Linux বক্সের eth0 তে ফরওয়ার্ড করে।
 
-The kernel now owns the packet and must decide where to send it next based on the destination IP (8.8.8.8).
+এবার kernel এর কাছে প্যাকেটটা আছে এবং ডেস্টিনেশন IP (8.8.8.8) অনুযায়ী সিদ্ধান্ত নিতে হবে পরে কোথায় পাঠাতে হবে।
 
-## Step 4: Kernel checks routing table for destination 8.8.8.8 [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: kernel 8.8.8.8 ডেস্টিনেশনের জন্য রুটিং টেবিল যাচাই করে
 
-The Linux kernel consults its **routing table** to find a match for destination 8.8.8.8.
+Linux kernel তার **রুটিং টেবিল** দেখে 8.8.8.8 ডেস্টিনেশনের জন্য একটা ম্যাচ খুঁজে।
 
-It checks each entry:
-• `192.168.1.0/24` → No match (8.8.8.8 is not in this subnet)
-• `10.0.0.0/24` → No match (8.8.8.8 is not in this subnet)
+সে প্রতিটা এন্ট্রি যাচাই করে:
+• `192.168.1.0/24` → ম্যাচ হয়নি (8.8.8.8 এই সাবনেটে নেই)
+• `10.0.0.0/24` → ম্যাচ হয়নি (8.8.8.8 এই সাবনেটে নেই)
 
-No specific route matches — the kernel looks for a **default route**.
+কোনো নির্দিষ্ট রুট ম্যাচ করেনি — kernel একটা **ডিফল্ট রুট** খুঁজে।
 
-## Step 5: Match: 0.0.0.0/0 via 10.0.0.1 (default route) [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: ম্যাচ: 0.0.0.0/0 via 10.0.0.1 (ডিফল্ট রুট)
 
-The kernel finds the **default route** (0.0.0.0/0) — a catch-all entry that matches any destination.
+kernel **ডিফল্ট রুট** (0.0.0.0/0) খুঁজে পায় — যেটা যেকোনো ডেস্টিনেশনের সাথে ম্যাচ হয়।
 
-The default gateway is `10.0.0.1`, which is the Linux box's own eth1 interface. The packet should be sent out via **eth1**.
+ডিফল্ট গেটওয়ে হলো `10.0.0.1`, যেটা Linux বক্সের নিজের eth1 interface। প্যাকেটটা **eth1** দিয়ে বের হওয়া উচিত।
 
-## Step 6: Kernel forwards packet to eth1 [বাংলা অনুবাদ প্রয়োজন]
+## Step 6: kernel প্যাকেটটা eth1 তে ফরওয়ার্ড করে
 
-Based on the routing decision, the kernel **forwards** the packet from eth0 to eth1.
+রুটিং সিদ্ধান্ত অনুযায়ী, kernel প্যাকেটটা eth0 থেকে eth1 তে **ফরওয়ার্ড** করে।
 
-The packet is now being routed between the two interfaces — the Linux box is acting as a **router**.
+প্যাকেটটা এখন দুটি interface এর মধ্যে রুট করা হচ্ছে — Linux বক্স একটা **রাউটার** হিসেবে কাজ করছে।
 
-## Step 7: Packet: eth1 → Switch B [বাংলা অনুবাদ প্রয়োজন]
+## Step 7: প্যাকেট: eth1 → Switch B
 
-The packet exits eth1 (10.0.0.1) and travels to Switch B.
+প্যাকেটটা eth1 (10.0.0.1) থেকে বের হয়ে Switch B তে যায়।
 
-The packet is now on the 10.0.0.0/24 network, heading toward the destination 8.8.8.8.
+প্যাকেটটা এখন 10.0.0.0/24 নেটওয়ার্কে আছে, 8.8.8.8 ডেস্টিনেশনের দিকে যাচ্ছে।
 
-## Step 8: Switch B forwards to server [বাংলা অনুবাদ প্রয়োজন]
+## Step 8: Switch B সার্ভারে ফরওয়ার্ড করে
 
-Switch B receives the packet and forwards it to the Server (8.8.8.8) based on its forwarding table.
+Switch B প্যাকেটটা গ্রহণ করে এবং তার ফরওয়ার্ডিং টেবিল অনুযায়ী Server (8.8.8.8) তে পাঠায়।
 
-## Step 9: Routing decision summary [বাংলা অনুবাদ প্রয়োজন]
+## Step 9: রুটিং সিদ্ধান্তের সারসংক্ষেপ
 
-The packet was successfully routed from the 192.168.1.0/24 network to the 10.0.0.0/24 network.
+প্যাকেটটা সফলভাবে 192.168.1.0/24 নেটওয়ার্ক থেকে 10.0.0.0/24 নেটওয়ার্কে রুট করা হয়েছে।
 
-**Key steps:**
-1. Packet arrived on eth0 from PC-A
-2. Kernel checked routing table for destination 8.8.8.8
-3. No specific route matched — used **default route**
-4. Packet forwarded to eth1 and delivered to the server
+**মূল ধাপগুলো:**
+1. প্যাকেটটা PC-A থেকে eth0 তে এসেছে
+2. kernel 8.8.8.8 ডেস্টিনেশনের জন্য রুটিং টেবিল দেখেছে
+3. কোনো নির্দিষ্ট রুট ম্যাচ করেনি — **ডিফল্ট রুট** ব্যবহার করা হয়েছে
+4. প্যাকেট eth1 তে ফরওয়ার্ড হয়ে সার্ভারে ডেলিভার হয়েছে
 
-The `ip route` command shows the kernel's routing table.
+`ip route` কমান্ড kernel এর রুটিং টেবিল দেখায়।
 
-## Step 10: ip route shows the kernel's routing table [বাংলা অনুবাদ প্রয়োজন]
+## Step 10: ip route kernel এর রুটিং টেবিল দেখায়
 
-The `ip route` command displays the routing table:
+`ip route` কমান্ড রুটিং টেবিল দেখায়:
 
 `192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.1`
 `10.0.0.0/24 dev eth1 proto kernel scope link src 10.0.0.1`
 `default via 10.0.0.1 dev eth1`
 
-**Key takeaway:** Linux uses its routing table to make forwarding decisions. The default route (0.0.0.0/0) is the fallback when no specific route matches the destination.
+**মূল কথা:** Linux তার রুটিং টেবিল ব্যবহার করে ফরওয়ার্ডিং সিদ্ধান্ত নেয়। ডিফল্ট রুট (0.0.0.0/0) হলো ফলব্যাক, যখন কোনো নির্দিষ্ট রুট ডেস্টিনেশনের সাথে ম্যাচ করে না।

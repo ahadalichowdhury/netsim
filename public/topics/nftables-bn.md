@@ -1,48 +1,48 @@
 ---
 name: nftables
-description: Modern Linux firewall — the successor to iptables
+description: আধুনিক Linux firewall — iptables এর উত্তরাধিকারী
 category: Linux Core Networking
 order: 38
 ---
 
-## Step 1: nftables Tables [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: nftables টেবিল
 
-nftables organizes firewall rules into **tables** by protocol family:
+nftables ফায়ারওয়াল রুলগুলোকে প্রোটোকল ফ্যামিলি অনুযায়ী **টেবিলে** সাজায়:
 
-**ip** — IPv4 rules
-**ip6** — IPv6 rules
-**inet** — Both IPv4 and IPv6
-**arp** — ARP rules
+**ip** — IPv4 রুল
+**ip6** — IPv6 রুল
+**inet** — IPv4 এবং IPv6 দুটোই
+**arp** — ARP রুল
 
-Tables are containers for chains. A single table can hold all your firewall rules for a given protocol family.
+টেবিল হলো চেইনের ধারক। একটা টেবিলেই একটা নির্দিষ্ট প্রোটোকল ফ্যামিলির সব ফায়ারওয়াল রুল থাকতে পারে।
 
-## Step 2: Chains [বাংলা অনুবাদ প্রয়োজন]
+## Step 2: চেইন
 
-Within each table, **chains** define where rules are evaluated in the packet flow:
+প্রতিটা টেবিলের ভেতরে, **চেইন** নির্ধারণ করে কোন জায়গায় রুলগুলো যাচাই করা হবে:
 
-**input** — packets destined for the firewall itself
-**forward** — packets passing through the firewall
-**output** — packets originating from the firewall
+**input** — ফায়ারওয়াল নিজের দিকে আসা প্যাকেট
+**forward** — ফায়ারওয়াল দিয়ে যাওয়া প্যাকেট
+**output** — ফায়ারওয়াল থেকে বের হওয়া প্যাকেট
 
-Chains are attached to **hooks** (prerouting, input, forward, output, postrouting) that determine when they execute.
+চেইনগুলো **হুকে** (prerouting, input, forward, output, postrouting) সংযুক্ত থাকে, যেগুলো নির্ধারণ করে চেইন কখন চলবে।
 
-## Step 3: Rules & Expressions [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: রুল এবং এক্সপ্রেশন
 
-Each chain contains an ordered list of **rules**. Each rule has **match conditions** and an **action**:
+প্রতিটা চেইনের ভেতরে একটা ক্রমানুসারে সাজানো **রুলের** তালিকা থাকে। প্রতিটা রুলে একটা **ম্যাচ শর্ত** এবং একটা **একশন** থাকে:
 
-Example rule:
+উদাহরণ রুল:
 `tcp dport 22 accept`
 
-This matches TCP packets on port 22 and accepts them. If no rule matches, the chain's **default policy** applies.
+এটা TCP প্যাকেট যার port 22 সেগুলো ম্যাচ করে এবং গ্রহণ করে। কোনো রুল ম্যাচ না হলে, চেইনের **ডিফল্ট পলিসি** কাজ করবে।
 
-## Step 4: nft vs iptables [বাংলা অনুবাদ প্রয়োজন]
+## Step 4: nft বনাম iptables
 
-**nftables** is the modern successor to iptables with key advantages:
+**nftables** হলো iptables এর আধুনিক উত্তরাধিকারী, এতে কিছু বড় সুবিধা আছে:
 
-**Atomic ruleset changes** — replace entire rulesets without locking
-**Better performance** — optimized kernel backend
-**Simpler syntax** — more readable configuration
-**Native set/map support** — efficient matching of IPs, ports, interfaces
-**Unified framework** — replaces iptables, ip6tables, arptables, ebtables
+**অ্যাটমিক রুলসেট পরিবর্তন** — লক না করেই পুরো রুলসেট বদলানো যায়
+**ভালো পারফরম্যান্স** — অপ্টিমাইজড কার্নেল ব্যাকএন্ড
+**সিম্পলার সিনট্যাক্স** — বেশি পড়ার যোগ্য কনফিগারেশন
+**নেটিভ সেট/ম্যাপ সাপোর্ট** — IP, port, interface দক্ষতার সাথে ম্যাচ করা যায়
+**ইউনিফাইড ফ্রেমওয়ার্ক** — iptables, ip6tables, arptables, ebtables সব বদলে দেয়
 
-Most modern Linux distributions now use nftables as the default firewall.
+বেশিরভাগ আধুনিক Linux ডিস্ট্রিবিউশন এখন nftables কে ডিফল্ট ফায়ারওয়াল হিসেবে ব্যবহার করে।

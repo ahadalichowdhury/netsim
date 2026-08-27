@@ -1,89 +1,71 @@
 ---
-name: DNS
-description: Domain Name System — how names become IP addresses
-category: Networking Fundamentals
-order: 16
+name: DNS (ডোমেইন নেম সিস্টেম)
+description: কীভাবে google.com টাইপ করলেই তোমার কম্পিউটার IP এড্রেস খুঁজে বের করে
 ---
 
-## Step 1: User types google.com in browser [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: ব্যবহারকারী google.com টাইপ করে
 
-The user opens a browser and types **google.com** in the address bar.
+তুমি তোমার ব্রাউজারে `google.com` টাইপ করে এন্টার চাপো। কিন্তু ব্রাউজার জানে না google.com মানে কি। ব্রাউজারকে লাগে IP এড্রেস — যেমন 142.250.185.78। DNS হলো সেই সিস্টেম যেটা ডোমেইন নেমকে IP তে রূপান্তর করে।
 
-The computer needs to convert this human-readable **domain name** into an IP address. It starts by checking its **local DNS cache** to see if it already knows the answer.
+## Step 2: লোকাল DNS ক্যাশে মিস
 
-**Note:** DNS resolution happens before most network connections. After DNS, the **TCP Handshake** establishes the connection to the resolved IP.
+ব্রাউজার প্রথমে লোকাল DNS ক্যাশে চেক করে। ধরো, তুমি আগে google.com ভিজিট করেছো — তাহলে ক্যাশেতে IP থাকতে পারে। কিন্তু এখন ধরো ক্যাশেতে কিছু নেই — মানে Cache MISS।
 
-**See also:** **TCP/UDP Ports** topic — DNS uses port 53.
+তখন ব্রাউজারের OS-কে DNS রিসলুশন দরকার হয়।
 
-## Step 2: PC checks local DNS cache — miss [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: DNS কোয়েরি UDP পোর্ট 53-এ যায়
 
-The PC checks its **local DNS cache** for "google.com".
+OS একটা DNS কোয়েরি তৈরি করে:
 
-The cache is **empty** — this is the first time visiting this site. The PC must now send a **DNS query** to a recursive DNS resolver to look up the IP address.
+- **Type:** A Record (IPv4)
+- **Query:** google.com
+- **Protocol:** UDP
+- **Port:** 53
+- **DNS Server:** 8.8.8.8 (Google DNS)
 
-## Step 3: PC builds DNS Query (UDP port 53) [বাংলা অনুবাদ প্রয়োজন]
+UDP ব্যবহার হয় কারণ এটা দ্রুত — TCP-র মতো handshake লাগে না।
 
-The PC creates a **DNS query** packet:
-`Type: A (IPv4 address request)`
-`Name: google.com`
+## Step 4: কোয়েরি সুইচে যায়
 
-The query will travel from PC → Switch → DNS Server (8.8.8.8) using UDP port 53.
+DNS কোয়েরি প্যাকেট তোমার কম্পিউটার থেকে Switch-এ যায়। Switch প্যাকেটটা ডিফল্ট গেটওয়ের (রাউটার) দিকে পাঠায়। রাউটার কোয়েরিটা ইন্টারনেটের দিকে ফরোয়ার্ড করে।
 
-## Step 4: DNS Query: PC → Switch [বাংলা অনুবাদ প্রয়োজন]
+## Step 5: Switch DNS সার্ভারে পাঠায়
 
-The PC sends the DNS query frame to the Switch.
-`Src MAC: AA:BB:CC:DD:EE:01 (PC)`
-`Dst MAC: AA:BB:CC:DD:EE:FF (DNS Server)`
+কোয়েরি প্যাকেটটা বিভিন্ন রাউটার হয়ে চলে যায় এবং শেষে পৌঁছায় DNS সার্ভারে — যেমন Google DNS (8.8.8.8)। DNS সার্ভার প্যাকেটটা গ্রহণ করে এবং বুঝতে পারে: "ব্যবহারকারী google.com-এর IP চাইছে।"
 
-The Switch receives the frame and will forward it toward the DNS Server.
+## Step 6: DNS সার্ভার A Record খুঁজে পায়
 
-## Step 5: Switch forwards to DNS Server [বাংলা অনুবাদ প্রয়োজন]
+DNS সার্ভার তার ডাটাবেসে google.com খুঁজে দেখে। সে A Record পায়:
 
-The Switch receives the frame and looks up the destination MAC in its forwarding table.
+```
+google.com.    IN    A    142.250.185.78
+```
 
-The DNS Server (AA:BB:CC:DD:EE:FF) is reachable on the port connected to it. The Switch **forwards** the frame directly to the DNS Server.
+A Record মানে IPv4 এড্রেস। DNS সার্ভার এই IP টা ব্যবহারকারীকে দেবে।
 
-## Step 6: DNS Server looks up A record [বাংলা অনুবাদ প্রয়োজন]
+## Step 7: DNS রিপ্লাই তৈরি হয়
 
-The DNS Server receives the query for **google.com**.
+DNS সার্ভার একটা DNS Reply তৈরি করে:
 
-It looks up the **A record** in its zone files and finds the IP address: `142.250.80.46`
+- **Query:** google.com
+- **Answer:** 142.250.185.78
+- **TTL:** 300 সেকেন্ড (5 মিনিট)
 
-The DNS Server builds a response with the resolved IP address.
+TTL (Time To Live) বলে দেয় এই রেজাল্টটা কতক্ষণ ক্যাশেতে রাখা যাবে।
 
-## Step 7: DNS Reply: Server → Switch [বাংলা অনুবাদ প্রয়োজন]
+## Step 8: সুইচ রিপ্লাই ফরোয়ার্ড করে
 
-The DNS Server sends back a **DNS response**:
-`Type: A`
-`Name: google.com`
-`IP: 142.250.80.46`
-`TTL: 300 seconds`
+DNS রিপ্লাই প্যাকেটটা আবার উল্টো দিকে যায় — DNS সার্ভার → রাউটার → Switch → তোমার কম্পিউটার। Switch প্যাকেটটা তোমার কম্পিউটারের পোর্টে পাঠায়।
 
-The reply travels from DNS Server → Switch.
+## Step 9: PC DNS রেজাল্ট ক্যাশে করে
 
-## Step 8: Switch forwards Reply to PC [বাংলা অনুবাদ প্রয়োজন]
+তোমার কম্পিউটার DNS রিপ্লাই পায় এবং দুটো কাজ করে:
 
-The Switch receives the DNS reply and looks up the destination MAC (AA:BB:CC:DD:EE:01 — PC).
+1. **ক্যাশেতে রাখে:** পরের বার google.com সার্চ করলে আবার DNS কোয়েরি পাঠানোর দরকার নেই। সরাসরি ক্যাশে থেকে IP পাওয়া যাবে।
+2. **ব্রাউজারকে দেয়:** ব্রাউজার IP পায় এবং 142.250.185.78-তে HTTP/HTTPS কনেকশন তৈরি করে।
 
-It forwards the frame out the port connected to the PC.
+## Step 10: রিজলিউশন সম্পূর্ণ
 
-## Step 9: PC caches IP address [বাংলা অনুবাদ প্রয়োজন]
+পুরো প্রক্রিয়া শেষ! তুমি `google.com` টাইপ করেছো, DNS সেটাকে `142.250.185.78` এ রূপান্তর করেছে, এবং এখন গুগলের ওয়েবসাইট তোমার ব্রাউজারে লোড হচ্ছে।
 
-The PC receives the DNS reply and **caches** the result:
-`google.com → 142.250.80.46`
-
-This entry will stay in the cache for **300 seconds** (the TTL). Future visits to this domain won't need another DNS lookup!
-
-## Step 10: DNS Resolution complete! [বাংলা অনুবাদ প্রয়োজন]
-
-**Key takeaway:** DNS translates human-readable domain names into IP addresses that computers can use.
-
-The process involved:
-1. Checking the **local cache** — miss!
-2. Building a **DNS Query** (UDP port 53)
-3. Query travels PC → Switch → DNS Server
-4. DNS Server looks up the **A record**
-5. Reply travels DNS Server → Switch → PC
-6. PC **caches** the result with a TTL
-
-Without DNS, you'd have to remember IP addresses like `142.250.80.46` instead of typing `google.com`!
+DNS ছাড়া তুমি `google.com` টাইপ করে কোনো ওয়েবসাইটে যেতে পারবে না। তোমাকে প্রতিবার IP এড্রেস মনে রাখতে হতো — যা প্রায় অসম্ভব।

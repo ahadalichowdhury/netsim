@@ -1,52 +1,43 @@
 ---
-name: VPN Basics
-description: Encrypted tunnel — private communication over public networks
-category: Networking Fundamentals
-order: 36
+name: VPN (ভার্চুয়াল প্রাইভেট নেটওয়ার্ক)
+description: এনক্রিপ্টেড টানেল দিয়ে নিরাপদে ইন্টারনেট ব্যবহার
 ---
 
-## Step 1: What is a VPN? [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: VPN কী?
 
-A **VPN (Virtual Private Network)** creates an **encrypted tunnel** over a public network.
+**VPN (Virtual Private Network)** হলো একটা এনক্রিপ্টেড টানেল তোমার ডিভাইস ও VPN সার্ভারের মাঝে। যখন VPN চালু থাকে, তোমার সব ইন্টারনেট ট্রাফিক এই টানেল দিয়ে যায়।
 
-It allows a remote worker to securely access a private corporate network through the untrusted public internet. All traffic is encrypted end-to-end, so eavesdroppers on the public network cannot read the data.
+বাইরের কেউ দেখতে পায় না তুমি কী করছো — ISP, WiFi অপারেটর, হ্যাকার সবাই বাইরে থেকে শুধু "টানেলে ডেটা যাচ্ছে" দেখবে।
 
-## Step 2: How VPN Works [বাংলা অনুবাদ প্রয়োজন]
+## Step 2: VPN কীভাবে কাজ করে
 
-The VPN client on the remote worker's machine establishes an **encrypted tunnel** to the VPN server.
+VPN কাজ করে এভাবে:
 
-Traffic destined for the corporate network (10.0.0.0/8) is **encapsulated** inside an encrypted outer packet. This encrypted packet travels safely over the public internet.
+1. তোমার ডিভাইস VPN সার্ভারের সাথে **এনক্রিপ্টেড কনেকশন** স্থাপন করে
+2. সব ইন্টারনেট ট্রাফিক এই কনেকশন দিয়ে যায়
+3. VPN সার্ভার তোমার হয়ে ইন্টারনেটে যায়
+4. রেসপন্স আবার এনক্রিপ্টেড টানেল দিয়ে তোমার কাছে ফিরে আসে
 
-The VPN server on the corporate side **decrypts** the packet and forwards it into the internal network.
+তুমি যেন সরাসরি VPN সার্ভারের নেটওয়ার্কে আছো — এমন অনুভূতি হয়।
 
-## Step 3: VPN Protocols [বাংলা অনুবাদ প্রয়োজন]
+## Step 3: VPN প্রোটোকল
 
-Two major VPN protocols:
+বিভিন্ন VPN প্রোটোকল আছে:
 
-**IPSec** (traditional) — operates at Layer 3, uses IKE for key exchange, provides strong encryption but can be complex to configure.
+- **OpenVPN** — ওপেন সোর্স, নির্ভরযোগ্য, কিন্তু একটু ধীর
+- **WireGuard** — নতুন, খুব দ্রুত, সিম্পল কনফিগ
+- **IPSec/IKEv2** — মোবাইল ডিভাইসে ভালো কাজ করে
+- **L2TP** — পুরাতন, কম ব্যবহৃত
 
-**WireGuard** (modern) — simpler, faster, and uses state-of-the-art cryptography. Growing rapidly in popularity due to its performance and ease of use.
+## Step 4: VPN-র ব্যবহার
 
-## Step 4: VPN Use Cases [বাংলা অনুবাদ প্রয়োজন]
+VPN-র প্রধান ব্যবহারগুলো:
 
-**Remote Access:** Employees working from home connect securely to the corporate network.
+- **পাবলিক WiFi** — কফি শপের WiFi-তে VPN চালু করলে তোমার ডেটা সুরক্ষিত থাকে
+- **রিমোট ওয়ার্ক** — অফিসের নেটওয়ার্কে ঘর থেকে যোগাযোগ
+- **জিও-ব্লকিং বাইপাস** — অন্য দেশের কন্টেন্ট দেখা
+- **প্রাইভেসি** — ISP থেকে তোমার ব্রাউজিং হাইড করা
 
-**Site-to-Site:** Two office networks connected via VPN over the internet.
+## Step 5: সারসংক্ষেপ
 
-**Privacy:** Encrypting traffic on public WiFi to prevent eavesdropping.
-
-**Bypass Geo-Restrictions:** Accessing content available in other regions by routing through a VPN server in that location.
-
-## Step 5: VPN Summary [বাংলা অনুবাদ প্রয়োজন]
-
-**Key takeaway:** VPNs provide encrypted, private communication over public networks.
-
-**Pros:**
-• Security — encrypted traffic even on untrusted networks
-• Privacy — hides your real IP address from destination servers
-• Remote access — securely reach internal resources from anywhere
-
-**Cons:**
-• Latency — encryption/decryption adds overhead
-• Complexity — requires proper configuration and maintenance
-• Not bulletproof — VPN providers can still log traffic
+VPN হলো নিরাপত্তার একটা গুরুত্বপূর্ণ স্তর। এটা তোমার ডেটাকে এনক্রিপ্ট করে এবং তোমার IP এড্রেস হাইড করে। তবে VPN সব সমস্যার সমাধান না — তুমি এখনও phishing email-এ ক্লিক করতে পারো। কিন্তু সিকিউরিটির একটা গুরুত্বপূর্ণ লেয়ার।

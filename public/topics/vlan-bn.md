@@ -1,111 +1,84 @@
 ---
-name: VLAN
-description: Virtual LANs — segmenting networks logically
-category: Networking Fundamentals
-order: 19
+name: VLAN (ভার্চুয়াল LAN)
+description: একটা সুইচ দিয়ে একাধিক ভার্চুয়াল নেটওয়ার্ক তৈরি করা
 ---
 
-## Step 1: 4 PCs, 2 VLANs on one switch [বাংলা অনুবাদ প্রয়োজন]
+## Step 1: 4টা PC, 2টা VLAN
 
-All four PCs are connected to the **same physical switch**, but the switch has been configured to create **two VLANs**:
+ধরো, তোমার কাছে 4টা PC আছে (A, B, C, D) এবং একটা সুইচ। তুমি 2টা আলাদা নেটওয়ার্ক তুলতে চাও:
 
-• **VLAN 10**: PC-A (Port 1) and PC-B (Port 2)
-• **VLAN 20**: PC-C (Port 3) and PC-D (Port 4)
+- **VLAN 10**: PC-A ও PC-B (মার্কেটিং টিম)
+- **VLAN 20**: PC-C ও PC-D (ইঞ্জিনিয়ারিং টিম)
 
-VLANs **logically segment** the network — even though all devices share one switch, they are isolated into separate broadcast domains.
+একটা সুইচ দিয়েই দুটো আলাদা নেটওয়ার্ক তৈরি হবে।
 
-**Prerequisite:** Understand **Layer 2** (how switches forward frames) first. VLANs extend switching with logical segmentation.
+## Step 2: VLAN অ্যাসাইনমেন্ট
 
-## Step 2: VLAN assignments: PC-A,B = VLAN 10; PC-C,D = VLAN 20 [বাংলা অনুবাদ প্রয়োজন]
+সুইচের প্রতিটা পোর্টে একটা VLAN অ্যাসাইন করতে হবে:
 
-The VLAN table on the switch is fully configured:
+| পোর্ট | PC | VLAN |
+|--------|-----|------|
+| Port 1 | PC-A | VLAN 10 |
+| Port 2 | PC-B | VLAN 10 |
+| Port 3 | PC-C | VLAN 20 |
+| Port 4 | PC-D | VLAN 20 |
 
-`Port 1 → VLAN 10 (PC-A)`
-`Port 2 → VLAN 10 (PC-B)`
-`Port 3 → VLAN 20 (PC-C)`
-`Port 4 → VLAN 20 (PC-D)`
+এখন প্রতিটা পোর্ট শুধু তার নির্ধারিত VLAN-র সাথে কথা বলবে।
 
-Frames within the same VLAN can communicate. Frames across different VLANs are **blocked** at Layer 2.
+## Step 3: PC-A থেকে PC-B — একই VLAN
 
-## Step 3: PC-A (VLAN 10) sends to PC-B (VLAN 10) [বাংলা অনুবাদ প্রয়োজন]
+PC-A (VLAN 10) থেকে PC-B (VLAN 10)-কে ডেটা পাঠাতে চায়।
 
-PC-A (VLAN 10) wants to send data to PC-B (also VLAN 10).
+PC-A একটা ফ্রেম পাঠায়। ফ্রেমের সাথে VLAN tag যুক্ত হয় (802.1Q standard): `VLAN ID: 10`।
 
-Since both are in the **same VLAN**, the switch will forward the frame normally. The VLAN tag is **internal** to the switch — PC-A doesn't need to know about VLANs.
+## Step 4: সুইচ VLAN 10 অ্যাসাইন করে
 
-## Step 4: Switch receives untagged frame, assigns VLAN 10 [বাংলা অনুবাদ প্রয়োজন]
+সুইচ ফ্রেম পায় এবং দেখে VLAN tag: 10। সে জানে — এই ফ্রেমটা VLAN 10-র অন্তর্গত।
 
-The switch receives the frame on Port 1. Since the port is an **access port** in VLAN 10, the switch internally tags the frame with **VLAN 10**.
+সুইচ তার VLAN টেবিল দেখে: "VLAN 10-র কোন পোর্ট আছে?" Port 1 ও Port 2।
 
-The 802.1Q tag is inserted into the Ethernet header:
-`TPID: 0x8100`
-`VID: 10`
+## Step 5: একই VLAN-তে ফরোয়ার্ড
 
-## Step 5: Same VLAN — forwards to PC-B [বাংলা অনুবাদ প্রয়োজন]
+সুইচ ফ্রেমটা Port 2-তে (PC-B) ফরোয়ার্ড করে। Port 3 ও Port 4-তে **পাঠায় না** — কারণ সেগুলো VLAN 20-র।
 
-The switch checks its VLAN table:
-• Source port (Port 1) is in **VLAN 10**
-• Destination MAC (PC-B) is on Port 2 — also in **VLAN 10**
+এভাবেই VLAN একটা ফিজিক্যাল সুইচকে ভার্চুয়ালি ভাগ করে।
 
-**Same VLAN → forward!** The switch strips the VLAN tag and delivers the frame to PC-B.
+## Step 6: PC-B রিসিভ করে
 
-## Step 6: PC-B receives successfully [বাংলা অনুবাদ প্রয়োজন]
+PC-B ফ্রেম পায়। ফ্রেমের VLAN tag সরিয়ে PC-B ডেটা প্রসেস করে। পুরো যোগাযোগ হয়ে গেল — একই সুইচ, কিন্তু আলাদা নেটওয়ার্ক।
 
-**PC-B** receives the frame, sees the destination MAC matches its own — it **accepts** the frame.
+## Step 7: PC-A থেকে PC-C — আলাদা VLAN
 
-Communication within the same VLAN works exactly like a normal switch — VLANs are transparent to the end devices.
+এখন ধরো, PC-A (VLAN 10) থেকে PC-C (VLAN 20)-কে ডেটা পাঠাতে চায়।
 
-## Step 7: PC-A sends to PC-C (VLAN 20) [বাংলা অনুবাদ প্রয়োজন]
+PC-A ফ্রেম পাঠায়: `VLAN ID: 10`।
 
-Now PC-A (VLAN 10) tries to send data to PC-C (VLAN 20).
+## Step 8: সুইচ VLAN 10 অ্যাসাইন করে
 
-PC-A doesn't know about VLANs — it just sends the frame to the switch. The switch will check the VLAN configuration.
+সুইচ ফ্রেম পায়, VLAN tag 10 দেখে। VLAN টেবিল চেক করে: "VLAN 10-র পোর্ট কোনগুলো?" Port 1 ও Port 2।
 
-## Step 8: Switch assigns VLAN 10 from PC-A's port [বাংলা অনুবাদ প্রয়োজন]
+## Step 9: VLAN টেবিল চেক করে
 
-The switch receives the frame on Port 1 (an access port in **VLAN 10**). It internally tags the frame as VLAN 10.
+সুইচ দেখে — ফ্রেমটা VLAN 10-র, কিন্তু ডেস্টিনেশন (PC-C) Port 3-তে আছে, যেটা VLAN 20-র।
 
-Now it looks up the destination MAC (PC-C) in its forwarding table.
+দুটো VLAN-র মাঝে সরাসরি যোগাযোগ সম্ভব না!
 
-## Step 9: Checks VLAN table — PC-C is VLAN 20 [বাংলা অনুবাদ প্রয়োজন]
+## Step 10: ব্লক হয়ে যায়!
 
-The switch checks its VLAN table:
-• Source port (Port 1) is in **VLAN 10**
-• Destination MAC (PC-C) is on Port 3 — which is in **VLAN 20**
+সুইচ ফ্রেমটা **ব্লক** করে। PC-A থেকে PC-C-তে সরাসরি কোনো প্যাকেট যায় না। VLAN এই সীমাবদ্ধতা তৈরি করে।
 
-**VLAN 10 ≠ VLAN 20** — the frame cannot be forwarded!
+## Step 11: Cross-VLAN এর জন্য রাউটার লাগে
 
-## Step 10: BLOCKED! Different VLANs cannot communicate directly [বাংলা অনুবাদ প্রয়োজন]
+যদি VLAN 10 ও VLAN 20-র মাঝে কথা বলতে হয়, তাহলে একটা **রাউটার** বা **Layer 3 সুইচ** লাগবে। একে বলে **Router-on-a-Stick** বা **Inter-VLAN Routing**।
 
-The switch **will not forward** the frame.
+রাউটার দুটো VLAN-কে কনেক্ট করে এবং প্যাকেট রুট করে।
 
-VLANs create separate **broadcast domains** — traffic cannot cross between them at Layer 2. The frame from PC-A is silently dropped.
+## Step 12: সারসংক্ষেপ
 
-PC-A will never reach PC-C without a Layer 3 device.
+VLAN হলো নেটওয়ার্ক সেগমেন্টেশনের সবচেয়ে সহজ পদ্ধতি:
 
-## Step 11: Cross-VLAN needs a Layer 3 router (Router-on-a-Stick) [বাংলা অনুবাদ প্রয়োজন]
+- **একই VLAN** → সুইচ ফরোয়ার্ড করে
+- **আলাদা VLAN** → সুইচ ব্লক করে
+- **Cross-VLAN** → রাউটার লাগে
 
-To communicate across VLANs, you need a **Layer 3 device** (router or Layer 3 switch).
-
-The common approach is **Router-on-a-Stick**: a single router interface with **802.1Q trunk** carrying tagged traffic for multiple VLANs.
-
-The router has sub-interfaces:
-`VLAN 10: 192.168.10.1`
-`VLAN 20: 192.168.20.1`
-
-PC-A sends to the router (its default gateway), and the router forwards to PC-C in VLAN 20.
-
-## Step 12: VLAN summary! [বাংলা অনুবাদ প্রয়োজন]
-
-**Key takeaway:** VLANs **logically segment** a physical network into separate broadcast domains.
-
-How they worked in this scenario:
-1. 4 PCs on one switch, assigned to **VLAN 10 and VLAN 20**
-2. PC-A → PC-B (same VLAN 10) — **forwarded** successfully
-3. PC-A → PC-C (different VLANs) — **BLOCKED** at Layer 2
-4. Cross-VLAN needs a **Layer 3 router** (Router-on-a-Stick with 802.1Q trunk)
-
-Benefits:
-• **Security** — traffic isolation between departments
-• **Reduced broadcast** — smaller broadcast domains
-• **Flexibility** — group users logically, not physically
+VLAN ছাড়া নেটওয়ার্ক সিকিউরিটি ও পারফরম্যান্স ম্যানেজ করা অসম্ভব।
