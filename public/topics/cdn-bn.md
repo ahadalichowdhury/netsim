@@ -1,38 +1,81 @@
 ---
-name: CDN (কন্টেন্ট ডেলিভারি নেটওয়ার্ক)
-description: কীভাবে CDN বিশ্বজুড়ে কন্টেন্ট দ্রুত পৌঁছায় — Edge Locations, POPs, এবং Caching
+name: CDN
+description: Content Delivery Networks — বৈশ্বিক পারফরম্যান্সের জন্য edge caching
+category: Advanced Networking
+order: 43
 ---
 
-## Step 1: Edge Locations এবং POPs
+## Step 1: Edge Locations — POPs বিশ্বব্যাপী
 
-CDN (Content Delivery Network) হলো বিশ্বজুড়ে ছড়িয়ে থাকা ডেটা সেন্টারের একটা নেটওয়ার্ক। প্রতিটা ডেটা সেন্টারকে বলে **Edge Location** বা **Point of Presence (POP)**।
+একটি **CDN (Content Delivery Network)** বিশ্বব্যাপী **Points of Presence (POPs)** জুড়ে content বিতরণ করে।
 
-ধরো, Cloudflare CDN-র ঢাকায় একটা POP আছে, মুম্বাইয়ে একটা, সিঙ্গাপুরে একটা। যখন তুমি ঢাকা থেকে কোনো ওয়েবসাইট ভিজিট করো, তখন কন্টেন্টটা ঢাকার POP থেকে আসে — মানে অনেক কাছ থেকে।
+প্রতিটি POP-এ **edge server** থাকে যা origin content-র কপি cache করে।
 
-## Step 2: DNS-ভিত্তিক রুটিং
+**কীভাবে সাহায্য করে:**
+• **Latency কমে** — content নিকটতম edge থেকে পরিবেশিত হয়, origin থেকে নয়
+• **Bandwidth কমে** — origin শুধুমাত্র cache miss পরিবেশন করে
+• **উচ্চ সহজলভ্যতা** — একটি edge ব্যর্থ হলে, অন্যগুলো content পরিবেশন করে
+• **DDoS সুরক্ষা** — traffic অনেকগুলো edge server-এ বিতরিত হয়
 
-CDN কীভাবে কাজ করে? সিম্পল — DNS দিয়ে। যখন তুমি `example.com` এ যাও, তখন DNS resolver দেখে তুমি কোথায় আছো। ঢাকায় থাকলে, DNS তোমাকে ঢাকার POP-এর IP দেবে। মুম্বাইয়ে থাকলে মুম্বাইয়ের POP-এর IP দেবে।
+জনপ্রিয় CDNs-এর মধ্যে আছে Cloudflare, AWS CloudFront, Akamai এবং Fastly।
 
-এভাবে প্রতিটা ব্যবহারকারী তার কাছের POP থেকে কন্টেন্ট পায়।
+## Step 2: DNS-Based Routing
 
-## Step 3: Cache স্ট্র্যাটেজি — HIT বনাম MISS
+CDN ব্যবহারকারীদের নিকটতম edge server-এ পরিচালিত করতে **DNS routing** ব্যবহার করে।
 
-CDN-র মূল কাজ হলো **caching**। যখন কোনো কন্টেন্ট CDN-র Edge Location-এ আগে থেকেই থাকে, তাকে বলে **Cache HIT**। মানে কন্টেন্টটা সাথে সাথে পাওয়া যায়।
+**GeoDNS:**
+• DNS resolver ব্যবহারকারীর ভৌগোলিক অবস্থানের ভিত্তিতে সবচেয়ে কাছের edge-র IP ফেরত দেয়
+• ইউরোপীয় ব্যবহারকারী → London POP, এশীয় ব্যবহারকারী → Tokyo POP
 
-কিন্তু যদি কন্টেন্টটা Edge Location-এ না থাকে, তাকে বলে **Cache MISS**। তখন CDN কন্টেন্টটা অরিজিনাল সার্ভার থেকে আনতে হয়, cache করে, তারপর তোমাকে দেয়। পরের বার আবার HIT হবে।
+**Anycast:**
+• একাধিক edge server একই IP address বিজ্ঞাপন দেয়
+• BGP routing স্বাভাবিকভাবে traffic নিকটতম server-এ পরিচালিত করে
+• একই IP, ভিন্ন ভৌতিক অবস্থান
 
-```
-Cache HIT  → সাথে সাথে পাওয়া গেল
-Cache MISS → অরিজিন থেকে আনতে হলো
-```
+ব্যবহারকারী জানে না কোন edge-তে পৌঁছাচ্ছে — CDN transparently routing পরিচালনা করে।
 
-## Step 4: CDN — সারসংক্ষেপ
+## Step 3: Cache Strategy — HIT বনাম MISS
 
-CDN ছাড়া আজকের ইন্টারনেট চলবে না। এটা যা করে:
+যখন একটি ব্যবহারকারী content অনুরোধ করে, edge server তার **cache** চেক করে:
 
-- **দ্রুত লোডিং:** কাছের POP থেকে কন্টেন্ট দেয়
-- **কম ব্যান্ডউইডথ:** অরিজিনাল সার্ভারের চাপ কমায়
-- **বেশি আপটাইম:** একটা POP ডাউন হলে অন্যটা কাজ করে
-- **DDoS প্রোটেকশন:** CDN আক্রমণ ঠেকায়
+**Cache HIT:**
+• Content edge cache-এ আছে এবং এখনো fresh (TTL-র মধ্যে)
+• Edge সাথে সাথে পরিবেশন করে — দ্রুত!
+• Origin server-এ কোনো অনুরোধ নেই
 
-Netflix, Facebook, YouTube — সবাই CDN ব্যবহার করে। ছাড়া করলে ঢাকা থেকে একটা ভিডিও লোড হতে 10 সেকেন্ড লাগত।
+**Cache MISS:**
+• Content cache করা নেই বা মেয়াদোত্তীর্ণ হয়েছে
+• Edge origin server থেকে fetch করে
+• ভবিষ্যতের অনুরোধের জন্য একটি কপি সংরক্ষণ করে
+• ব্যবহারকারীকে response পরিবেশন করে
+
+**TTL (Time To Live):**
+• কন্ট্রোল করে কতক্ষরা cached content fresh থাকে
+• ছোট TTL → বেশি origin fetch, কিন্তু fresher content
+• লম্বা TTL → কম origin fetch, কিন্তু stale content-র ঝুঁকি
+
+## Step 4: CDN সারসংক্ষেপ
+
+**CDN মডেল:**
+
+**Pull CDN:**
+• Edge প্রথম অনুরোধে origin থেকে fetch করে (cache miss)
+• প্রয়োজন অনুযায়ী content automatically pulled হয়
+• ভালো: গতিশীল বা ঘন ঘন আপডেট করা content-এর জন্য
+
+**Push CDN:**
+• Content আগে থেকে edge-তে push করা হয়
+• Origin নিয়ন্ত্রণ করে কখন এবং কী বিতরণ করতে হবে
+• ভালো: পূর্বাভাসযোগ্য প্রবেশ প্যাটার্ন সহ static content-এর জন্য
+
+**Cache Invalidation:**
+• TTL মেয়াদোত্তীর্ণ হওয়ার আগে cached content মুছুন
+• URL, tag, বা সম্পূর্ণ cache দিয়ে purge করুন
+• Content update বা জরুরি সংশোধনের জন্য অপরিহার্য
+
+**Protocols:**
+• HTTP/HTTPS — web content, APIs
+• Video streaming — HLS, DASH segments
+• Software updates — OS patches, app downloads
+
+CDNs অপরিহার্য infrastructure — তারা বিশ্বব্যাপী সমস্ত web traffic-এর 50% এর বেশি পরিবেশন করে।

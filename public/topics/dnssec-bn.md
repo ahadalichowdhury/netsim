@@ -1,55 +1,75 @@
 ---
-name: "DNSSEC"
-description: "DNSSEC কীভাবে DNS কে নিরাপদ করে — চেইন অব ট্রাস্ট, DS রেকর্ড, RRSIG, DNSKEY।"
+name: DNSSEC
+description: DNS Security Extensions — cache poisoning এবং spoofing প্রতিরোধ
+category: Advanced Networking
+order: 49
 ---
 
-## Step 1: DNSSEC কী এবং কেন দরকার?
+## Step 1: বিশ্বাসের শৃঙ্খল (Chain of Trust)
 
-DNS মূলত একটা বিশ্বাসের উপর চলে — তুমি DNS সার্ভারকে জিজ্ঞেস করো এবং সে যা বলে সেটাই মানো। কিন্তু সমস্যা হলো, কেউ মাঝখানে থেকে উত্তর পরিবর্তন করে দিলে কী হবে?
+**DNSSEC** মূল zone থেকে নিচে পর্যন্ত একটি **বিশ্বাসের শৃঙ্খল (chain of trust)** তৈরি করে।
 
-মানে, তুমি `bank.com` খুঁজছো, কিন্তু হ্যাকার DNS রেসপন্স বদলে দিল — তোমাকে নকল সাইটে নিয়ে গেল। এটাকে বলে **DNS Spoofing** বা **Cache Poisoning**।
+**Root zone** (.) — অ্যাঙ্কর:
+• একটি পরিচিত Key Signing Key (KSK) দিয়ে সাইন করা
+• IANA root key signing ceremony এ প্রকাশিত
+• Resolvers এই কীকে শুরুর পয়েন্ট হিসেবে বিশ্বাস করে
 
-DNSSEC এই সমস্যার সমাধান। এটা প্রমাণ করে যে DNS ডেটা আসল অথরিটি থেকে এসেছে এবং পথে কেউ পরিবর্তন করেনি।
+**কীভাবে কাজ করে:**
+1. Root zone, TLD zones কে সাইন করে
+2. TLD zones তাদের অধীনের domains কে সাইন করে
+3. Domains তাদের নিজস্ব রেকর্ড সাইন করে
+4. Resolver root পর্যন্ত প্রতিটি সিগনেচার যাচাই করে
 
-## Step 2: চেইন অব ট্রাস্ট
+**ফলাফল:** যদি কোনো রেকর্ডে হেরফের করা হয়, তাহলে সিগনেচারের শৃঙ্খল ভেঙে যায়।
 
-DNSSEC কাজ করে একটা **Chain of Trust**-এর উপর। ধরো তুমি `example.com` রিজল্ভ করছো:
+## Step 2: DS রেকর্ড
 
-```
-Root Zone (.)
-  └── .com Zone
-       └── example.com Zone
-```
+**DS (Delegation Signer)** রেকর্ড — বাবা সন্তানকে সাইন করে।
 
-প্রতিটা লেভেলে একটা **DS (Delegation Signer) রেকর্ড** থাকে যেটা নিচের লেভেলের কী সাথে ম্যাচ করে। এভাবে একটা নিরাপদ চেইন তৈরি হয়।
+বাবা zone (যেমন, .com) এ সন্তান zone এর DNSKEY কে hash করে একটি **DS রেকর্ড** থাকে:
 
-## Step 3: RRSIG ও DNSKEY রেকর্ড
+`.com → DS: SHA-256 hash of example.com DNSKEY`
 
-DNSSEC দুটো মূল রেকর্ড ব্যবহার করে:
+**কীভাবে কাজ করে:**
+1. বাবা zone নিজস্ব কী দিয়ে DS রেকর্ড সাইন করে
+2. Resolver বাবা zone থেকে DS রেকর্ড আনে
+3. Resolver hash যাচাই করে যে এটি সন্তান zone এর DNSKEY এর সাথে মিলে
 
-**DNSKEY**: এটা পাবলিক কী — যেটা দিয়ে সিগনেচার যাচাই করা হয়।
+**ফলাফল:** বাবা zone সন্তান zone এর কীকে প্রমাণ দেয় — বিশ্বাসের শৃঙ্খলকে প্রসারিত করে।
 
-```
-example.com.    IN    DNSKEY    257 3 13 AwEAAh...
-```
+## Step 3: RRSIG + DNSKEY
 
-**RRSIG**: এটা আসল সিগনেচার — যেটা প্রতিটা রিসোর্স রেকর্ডের সাথে থাকে।
+**Resource record**গুলো **RRSIG** দিয়ে সাইন করা হয়।
 
-```
-example.com.    IN    RRSIG    A 13 2 3600 20241201000000 20241101000000 12345 example.com. ...
-```
+প্রতিটি DNS রেকর্ড টাইপের সাথে security রেকর্ড সংযুক্ত থাকে:
 
-যখন তুমি DNS রেসপন্স পাও, তখন রেজলভার DNSKEY দিয়ে RRSIG ভেরিফাই করে। ম্যাচ করলে ডেটা ভ্যালিড।
+**DNSKEY:**
+• সিগনেচার যাচাই করার জন্য ব্যবহৃত public key ধারণ করে
+• Zone Signing Key (ZSK) — পৃথক রেকর্ড সাইন করে
+• Key Signing Key (KSK) — DNSKEY রেকর্ডকে নিজেই সাইন করে
 
-## Step 4: ভ্যালিডেশন প্রসেস
+**RRSIG:**
+• Resource record এর উপর ক্রিপ্টোগ্রাফিক সিগনেচার
+• অন্তর্ভুক্ত: signature algorithm, expiration, original TTL
+• Zone এর private key ব্যবহার করে তৈরি করা হয়
 
-সম্পূর্ণ ভ্যালিডেশন প্রসেস এরকম:
+**কুয়েরি:** `dig example.com +dnssec`
 
-1. **Resolver** `example.com`-এর জন্য DS রেকর্ড চায় `.com` সার্ভার থেকে
-2. `.com` সার্ভার DS রেকর্ড দেয় এবং RRSIG সিগনেচার
-3. Resolver `.com`-এর DNSKEY দিয়ে সিগনেচার ভেরিফাই করে
-4. তারপর `example.com` থেকে DS রেকর্ড নেয়
-5. সেটার DNSKEY দিয়ে ভেরিফাই করে
-6. শেষে আসল রেকর্ড ও RRSIG ভেরিফাই করে
+## Step 4: যাচাইকরণ (Validation)
 
-যদি যেকোনো ধাপে ম্যাচ না হয়, রেজলভার সেই DNS ডেটা বিশ্বাস করবে না। এভাবেই DNSSEC ইন্টারনেটকে নিরাপদ রাখে।
+**Resolver** বিশ্বাসের সম্পূর্ণ শৃঙ্খল যাচাই করে।
+
+**যাচাইকরণ প্রক্রিয়া:**
+1. Resolver RRSIG সহ একটি DNS response পায়
+2. Zone এর DNSKEY আনে
+3. DNSKEY এর বিরুদ্ধে RRSIG যাচাই করে
+4. বাবা zone থেকে DS রেকর্ড চেক করে
+5. বাবা zone এর DS, সন্তান zone এর DNSKEY hash এর সাথে মিলছে কিনা যাচাই করে
+6. Root zone পর্যন্ত চালিয়ে যায় (যাকে ইতিমধ্যে বিশ্বাস করে)
+
+**যদি যেকোনো ধাপ ব্যর্থ হয়:**
+• সিগনেচার মিলছে না → **SERVFAIL**
+• মেয়াদোত্তীর্ণ সিগনেচার → **SERVFAIL**
+• অনুপস্থিত সিগনেচার → **SERVFAIL**
+
+**ফলাফল:** DNSSEC-যাচাইকৃত response ক্রিপ্টোগ্রাফিকভাবে প্রমাণিত যে এগুলো প্রকৃত।

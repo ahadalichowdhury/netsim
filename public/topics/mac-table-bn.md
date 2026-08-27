@@ -1,81 +1,90 @@
 ---
-name: MAC Address Table - সুইচ লার্নিং
-description: MAC Address Table কী, সুইচ কীভাবে শেখে, forward করে, timeout করে — সব বাংলায়
+name: MAC Address Table
+description: সুইচ কিভাবে মনে রাখে কোন পোর্ট কোন ডিভাইসের সাথে সংযুক্ত
+category: Components
+order: 5
 ---
 
-# MAC Address Table — সুইচ লার্নিং
+## Step 1: MAC Table কী?
 
-আজ দেখবো সুইচ কীভাবে MAC Address Table তৈরি করে এবং ব্যবহার করে।
+**MAC address table** (যাকে forwarding database বা FDBও বলে) হলো সুইচের অভ্যন্তরীণ database যেটা **MAC address কে ভৌতিক পোর্টের** সাথে ম্যাপ করে।
 
-## Step 1: MAC Address Table কী
+যখন সুইচ একটি Ethernet frame গ্রহণ করে, সে **সোর্স MAC address** দেখে কোন ডিভাইস কোন পোর্টে আছে তা শেখে। তারপর সে সঠিক পোর্টে frame **ফরওয়ার্ড করতে** এই table ব্যবহার করে — সব পোর্টে ফ্লাড করার বদলে।
 
-MAC Address Table হলো সুইচের ডায়েরি — সে এখানে লেখে কোন MAC address কোন পোর্টে আছে। এটা ছাড়া সুইচ ফরোয়ার্ড করতে পারবে না।
+এটাই সুইচকে hub-এর চেয়ে স্মার্ট করে এমন মৌলিক প্রক্রিয়া।
 
-উদাহরণ:
+## Step 2: সুইচ কিভাবে শেখে
 
-| MAC Address | Port |
-|---|---|
-| `AA:AA:AA:AA:AA:01` | Port 1 |
-| `BB:BB:BB:BB:BB:01` | Port 2 |
-| `CC:CC:CC:CC:CC:01` | Port 3 |
+সুইচ প্রতিটি আগমনকারী frame-এর **সোর্স MAC address** পরীক্ষা করে শেখে:
 
-## Step 2: সুইচ কীভাবে শেখে (Learning)
+1. Frame পোর্ট ১-তে `AA:BB:CC:DD:EE:01` MAC থেকে আসে
+2. সুইচ রেকর্ড করে: `AA:BB:CC:DD:EE:01 → Port 1`
+3. Frame পোর্ট ২-তে `AA:BB:CC:DD:EE:02` MAC থেকে আসে
+4. সুইচ রেকর্ড করে: `AA:BB:CC:DD:EE:02 → Port 2`
 
-সুইচ প্রতিটা ইনকামিং ফ্রেমের **সোর্স MAC** দেখে। ধরো Port 1-এ `AA:AA:AA:AA:AA:01` থেকে ফ্রেম এলো। সুইচ তার MAC Table-ে এন্ট্রি বানায়:
+এই প্রক্রিয়াকে **MAC learning** বলে — এটা প্রতিটি frame-তে স্বয়ংক্রিয়ভাবে ঘটে। সুইচকে তার table তৈরি করতে কোনো কনফিগারেশনের প্রয়োজন নেই।
 
-```
-AA:AA:AA:AA:AA:01 → Port 1
-```
+## Step 3: ফরওয়ার্ডিং সিদ্ধান্ত
 
-এটাই **self-learning** — সুইচ নিজে থেকে শেখে, কেউ শেখায় না।
+যখন সুইচ একটি frame গ্রহণ করে, সে **ফরওয়ার্ডিং সিদ্ধান্ত** নিতে তার MAC table ব্যবহার করে:
 
-## Step 3: Forwarding সিদ্ধান্ত (Forwarding Decision)
+**জানা destination MAC:**
+• MAC table-তে destination খুঁজে দেখুন
+• সংশ্লিষ্ট পোর্ট খুঁজুন
+• Frame **শুধু সেই পোর্টে** ফরওয়ার্ড করুন (unicast)
 
-সুইচ ফ্রেম পায়, সোর্স MAC শেখে, এবং এখন **ডেস্টিনেশন MAC** দেখে:
+**অজানা destination MAC:**
+• MAC table-তে নেই
+• Frameটা সোর্স বাদ দিয়ে **সব পোর্টে ফ্লাড** করুন
+• এটাকে **unknown unicast flooding** বলে
 
-- **MAC Table-এ আছে:** শুধু সঠিক পোর্টে পাঠায় (unicast)
-- **MAC Table-এ নেই:** সব পোর্টে (ইনকামিং বাদ) ছড়িয়ে দেয় (flood)
-- **Broadcast (`FF:FF:FF:FF:FF:FF`):** সব পোর্টে পাঠায়
+**Broadcast (FF:FF:FF:FF:FF:FF):**
+• সবসময় সোর্স বাদ দিয়ে সব পোর্টে ফ্লাড করুন
 
 ## Step 4: Aging এবং Timeout
 
-সুইচের MAC Table-এর প্রতিটা এন্ট্রির একটা **timer** থাকে। ধরো timer 300 সেকেন্ড (5 মিনিট)।
+MAC table এন্ট্রিগুলো **অস্থায়ী** এবং একটি **aging time** (সাধারণত 300 সেকেন্ড)-পরে মারা যায়।
 
-- যদি 300 সেকেন্ডের মধ্যে সেই MAC থেকে আবার ফ্রেম না আসে → এন্ট্রি **মুয়ে ফেলা** হয়
-- যদি আসে → timer **রিসেট** হয়ে যায়
+যদি কোনো ডিভাইস frame পাঠানো বন্ধ করে (যেমন, বন্ধ বা সংযোগ বিচ্ছিন্ন), তার MAC entry **বয়সে যাবে** এবং table থেকে সরিয়ে দেওয়া হবে।
 
-কেন এটা দরকার? যদি একটা PC সুইচ থেকে সরিয়ে নেওয়া হয়, তাহলে সুইচ আর সেই পোর্টে পাঠাবে না।
+কেন aging গুরুত্বপূর্ণ:
+• ডিভাইসগুলো **পোর্টের মধ্যে স্থানান্তরিত** হতে পারে (ল্যাপটপ অন্য jack-এ সরে যায়)
+• **পুরনো এন্ট্রি** দ্বারা ভুল ফরওয়ার্ডিং রোধ করে
+• MAC table-কে **সংক্ষিপ্ত এবং সঠিক** রাখে
 
-## Step 5: MAC Table দেখো
+Managed switch-এ aging time কনফিগারযোগ্য:
+`switch(config)# mac address-table aging-time 600`
 
-তুমি `show mac address-table` কমান্ড দিয়ে সুইচের MAC Table দেখতে পারো:
+## Step 5: MAC Table দেখুন
 
-```bash
-# Cisco Switch-এ
-show mac address-table
-```
+**Cisco IOS** switch-এ:
+`show mac address-table`
 
-আউটপুট:
+`MAC Address Table`
+`-------------------------------------------`
+`Vlan    MAC Address       Type    Ports`
+`----    -----------------  ------  ------`
+`1       AA:BB:CC:DD:EE:01  DYNAMIC  Fa0/1`
+`1       AA:BB:CC:DD:EE:02  DYNAMIC  Fa0/2`
 
-```
-MAC Address Table
--------------------------------------------
-VLAN    MAC Address       Ports
-----    -----------       -----
-1       AA:AA:AA:AA:AA:01  Fa0/1
-1       BB:BB:BB:BB:BB:01  Fa0/2
-1       CC:CC:CC:CC:CC:01  Fa0/3
-```
+**Linux bridge**-তে:
+`bridge fdb show`
 
-এখানে দেখতে পাচ্ছো কোন MAC কোন পোর্টে আছে।
+**Linux**-তে `brctl` দিয়ে:
+`brctl showmacs br0`
 
-## Step 6: সারসংক্ষেপ
+## Step 6: MAC Table সারসংক্ষেপ
 
-MAC Address Table-এর মূল কথা:
+**মূল কথা:** MAC address table হলো সুইচের forwarding database যেটা MAC address কে ভৌতিক পোর্টের সাথে ম্যাপ করে।
 
-- **শেখে (Learn):** সোর্স MAC থেকে এন্ট্রি তৈরি করে
-- **মনে রাখে (Remember):** সব এন্ট্রি table-এ থাকে
-- **ফরোয়ার্ড করে (Forward):** MAC জানলে unicast, না জানলে flood
-- **পুরোনো মুয়ে দেয় (Age):** Timer শেষ হলে এন্ট্রি মুয়ে যায়
+**কিভাবে কাজ করে:**
+• সুইচ আগমনকারী frame-এর সোর্স MAC পরীক্ষা করে **শেখে**
+• সুইচ table-তে destination MAC খুঁজে **ফরওয়ার্ড করে**
+• রিফ্রেশ না হলে 300 সেকেন্ড-পরে এন্ট্রিগুলো **বয়সে যায়**
 
-এটাই সুইচের আসল জাদু — নিজে থেকে শেখে, মনে রাখে, এবং সঠিক পথে পাঠায়!
+**কমান্ড:**
+• Cisco: `show mac address-table`
+• Linux bridge: `bridge fdb show`
+• স্ট্যাটিক যোগ করুন: `mac address-table static AA:BB:CC:DD:EE:01 vlan 1 interface Fa0/1`
+
+MAC table-ই সুইচকে কার্যকর করে — এটা না থাকলে, প্রতিটি frame hub-এর মতো ফ্লাড হতো।

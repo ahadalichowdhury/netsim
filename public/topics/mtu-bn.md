@@ -1,64 +1,55 @@
 ---
-name: MTU - সর্বোচ্চ ট্রান্সমিশন ইউনিট
-description: MTU কী, সাধারণ MTU মান, Fragmentation কীভাবে হয়, Path MTU Discovery — সব বাংলায়
+name: MTU
+description: Maximum Transmission Unit — নেটওয়ার্ক যে সর্বোচ্চ packet আকার অনুমোদন করে
+category: Components
+order: 10
 ---
 
-# MTU — সর্বোচ্চ ট্রান্সমিশন ইউনিট
+## Step 1: MTU কী?
 
-আজ দেখবো MTU (Maximum Transmission Unit) কী এবং এটা নেটওয়ার্কিং-এ কেন গুরুত্বপূর্ণ।
+**MTU (Maximum Transmission Unit)** হলো বিভাজন ছাড়াই সর্বোচ্চ Layer 2 payload আকার যেটি প্রেরণ করা যায়।
 
-## Step 1: MTU কী
+সাধারণ MTU মান:
+• **Ethernet:** 1500 bytes (স্ট্যান্ডার্ড)
+• **Jumbo frame:** 9000 bytes (ডেটা সেন্টার)
+• **Loopback:** 65535 bytes (Linux)
+• **PPP over Ethernet (PPPoE):** 1492 bytes (2 bytes সংরক্ষিত)
 
-MTU হলো একটা নেটওয়ার্ক লিংক যে সর্বোচ্চ পরিমাণ ডেটা একসাথে পাঠাতে পারে। মানে, একটা Ethernet ফ্রেমের সর্বোচ্চ মান।
+যদি একটি packet MTU অতিক্রম করে, এটাকে অবশ্যই বিভাজন করতে হবে বা ফেলে দিতে হবে।
 
-সহজ কথায় — যদি MTU 1500 বাইট হয়, তাহলে তুমি একবারে 1500 বাইটের বেশি ডেটা পাঠাতে পারবে না। বেশি হলে ভাঙতে হবে।
+## Step 2: সাধারণ MTU
 
-## Step 2: সাধারণ MTU মান
+বিভিন্ন নেটওয়ার্ক প্রযুক্তির বিভিন্ন MTU সীমা আছে:
 
-বিভিন্ন নেটওয়ার্কে ভিন্ন MTU আছে:
+`Ethernet:     1500 bytes`
+`Jumbo Frame:  9000 bytes`
+`PPPoE:        1492 bytes`
+`Wi-Fi:        2304 bytes (802.11)`
+`Loopback:     65535 bytes (Linux)`
 
-| নেটওয়ার্ক টাইপ | MTU |
-|---|---|
-| Ethernet | 1500 বাইট |
-| Jumbo Ethernet | 9000 বাইট |
-| PPPoE (DSL) | 1492 বাইট |
-| VPN (WireGuard) | 1420 বাইট |
-| Loopback | 65536 বাইট |
+1500 bytes-এর স্ট্যান্ডার্ড Ethernet MTU হলো সবচেয়ে বেশি দেখা যাওয়া সীমা। Jumbo frame high-throughput storage এবং clustering traffic-এর জন্য ডেটা সেন্টারে ব্যবহৃত হয়।
 
-সবচেয়ে সাধারণ হলো Ethernet-এর 1500 বাইট। বেশিরভাগ ক্ষেত্রে তুমি এটাই দেখবে।
+## Step 3: বিভাজন
 
-## Step 3: Fragmentation কী হয়
+যখন একটি packet MTU অতিক্রম করে, এটাকে ছোট অংশে **বিভাজন** করতে হয়।
 
-যদি তোমার প্যাকেট MTU-র চেয়ে বড় হয়, তাহলে **fragmentation** হয় — মানে প্যাকেটকে ছোট ছোট টুকরো ভাগ করা হয়।
+একটি 4000-byte packet 1500-byte Ethernet MTU-তে ফিট করার জন্য ভাগ করতে হবে:
+• **Fragment 1:** 1500 bytes (offset 0)
+• **Fragment 2:** 1500 bytes (offset 1500)
+• **Fragment 3:** 1000 bytes (offset 3000)
 
-উদাহরণ:
-- তোমার প্যাকেট: 3000 বাইট
-- MTU: 1500 বাইট
-- ফলাফল: ২টা ফ্র্যাগমেন্ট (1500 + 1500)
+প্রতিটি fragment নিজের IP header সহ একটি স্বাধীন packet। গ্রাহক **Identification**, **Fragment Offset**, এবং **More Fragments (MF)** flag ব্যবহার করে সেগুলো পুনর্গঠন করে।
 
-প্রতিটা ফ্র্যাগমেন্ট আলাদা করে পাঠানো হয় এবং ডেস্টিনেশনে গিয়ে আবার জোড়া লাগানো হয় (reassembly)।
-
-Fragmentation **কম কাম্য** — কারণ:
-- প্রতিটা ফ্র্যাগমেন্টে IP header লাগে
-- একটা ফ্র্যাগমেন্ট হারিয়ে গেলে পুরো প্যাকেট হারিয়ে যায়
-- রিসিভারের কাজ বাড়ে
+বিভাজন overhead যোগ করে এবং কর্মদক্ষতার সমস্যা সৃষ্টি করতে পারে।
 
 ## Step 4: Path MTU Discovery
 
-**Path MTU Discovery (PMTUD)** হলো পুরো পথে সর্বোচ্চ MTU খুঁজে বের করার পদ্ধতি।
+**Path MTU Discovery (PMTUD)** সম্পূর্ণ পথে বিভাজন ছাড়াই বৃহত্তম MTU খুঁজে বের করে।
 
-কীভাবে কাজ করে:
-1. Sender প্যাকেট পাঠায়, DF (Don't Fragment) bit সেট করে
-2. যদি কোনো router-এর MTU ছোট হয় → router ICMP "Fragmentation Needed" message পাঠায়
-3. Sender প্যাকেট ছোট করে আবার পাঠায়
-4. এভাবে পুরো পথে সবচেয়ে ছোট MTU খুঁজে বের হয়
+কিভাবে কাজ করে:
+1. প্রেরক IP header-এ **DF (Don't Fragment)** bit সেট করে
+2. যদি একটি router packet ফরওয়ার্ড করতে না পারে (খুব বড়, DF=1), সে এটা ফেলে দেয় এবং একটি **ICMP Fragmentation Needed** message (Type 3, Code 4) পাঠায়
+3. প্রেরক packet-এর আকার কমায় এবং আবার চেষ্টা করে
+4. এটা চলতে থাকে packet ডেস্টিনেশনে পৌঁছানো পর্যন্ত
 
-Linux-এ `ping` দিয়ে PMTUD চেষ্টা করতে পারো:
-
-```bash
-ping -M do -s 1472 8.8.8.8
-```
-
-এখানে `-M do` DF bit সেট করে এবং `-s 1472` payload size (1472 + 28 IP/ICMP header = 1500)।
-
-**সারসংক্ষেপ:** MTU হলো একসাথে পাঠানো সর্বোচ্চ ডেটা। 1500 বাইট সাধারণ। বেশি হলে fragmentation হয় — যা এড়ানো উচিত। PMTUD দিয়ে পুরো পথের সঠিক MTU খুঁজে নাও।
+PMTUD সম্পূর্ণভাবে বিভাজন এড়িয়ে যায়, যার ফলে কর্মদক্ষতা বৃদ্ধি পায়। এটা TCP অ্যাপ্লিকেশনের জন্য পছন্দের পদ্ধতি।

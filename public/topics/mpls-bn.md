@@ -1,76 +1,71 @@
 ---
-name: MPLS - লেবেল সুইচিং
-description: MPLS কীভাবে কাজ করে — FEC, Label Push, Swap, Pop সব বাংলায় সহজে বোঝানো হয়েছে
+name: MPLS
+description: Label switching — IP lookup ছাড়াই দ্রুত ফরওয়ার্ডিং
+category: Advanced Networking
+order: 41
 ---
 
-# MPLS — লেবেল সুইচিং
+## Step 1: FEC — Forwarding Equivalence Class
 
-আজ দেখবো MPLS (Multi-Protocol Label Switching) কী এবং এটা কীভাবে কাজ করে।
+**FEC (Forwarding Equivalence Class)** একইভাবে ফরওয়ার্ড হওয়া packetগুলোকে একসাথে গ্রুপ করে — একই পথ, একই সেবা, একই QoS।
 
-## Step 1: FEC — প্যাকেট গ্রুপ করো
+FEC-র সব packet ingress LSR-তে **একই label** পায়। এটা traffic-কে destination prefix, VPN, বা traffic engineering নীতি অনুযায়ী গ্রুপ করে।
 
-MPLS শুরু হয় **FEC (Forwarding Equivalence Class)** দিয়ে। FEC মানে হলো একই ধরনের প্যাকেটকে একসাথে গ্রুপ করা।
+**মূল পয়েন্ট:**
+• একই FEC-র packet = একই label = একই পথ
+• FEC destination IP, QoS, বা VPN-এর ভিত্তিতে হতে পারে
+• ফরওয়ার্ডিং সিদ্ধান্ত সরল করে
 
-উদাহরণ:
-- সব HTTP traffic → FEC 1
-- সব Video traffic → FEC 2
-- সব Database traffic → FEC 3
+## Step 2: Label Push (Ingress)
 
-MPLS router জানে যে FEC 1-এর প্যাকেটগুলো একই পথে যাবে, FEC 2-এর আরেকটা পথে। এটাই MPLS-এর efficiency।
+**Ingress LSR (Label Switch Router)** একটি IP packet গ্রহণ করে এবং একটি **label push** সম্পন্ন করে — packet-এ একটি MPLS label যোগ করে।
 
-## Step 2: Label Push — লেবেল জুড়ে দাও
+Labelটি 20-bit মান যেটা FEC নির্ধারণ করে। Packetটি এখন একটি MPLS frame এবং IP lookup-এর বদলে label switching দ্বারা ফরওয়ার্ড হবে।
 
-যখন প্যাকেট MPLS network-এ প্রবেশ করে, তখন **Ingress LSR** (Label Switch Router) প্যাকেটের আগে একটা **MPLS Label** জুড়ে দেয়।
+**MPLS Label ফরম্যাট:**
+• Label (20 bit) — FEC নির্ধারণ করে
+• TC (3 bit) — Traffic Class (QoS)
+• S (1 bit) — Stack-এর তলা
+• TTL (8 bit) — Hop সীমা
 
-লেবেল দেখতে এরকম:
+## Step 3: Label Swap (Transit)
 
-```
-+-------------------+-------------------+
-| MPLS Label (20b)  | TC (3b) | S | TTL |
-+-------------------+-------------------+
-|  32                |  0     | 1 |  64  |
-+-------------------+-------------------+
-```
+**Mid LSR** লেবেলযুক্ত packet গ্রহণ করে এবং একটি **label swap** সম্পন্ন করে — আগমনকারী label কে পরবর্তী hop-এর জন্য বহিঃগামী label দিয়ে প্রতিস্থাপন করে।
 
-- **Label:** 20-bit — শনাক্তকারী নম্বর
-- **TC:** Traffic Class — priority নির্দেশ করে
-- **S:** Stack bit — একাধিক লেবেল থাকতে পারে
-- **TTL:** Time to Live — পুরোনো IP TTL-ের মতো
+এটাই MPLS switching-এর মূলক: LSR তার **LFIB (Label Forwarding Information Base)**-তে আগমনকারী label খুঁজে দেখে এবং পরবর্তী label-তে swap করে।
 
-এখন প্যাকেট IP header-এর আগে MPLS header বহন করে।
+**মূল পয়েন্ট:**
+• আগমনকারী label দিয়ে LFIB lookup
+• পরবর্তী hop-এর জন্য label swap
+• কোনো IP header পরীক্ষার প্রয়োজন নেই — দ্রুত!
 
-## Step 3: Label Swap — লেবেল বদলাও
+## Step 4: Label Pop (Egress)
 
-MPLS network-এর ভেতরে **Transit LSR** রাউটারগুলো শুধু লেবেল দেখে কাজ করে — IP header দেখে না।
+**Egress LSR** লেবেলযুক্ত packet গ্রহণ করে এবং একটি **label pop** সম্পন্ন করে — MPLS label সরিয়ে দেয় এবং মূল IP packet ফরওয়ার্ড করে।
 
-প্রতিটা Transit LSR:
-1. ইনকামিং লেবেল দেখে
-2. তার নিজের forwarding table-এ চেক করে
-3. পুরোনো লেবেল বাদ দেয়
-4. নতুন লেবেল জুড়ে দেয়
-5. নতুন পোর্টে পাঠায়
+যখন দ্বিতীয়-শেষ LSR label pop করে, তাকে **PHP (Penultimate Hop Popping)** বলে — egress LSR-কে তারপর শুধু সাধারণ IP lookup করতে হয়।
 
-উদাহরণ:
-- Router A: Label 32 পায় → Label 50 দিয়ে Router B-তে পাঠায়
-- Router B: Label 50 পায় → Label 18 দিয়ে Router C-তে পাঠায়
+**মূল পয়েন্ট:**
+• MPLS label সরিয়ে দিন
+• IP lookup দিয়ে ফরওয়ার্ড করুন (সাধারণ রাউটিং)
+• PHP শেষ hop-টি অপ্টিমাইজ করে
 
-এটাই **Label Swap** — প্রতিটা hop-এ লেবেল বদলায়, কিন্তু প্যাকেট একই পথে চলতে থাকে।
+## Step 5: MPLS সারসংক্ষেপ
 
-## Step 4: Label Pop — লেবেল সরাও
+**মূল কথা:** MPLS প্রতিটি hop-তে IP header পরীক্ষা ছাড়াই দ্রুত label-ভিত্তিক ফরওয়ার্ডিং প্রদান করে।
 
-যখন প্যাকেট MPLS network-এর শেষে পৌঁছায়, তখন **Egress LSR** শেষ MPLS label সরিয়ে দেয়। এটাকে **Label Pop** বলে।
+**Label অপারেশন:**
+• **Push** — Ingress label যোগ করে
+• **Swap** — Transit router label পরিবর্তন করে
+• **Pop** — Egress label সরিয়ে দেয়
 
-এরপর প্যাকেট আবার সাধারণ IP packet হিসেবে বাইরের নেটওয়ার্কে যায়।
+**LSR ধরন:**
+• **Ingress LER** — IP packet-এ label push করে
+• **Transit LSR** — Label swap করে (দ্রুত switching)
+• **Egress LER** — Label pop করে, IP দিয়ে ফরওয়ার্ড করে
 
-কিছু ক্ষেত্রে **PHP (Penultimate Hop Popping)** হয় — মানে শেষ আগের router-ই label সরিয়ে দেয়, শেষ router-কে আর কাজ করতে হয় না।
-
-## Step 5: সারসংক্ষেপ
-
-MPLS কীভাবে কাজ করে:
-
-- **FEC:** প্যাকেটকে গ্রুপ করো — কোন traffic কোন পথে যাবে
-- **Label Push:** MPLS network-এ ঢোকার সময় লেবেল জুড়ে দাও
-- **Label Swap:** ভেতরে routerগুলো শুধু লেবেল দেখে ফরোয়ার্ড করে — দ্রুত!
-- **Label Pop:** MPLS network থেকে বের হওয়ার সময় লেবেল সরাও
-
-MPLS-এর সুন্দরতা হলো — প্যাকেট প্রবেশ করার পর IP header আর দেখতে হয় না। শুধু লেবেল দেখে কাজ করে, তাই অনেক দ্রুত!
+**ব্যবহারের ক্ষেত্র:**
+• MPLS VPN (L3VPN, L2VPN)
+• Traffic engineering
+• Fast reroute (FRR)
+• QoS differentiation

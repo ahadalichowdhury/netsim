@@ -1,41 +1,41 @@
 ---
 name: QUIC
-description: UDP-ভিত্তিক ট্রান্সপোর্ট — HTTP/3, ০-RTT, মাল্টিপ্লেক্সিং
+description: UDP-ভিত্তিক transport — HTTP/3, 0-RTT, multiplexing
 category: Advanced Networking
 order: 50
 ---
 
-## Step 1: TCP + TLS এর ওভারহেড
+## Step 1: TCP + TLS Overhead
 
-পারম্পরিক **TCP + TLS 1.3** অ্যাপ্লিকেশন ডাটা পাঠানোর আগে **২-৩ রাউন্ড ট্রিপ** লাগে:
+ঐতিহ্যবাহী **TCP + TLS 1.3** প্রয়োগ data পাঠানোর আগে **2-3 round trip** প্রয়োজন করে:
 
-1. TCP SYN → SYN-ACK (১ RTT)
-2. TLS ClientHello → ServerHello + Finished (১ RTT)
-3. TLS Finished → ACK (১ RTT)
+1. TCP SYN → SYN-ACK (1 RTT)
+2. TLS ClientHello → ServerHello + Finished (1 RTT)
+3. TLS Finished → ACK (1 RTT)
 
-এই হ্যান্ডশেক শেষ হওয়ার পরেই HTTP রিকোয়েস্ট শুরু হতে পারে। প্রতিটা RTT লেটেন্সি যোগ করে — বিশেষত উচ্চ-লেটেন্সি কানেশনে এটা কষ্টদায়ক।
+এই handshakes এর পরেই HTTP request শুরু হতে পারে। প্রতিটি RTT latency যোগ করে — বিশেষত high-latency connections এ কষ্টকর।
 
-## Step 2: QUIC এর গতি
+## Step 2: QUIC গতি
 
-**QUIC** **UDP** এর উপর চলে এবং TLS 1.3 কে সরাসরি প্রোটোকলের ভেতরে একত্রিত করে।
+**QUIC** **UDP** এর উপর চলে এবং TLS 1.3 কে সরাসরি protocol তে একত্রিত করে।
 
-প্রথম কানেশন: **১ RTT** (QUIC ট্রান্সপোর্ট + ক্রিপ্টো হ্যান্ডশেক একত্রিত করে)
-আবার শুরু: **০-RTT** (ক্লায়েন্ট ক্যাশ করা ক্রিপ্টো পারামিটার ব্যবহার করে সাথে সাথে ডাটা পাঠাতে পারে)
+প্রথম connection: **1 RTT** (QUIC transport + crypto handshake একত্রিত করে)
+পুনরায় শুরু: **0-RTT** (client cached crypto params ব্যবহার করে সরাসরি data পাঠাতে পারে)
 
-QUIC TCP+TLS এর স্তরিত ওভারহেড দূর করে দুটোকেই একটা প্রোটোকলে বানিয়ে ফেলে।
+QUIC TCP+TLS layering overhead বাদ দেয় দুটোকেই একটি single protocol এ build করে।
 
-## Step 3: স্ট্রিম মাল্টিপ্লেক্সিং
+## Step 3: Stream Multiplexing
 
-**QUIC** একটা কানেশনের ভেতরে **একাধিক স্বাধীন স্ট্রিম** সাপোর্ট করে।
+**QUIC** একটি single connection এর ভেতরে **একাধিক independent streams** সমর্থন করে।
 
-TCP এর বিপরীতে (যেখানে একটা হারিয়ে যাওয়া প্যাকেট সব ডাটা আটকে দেয়), QUIC স্ট্রিমগুলো **স্বাধীনভাবে মাল্টিপ্লেক্সড**। একটা স্ট্রিমে লস হলে অন্যদের কোনো ক্ষতি হয় না।
+TCP এর বিপরীতে (যেখানে একটি হারানো packet সব data থামিয়ে দেয়), QUIC streams **স্বাধীনভাবে multiplexed** থাকে। একটি stream এ ক্ষতি অন্যগুলোকে প্রভাবিত করে না।
 
-এটা **হেড-অফ-লাইন ব্লকিং** দূর করে — TCP তে HTTP/2 এর একটা বড় পারফরম্যান্স সমস্যা।
+এটি **head-of-line blocking** বাদ দেয় — TCP এ HTTP/2 এর একটি বড় পারফরম্যান্স সমস্যা।
 
-## Step 4: স্ট্রিম-আলাদা রিকভারি
+## Step 4: Per-Stream Recovery
 
-প্রতিটা QUIC স্ট্রিমের **নিজস্ব লস ডিটেকশন এবং রিকভারি** আছে।
+প্রতিটি QUIC stream এ **স্বাধীন loss detection এবং recovery** আছে।
 
-যদি Stream 1 এর ডাটা বহন করা একটা প্যাকেট হারিয়ে যায়, তাহলে শুধু Stream 1 রিট্রান্সমিশনের জন্য অপেক্ষা করবে। Stream 2 এবং 3 বাধা ছাড়াই চলতে থাকবে।
+যদি Stream 1 data বহনকারী একটি packet হারিয়ে যায়, শুধুমাত্র Stream 1 retransmission এর জন্য অপেক্ষা করে। Streams 2 এবং 3 অব্যাহতভাবে চলতে থাকে।
 
-TCP তে, বিপরীতে, সব ডাটাকে একটা বাইট স্ট্রিম হিসেবে দেখা হয় — একটাই হারিয়ে যাওয়া প্যাকেট অ্যাপ্লিকেশনে সব ডাটা *সম্পূর্ণ* পৌঁছানো আটকে দেয়।
+TCP, এর বিপরীতে, সব data কে একটি byte stream হিসাবে দেখে — একটি মাত্র হারানো packet *সব* data এর জন্য application কে প্রেরণা ব্লক করে।।

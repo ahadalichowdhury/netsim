@@ -1,47 +1,49 @@
 ---
-name: "eBPF নেটওয়ার্কিং"
-description: "eBPF প্রোগ্রাম, হুক পয়েন্ট, ম্যাপ এবং নেটওয়ার্কিং ব্যবহার ক্ষেত্র।"
+name: eBPF নেটওয়ার্কিং
+description: Programmable kernel — kernel module ছাড়াই packet processing
+category: Advanced Networking
+order: 53
 ---
 
-## Step 1: eBPF কী?
+## Step 1: eBPF প্রোগ্রাম
 
-eBPF মানে **extended Berkeley Packet Filter**। এটা এমন একটা টেকনোলজি যেটা দিয়ে তুমি Linux কার্নেলে নিরাপদভাবে প্রোগ্রাম চালাতে পারো — কার্নেল সোর্স কোড ছাড়াই।
+**eBPF** (extended Berkeley Packet Filter) Linux kernel এর মধ্যে **নিরাপদ, যাচাইকৃত প্রোগ্রাম** চালানোর অনুমতি দেয়।
 
-সাধারণ ভাষায়, eBPF দিয়ে তুমি কার্নেলে ছোট ছোট প্রোগ্রাম জুড়ে দিতে পারো — যেগুলো নেটওয়ার্ক ট্রাফিক মনিটর করবে, ফায়ারওয়াল চেক করবে, পারফরম্যান্স ট্র্যাক করবে।
+কীভাবে কাজ করে:
+1. C বা restricted BPF এ একটি প্রোগ্রাম লিখুন
+2. **Verifier** যাচাই করে যে এটি নিরাপদ (কোনো crash নেই, কোনো loop নেই)
+3. **JIT compiler** এটিকে native machine code তে রূপান্তরিত করে
+4. প্রোগ্রামটি একটি kernel hook এ সংযুক্ত করা হয়
 
-## Step 2: হুক পয়েন্ট
+eBPF প্রোগ্রাম **kernel speed** এ চলে — userspace এ context switch হয় না।
 
-eBPF প্রোগ্রামগুলো বিভিন্ন **হুক পয়েন্টে** আটকানো যায়। নেটওয়ার্কিং-এ সবচেয়ে বেশি ব্যবহৃত হুক পয়েন্টগুলো:
+## Step 2: Hook Points
 
-- **XDP (eXpress Data Path)**: প্যাকেট নেটওয়ার্ক কার্ডে আসার সাথে সাথেই প্রসেস হয় — খুব দ্রুত
-- **TC (Traffic Control)**: প্যাকেট ফায়ারওয়াল বা ক্লাসিফাই করার জন্য
-- **Socket লেভেল**: TCP/UDP সকেটে ডেটা পাঠানো-গ্রহণ করার সময়
-- **Kprobe/Tracepoint**: কার্নেল ফাংশন কল ট্র্যাক করার জন্য
+eBPF প্রোগ্রাম নির্দিষ্ট **kernel hook points** এ সংযুক্ত হয়:
 
-XDP সবচেয়ে দ্রুত কারণ এটা প্যাকেট প্রসেস করে যেন সময়েই, আগে নয়।
+• **XDP (eXpress Data Path)** — প্রাথমিক hook, kernel network stack এর আগে চলে। Filtering/routing এর জন্য সর্বোচ্চ পারফরম্যান্স।
+• **TC (Traffic Control)** — traffic control layer এ চলে, XDP এর পরে কিন্তু socket layer এর আগে।
+• **Socket hooks** — application-aware processing এর জন্য socket level এ চলে।
 
-## Step 3: eBPF ম্যাপ
+যত আগে hook, তত কম kernel code traverse হয় — XDP সবচেয়ে দ্রুত।
 
-eBPF প্রোগ্রামগুলো ডেটা শেয়ার করতে **eBPF Maps** ব্যবহার করে। এগুলো হলো কার্নেল ও ইউজার-স্পেসের মধ্যে ব্রিজ।
+## Step 3: eBPF Maps
 
-কিছু জনপ্রিয় ম্যাপ টাইপ:
+**eBPF Maps** হলো eBPF প্রোগ্রাম এবং userspace এর মধ্যে শেয়ার করা **key-value store**।
 
-- **Hash Map**: Key-value পেয়ার — যেমন IP ঠিকানা ট্র্যাক করার জন্য
-- **Array Map**: ইন্ডেক্সেড অ্যারে — কাউন্টার রাখার জন্য
-- **Ring Buffer**: ইউজার-স্পেসে ইভেন্ট পাঠানোর জন্য
+এগুলো সক্ষম করে:
+• **Stateful processing** — connection, counter, statistics ট্র্যাক করা
+• **Communication** — প্রোগ্রামগুলো একে অপরের সাথে ডেটা শেয়ার করতে পারে
+• **Userspace access** — userspace tool থেকে map পড়া/আপডেট করা
 
-ধরো তুমি প্রতিটা IP থেকে আসা প্যাকেট গুনতে চাও — তাহলে Hash Map ব্যবহার করো, IP কী হিসেবে এবং কাউন্টার ভ্যালু হিসেবে।
+সাধারণ map টাইপ: **HashMap**, **ArrayMap**, **LPM Trie** (longest prefix match), **Ring Buffer**।
 
-## Step 4: নেটওয়ার্কিং ব্যবহার ক্ষেত্র
+## Step 4: ব্যবহারের ক্ষেত্র
 
-eBPF নেটওয়ার্কিং-এ যেখানে যেখানে ব্যবহৃত হয়:
+eBPF বেশ কয়েকটি প্রধান নেটওয়ার্কিং প্রজেক্টকে চালিত করে:
 
-**লোড ব্যালান্সিং**: Cilium ও CCO দিয়ে Kubernetes নেটওয়ার্কিং — eBPF দিয়ে প্যাকেট রাউটিং করে সরাসরি।
+• **Cilium** — Kubernetes CNI (Container Network Interface) যা eBPF ব্যবহার করে উচ্চ-কার্যক্ষম নেটওয়ার্কিং, load balancing এবং security policy এর জন্য
+• **Falco** — runtime security threat detection যা eBPF ব্যবহার করে syscall activity মনিটর করে
+• **bcc** — BPF Compiler Collection tracing এবং observability এর জন্য (tcpdump, network statistics)
 
-**ফায়ারওয়াল**: XDP দিয়ে DDoS অ্যাটাক ব্লক করা হয় — প্যাকেট এসেই ড্রপ করে দেয়।
-
-**অবজারভেবিলিটি**: প্রতিটা TCP কানেকশন ট্র্যাক করে, লেটেন্সি মাপে, এরর মনিটর করে।
-
-**সার্ভিস মেশ**: Istio ও Linkerd-এর পুরানো সংস্করণে sidecar proxy লাগতো — eBPF সেটা কার্নেল-লেভেলেই করে দেয়, তাই স্পিড বাড়ে।
-
-মূল কথা — eBPF দিয়ে তুমি কার্নেলকে নিজের মতো কাস্টমাইজ করতে পারো, রিবুট ছাড়াই।
+eBPF kernel module এর প্রয়োজনীয়তা দূর করে — প্রোগ্রাম kernel দ্বারা যাচাইকৃত এবং sandboxed থাকে।

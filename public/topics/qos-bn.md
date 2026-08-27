@@ -1,47 +1,47 @@
 ---
 name: QoS
-description: Quality of Service — ট্রাফিক শেপিং, প্রায়োরিটাইজেশন, DSCP
+description: Quality of Service — traffic shaping, prioritization, DSCP
 category: Advanced Networking
 order: 51
 ---
 
-## Step 1: শ্রেণিবিভাগ
+## Step 1: Classification
 
-**শ্রেণিবিভাগ** হলো QoS এর প্রথম ধাপ — ট্রাফিক চিহ্নিত এবং মার্ক করা।
+**Classification** QoS এর প্রথম step — traffic শনাক্ত করা এবং চিহ্নিত করা।
 
-প্যাকেটগুলো এভাবে শ্রেণিবিভাগ করা হয়:
-• **DSCP** (Differentiated Services Code Point) — IP header এর ৬-বিট ফিল্ড
-• **802.1p CoS** (Class of Service) — VLAN tag এর ৩-বিট ফিল্ড
+Packets classify করা হয়:
+• **DSCP** (Differentiated Services Code Point) — IP header এ 6-bit field
+• **802.1p CoS** (Class of Service) — VLAN tag এ 3-bit field
 
-শ্রেণিবিন্যাসকারী এই বিটগুলো পড়ে এবং প্রতিটা প্যাকেটকে একটা ট্রাফিক ক্লাসে বরাদ্দ করে।
+Classifier এই bits পড়ে এবং প্রতিটি packet কে একটি traffic class এ নির্ধারণ করে।
 
-## Step 2: কিউইং
+## Step 2: Queuing
 
-শ্রেণিবিভাগের পর, প্যাকেটগুলো **প্রায়োরিটি কিউতে** রাখা হয়:
+Classification এর পর, packets **priority queues** তে স্থাপন করা হয়:
 
-• **ভয়েস কিউ (EF, DSCP 46)** — স্ট্রিক্ট প্রায়োরিটি, সবচেয়ে কম লেটেন্সি
-• **ভিডিও কিউ (AF41, DSCP 34)** — ওয়েটেড ফেয়ার কিউইং
-• **ডাটা কিউ (BE, DSCP 0)** — বেস্ট এফোর্ট, সবচেয়ে কম প্রায়োরিটি
+• **Voice Queue (EF, DSCP 46)** — strict priority, ন্যূনতম latency
+• **Video Queue (AF41, DSCP 34)** — weighted fair queuing
+• **Data Queue (BE, DSCP 0)** — best effort, ন্যূনতম priority
 
-কিউইং অ্যালগরিদমের মধ্যে আছে **WFQ** (Weighted Fair Queuing), **CBWFQ** (Class-Based WFQ), এবং **LLQ** (Low Latency Queuing)।
+Queuing algorithms এর মধ্যে আছে **WFQ** (Weighted Fair Queuing), **CBWFQ** (Class-Based WFQ), এবং **LLQ** (Low Latency Queuing)।
 
-## Step 3: ট্রাফিক শেপিং
+## Step 3: Traffic Shaping
 
-**ট্রাফিক শেপিং** কongestion রোধ করতে আউটগোয়িং ট্রাফিকের রেট নিয়ন্ত্রণ করে।
+**Traffic Shaping** congestion রোধ করতে বহির্গামী traffic এর rate নিয়ন্ত্রণ করে।
 
-মূল মেকানিজম:
-• **টোকেন বাকেট** — বাকেটের আকার পর্যন্ত বার্স্টের অনুমতি দেয়
-• **লিকি বাকেট** — নির্দিষ্ট রেটে ট্রাফিককে মসৃণ করে
-• **WRED** (Weighted Random Early Detection) — কিউ ভরে যাওয়ার আগেই সক্রিয়ভাবে প্যাকেট ড্রপ করে, কম প্রায়োরিটির ট্রাফিক বেশি ড্রপ করে
+মূল mechanisms:
+• **Token Bucket** — bucket size পর্যন্ত burst অনুমোদন করে
+• **Leaky Bucket** — traffic কে একটি নির্ধারিত rate তে মসৃণ করে
+• **WRED** (Weighted Random Early Detection) — queues পূর্ণ হওয়ার আগেই proactive ভাবে packets drop করে, কম priority traffic drop করাকে পছন্দ করে
 
 ## Step 4: QoS সারসংক্ষেপ
 
-**QoS** নিশ্চিত করে যে সমস্যার সময় গুরুত্বপূর্ণ ট্রাফিক প্রায়োরিটি পায়।
+**QoS** নিশ্চিত করে congestion এর সময় critical traffic priority পায়।
 
-**মূল ধাপগুলো:**
-1. **শ্রেণিবিভাগ** — DSCP/CoS দিয়ে প্যাকেট মার্ক করো
-2. **কিউইং** — প্রায়োরিটি কিউতে রাখো (EF, AF, BE)
-3. **শেপিং** — রেট নিয়ন্ত্রণ করো, congestion রোধ করো
-4. **স্কেডিউলিং** — ভয়েসের জন্য স্ট্রিক্ট প্রায়োরিটি, অন্যদের জন্য ওয়েটেড
+**মূল steps:**
+1. **Classify** — DSCP/CoS দিয়ে packets চিহ্নিত করো
+2. **Queue** — priority queues (EF, AF, BE) তে স্থাপন করো
+3. **Shape** — rates নিয়ন্ত্রণ করো, congestion রোধ করো
+4. **Schedule** — voice এর জন্য strict priority, অন্যদের জন্য weighted
 
-QoS ছাড়া, সব ট্রাফিক সমান আচরণ পায় — ফাইল ট্রান্সফারের সময় ভয়েস কল কষ্ট পাবে।
+QoS ছাড়া, সব traffic সমানভাবে আচরণ করা হয় — file transfers এর সময় voice calls ক্ষতিগ্রস্ত হত।।

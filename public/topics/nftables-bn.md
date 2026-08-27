@@ -5,44 +5,44 @@ category: Linux Core Networking
 order: 38
 ---
 
-## Step 1: nftables টেবিল
+## Step 1: nftables Tables
 
-nftables ফায়ারওয়াল রুলগুলোকে প্রোটোকল ফ্যামিলি অনুযায়ী **টেবিলে** সাজায়:
+nftables firewall rules কে প্রোটোকল family অনুযায়ী **tables** এ সাজায়:
 
-**ip** — IPv4 রুল
-**ip6** — IPv6 রুল
-**inet** — IPv4 এবং IPv6 দুটোই
-**arp** — ARP রুল
+**ip** — IPv4 rules
+**ip6** — IPv6 rules
+**inet** — IPv4 এবং IPv6 উভয়ই
+**arp** — ARP rules
 
-টেবিল হলো চেইনের ধারক। একটা টেবিলেই একটা নির্দিষ্ট প্রোটোকল ফ্যামিলির সব ফায়ারওয়াল রুল থাকতে পারে।
+Tables হলো chains এর container। একটি single table প্রদত্ত প্রোটোকল family এর জন্য আপনার সব firewall rules ধারণ করতে পারে।
 
-## Step 2: চেইন
+## Step 2: Chains
 
-প্রতিটা টেবিলের ভেতরে, **চেইন** নির্ধারণ করে কোন জায়গায় রুলগুলো যাচাই করা হবে:
+প্রতিটি table এর মধ্যে, **chains** নির্ধারণ করে packet flow এ rules কোথায় evaluate করা হবে:
 
-**input** — ফায়ারওয়াল নিজের দিকে আসা প্যাকেট
-**forward** — ফায়ারওয়াল দিয়ে যাওয়া প্যাকেট
-**output** — ফায়ারওয়াল থেকে বের হওয়া প্যাকেট
+**input** — firewall নিজের দিকে আসা packets
+**forward** — firewall এর মধ্য দিয়ে যাওয়া packets
+**output** — firewall থেকে শুরু হওয়া packets
 
-চেইনগুলো **হুকে** (prerouting, input, forward, output, postrouting) সংযুক্ত থাকে, যেগুলো নির্ধারণ করে চেইন কখন চলবে।
+Chains **hooks** (prerouting, input, forward, output, postrouting) এ সংযুক্ত থাকে যা নির্ধারণ করে কখন এগুলো execute হবে।
 
-## Step 3: রুল এবং এক্সপ্রেশন
+## Step 3: Rules এবং Expressions
 
-প্রতিটা চেইনের ভেতরে একটা ক্রমানুসারে সাজানো **রুলের** তালিকা থাকে। প্রতিটা রুলে একটা **ম্যাচ শর্ত** এবং একটা **একশন** থাকে:
+প্রতিটি chain এ একটি ক্রমিক **rules** এর তালিকা থাকে। প্রতিটি rule এ **match conditions** এবং একটি **action** থাকে:
 
-উদাহরণ রুল:
+উদাহরণ rule:
 `tcp dport 22 accept`
 
-এটা TCP প্যাকেট যার port 22 সেগুলো ম্যাচ করে এবং গ্রহণ করে। কোনো রুল ম্যাচ না হলে, চেইনের **ডিফল্ট পলিসি** কাজ করবে।
+এটি port 22 এর TCP packets match করে এবং গ্রহণ করে। কোনো rule match না হলে, chain এর **default policy** প্রয়োগ হয়।
 
-## Step 4: nft বনাম iptables
+## Step 4: nft vs iptables
 
-**nftables** হলো iptables এর আধুনিক উত্তরাধিকারী, এতে কিছু বড় সুবিধা আছে:
+**nftables** হলো iptables এর আধুনিক উত্তরাধিকারী যার মূল সুবিধাগুলো হলো:
 
-**অ্যাটমিক রুলসেট পরিবর্তন** — লক না করেই পুরো রুলসেট বদলানো যায়
-**ভালো পারফরম্যান্স** — অপ্টিমাইজড কার্নেল ব্যাকএন্ড
-**সিম্পলার সিনট্যাক্স** — বেশি পড়ার যোগ্য কনফিগারেশন
-**নেটিভ সেট/ম্যাপ সাপোর্ট** — IP, port, interface দক্ষতার সাথে ম্যাচ করা যায়
-**ইউনিফাইড ফ্রেমওয়ার্ক** — iptables, ip6tables, arptables, ebtables সব বদলে দেয়
+**Atomic ruleset পরিবর্তন** — লকিং ছাড়াই সম্পূর্ণ ruleset প্রতিস্থাপন করা যায়
+**ভালো পারফরম্যান্স** — optimized kernel backend
+**সহজ সিনট্যাক্স** — পড়ার জন্য সহজ configuration
+**Native set/map সমর্থন** — IP, port, interface এর efficient matching
+**Unified framework** — iptables, ip6tables, arptables, ebtables কে প্রতিস্থাপন করে
 
-বেশিরভাগ আধুনিক Linux ডিস্ট্রিবিউশন এখন nftables কে ডিফল্ট ফায়ারওয়াল হিসেবে ব্যবহার করে।
+বেশিরভাগ আধুনিক Linux distribution এখন nftables কে default firewall হিসাবে ব্যবহার করে।

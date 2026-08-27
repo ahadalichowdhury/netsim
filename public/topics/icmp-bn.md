@@ -1,63 +1,79 @@
 ---
-name: "ICMP"
-description: "ICMP প্রোটোকল — ping, traceroute এবং নেটওয়ার্ক ডায়াগনস্টিক।"
+name: ICMP
+description: নেটওয়ার্ক বার্তাবাহক — ping, traceroute, error reporting
+category: Networking Fundamentals
+order: 29
 ---
 
 ## Step 1: ICMP কী?
 
-**ICMP (Internet Control Message Protocol)** হলো একটা নেটওয়ার্ক লেয়ার প্রোটোকল — যেটা দিয়ে নেটওয়ার্ক সমস্যা ডায়াগনস করা হয়।
+**ICMP (Internet Control Message Protocol)** হলো **error reporting** এবং **diagnostics** এর জন্য ব্যবহৃত একটি network-layer protocol।
 
-ICMP ট্রান্সপোর্ট লেয়ারের (TCP/UDP) উপরে কাজ করে না — সরাসরি IP প্যাকেটের ভেতরে থাকে। তবে এটাকে বলা হয় ট্রান্সপোর্ট লেয়ারেরও নয়, নেটওয়ার্ক লেয়ারেরও নয় — একটু আলাদাভাবে কাজ করে।
+TCP বা UDP এর বিপরীতে, ICMP application data পরিবহনের জন্য ব্যবহার করা হয় না। বরং, এটি নেটওয়ার্কের অবস্থা সম্পর্কে প্রতিক্রিয়া প্রদান করে:
+• Destination পৌঁছানো সম্ভব কিনা?
+• কোনো packet বর্জিত হয়েছে কিনা?
+• নেটওয়ার্ক congested কিনা?
 
-সবচেয়ে পরিচিত ব্যবহার হলো **ping** এবং **traceroute**।
+ICMP **Layer 3** এ কাজ করে (সরাসরি IP তে encapsulate) এবং ডেলিভারির জন্য IP ব্যবহার করে — কিন্তু এটি একটি transport protocol নয়।
 
-## Step 2: ICMP হেডার
+## Step 2: ICMP Header
 
-ICMP প্যাকেটের গঠন খুব সিম্পল:
+ICMP মেসেজের একটি সহজ header structure আছে:
 
-```
-| Type (1B) | Code (1B) | Checksum (2B) | ডেটা |
-```
+`Type (8 bits)` — মেসেজের টাইপ চিহ্নিত করে (যেমন, 8 = Echo Request)
+`Code (8 bits)` — টাইপের জন্য অতিরিক্ত বিবরণ প্রদান করে
+`Checksum (16 bits)` — error detection
+`Data` — variable payload (প্রায়ই আসল packet header)
 
-- **Type**: কোন ধরনের ICMP মেসেজ (8 = Echo Request, 0 = Echo Reply)
-- **Code**: Type-এর ভেতরে আরো স্পেসিফিক তথ্য
-- **Checksum**: এরর চেক করার জন্য
-- **ডেটা**: অতিরিক্ত তথ্য
+Type এবং Code ফিল্ড একসাথে ICMP মেসেজের উদ্দেশ্য নির্ধারণ করে।
 
-## Step 3: Echo Request (Ping)
+## Step 3: Echo Request (ping)
 
-তুমি যখন `ping google.com` চালাও, তখন ICMP **Echo Request** (Type 8) প্যাকেট পাঠাও:
+**ping** কমান্ড ICMP **Echo Request** মেসেজ (Type 8, Code 0) পাঠায় connectivity পরীক্ষা করতে।
 
-```
-ping google.com
+যখন আপনি `ping 8.8.8.8` টাইপ করেন:
+• আপনার host destination কে একটি ICMP Echo Request পাঠায়
+• Destination ICMP Echo Reply (Type 0) দিয়ে উত্তর দেয়
+• Round-trip time পরিমাপ করা হয়
 
-Pinging google.com [142.250.190.46] with 32 bytes of data:
-Reply from 142.250.190.46: bytes=32 time=12ms TTL=116
-Reply from 142.250.190.46: bytes=32 time=11ms TTL=116
-```
-
-প্রতিটা রিকোয়েস্টের সাথে একটা **সিকোয়েন্স নম্বর** থাকে যাতে বোঝা যায় কোন রিপ্লাই কোন রিকোয়েস্টের।
+Ping হলো সবচেয়ে সাধারণ ICMP ব্যবহারের ক্ষেত্র — এটি "তুমি কি সেখানে আছো?" এর নেটওয়ার্ক সমতুল্য।
 
 ## Step 4: Echo Reply
 
-সার্ভার যখন Echo Request পায়, সে **Echo Reply** (Type 0) পাঠায়। রিপ্লাইতে আগের ডেটা ফিরিয়ে দেয় এবং কিছু এক্সট্রা তথ্য যোগ করে:
+Destination Echo Request গ্রহণ করে এবং একটি **Echo Reply** (Type 0, Code 0) দিয়ে উত্তর দেয়।
 
-- **TTL (Time to Live)**: প্যাকেট আরো কতগুলো হপ যেতে পারে
-- **RTT (Round Trip Time)**: প্যাকেট যেতে-আসতে কত সময় লাগলো
+উত্তরে request এ পাঠানো একই ডেটা থাকে, যা source কে যাচাই করতে দেয় যে ডেটা অক্ষত ভাবে প্রাপ্ত হয়েছে।
 
-TTL কমে যায় প্রতিটা রাউটার পাস করার সাথে সাথে। শূন্য হলে প্যাকেট ড্রপ হয়ে যায়।
+**Traceroute** এটির উপর ভিত্তি করে incrementing TTL মান সহ packet পাঠায়। প্রতিটি router যেটি TTL 0 এ কমায় সে একটি ICMP **Time Exceeded** মেসেজ (Type 11) পাঠায়, পথ প্রকাশ করে।
 
-## Step 5: এরর মেসেজ
+## Step 5: Error Message
 
-ICMP শুধু ping-এর জন্য নয় — এটা বিভিন্ন নেটওয়ার্ক এরর রিপোর্ট করে:
+যখন packet ডেলিভার করা যায় না, তখন ICMP **error message** তৈরি করে:
 
-- **Type 3 (Destination Unreachable)**: ডেস্টিনেশন পৌঁছানো সম্ভব হচ্ছে না
-  - Code 0: Network Unreachable
-  - Code 1: Host Unreachable
-  - Code 3: Port Unreachable
-- **Type 11 (Time Exceeded)**: TTL শূন্য হয়ে গেছে — এটাই traceroute কাজ করার মূল ভিত্তি
-- **Type 5 (Redirect)**: রাউটার বলছে "আরো ভালো পথ আছে"
+**Type 3 — Destination Unreachable:**
+• Code 0: Network unreachable
+• Code 1: Host unreachable
+• Code 2: Protocol unreachable
+• Code 3: Port unreachable
 
-## Step 6: সারসংক্ষেপ
+**Type 11 — Time Exceeded:**
+• Code 0: TTL transit এ expired (traceroute দ্বারা ব্যবহৃত)
+• Code 1: Fragment reassembly timeout
 
-ICMP হলো ইন্টারনেটের সমস্যা সমাধানকারী। Ping দিয়ে চেক করো কানেকশন আছে কিনা, traceroute দিয়ে দেখো প্যাকেট কোন পথ দিয়ে যাচ্ছে। নেটওয়ার্ক প্রবলেম হলে সবার আগে ping চালাও — অনেক সময় সমস্যার সমাধান হয়ে যায়।
+এই মেসেজগুলো destination এ প্রবেশ ছাড়াই **নেটওয়ার্ক সমস্যা নির্ণয়** করতে সাহায্য করে।
+
+## Step 6: ICMP সারসংক্ষেপ
+
+**মূল ICMP মেসেজ টাইপ:**
+
+`Type 0` — Echo Reply (ping এর উত্তর)
+`Type 8` — Echo Request (ping)
+`Type 3` — Destination Unreachable
+`Type 5` — Redirect (ভালো পথ ব্যবহার করুন)
+`Type 11` — Time Exceeded (TTL expired)
+`Type 13` — Timestamp Request
+
+**ICMP ব্যবহারকারী সাধারণ টুল:**
+• **ping** — Echo Request/Reply (Types 8/0)
+• **traceroute** — Time Exceeded (Type 11) + Echo Reply (Type 0)
+• **path MTU discovery** — "DF set" সহ Unreachable (Type 3, Code 4)

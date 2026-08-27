@@ -1,68 +1,94 @@
 ---
-name: Load Balancing - L4/L7
-description: L4 এবং L7 Load Balancing কীভাবে কাজ করে — অ্যালগরিদম, backend pool, health check সব বাংলায়
+name: Load Balancing
+description: Traffic বণ্টন — L4/L7 balancer, algorithm, health check
+category: Advanced Networking
+order: 42
 ---
-
-# Load Balancing — L4 এবং L7
-
-আজ দেখবো Load Balancing কী, কেন দরকার, এবং L4 আর L7 কীভাবে আলাদা।
 
 ## Step 1: L4 Load Balancing
 
-L4 Load Balancer কাজ করে **Transport Layer**-তে — মানে TCP/UDP লেভেলে। সে IP এড্রেস এবং Port Number দেখে সিদ্ধান্ত নেয়।
+**L4 (Layer 4) Load Balancing** transport layer-এ কাজ করে।
 
-উদাহরণ: তুমি `example.com:80`-তে request পাঠাও। L4 LB শুধু দেখে "ও, এটা port 80 — এটা HTTP traffic" এবং একটা backend server-এ forward করে দেয়।
+এটা শুধু **IP address এবং port number**-র ভিত্তিতে traffic রাউট করে — payload পরীক্ষা করে না।
 
-**বৈশিষ্ট্য:**
-- দ্রুত — প্যাকেটের মধ্যে তাকায় না, শুধু header দেখে
-- Connection-oriented — একটা connection একটাই backend-তে যায়
-- কম রিসোর্স খরচ হয়
+**কিভাবে কাজ করে:**
+• একটা TCP/UDP connection গ্রহণ করে
+• Algorithm-এর ভিত্তিতে একটা backend নির্বাচন করে
+• কাঁচা packet stream ফরওয়ার্ড করে
+
+**সুবিধা:**
+• খুব দ্রুত — প্রতি packet-এ ন্যূনতম প্রসেসিং
+• কম latency — payload পরীক্ষা নেই
+• উচ্চ throughput — লক্ষ লক্ষ connection পরিচালনা করে
+
+L4 content পরীক্ষার প্রয়োজন না এমন সাধারণ, উচ্চ-পরিমাণ traffic বণ্টনের জন্য আদর্শ।
 
 ## Step 2: L7 Load Balancing
 
-L7 Load Balancer কাজ করে **Application Layer**-তে — মানে HTTP, HTTPS, gRPC লেভেলে। সে request-এর **content** দেখে সিদ্ধান্ত নেয়।
+**L7 (Layer 7) Load Balancing** application layer-এ কাজ করে।
 
-উদাহরণ: তুমি `example.com/api/users` এবং `example.com/images/logo.png` — দুটোই same domain, কিন্তু L7 LB দেখে:
+এটা **HTTP header, URL, cookie এবং content** পরীক্ষা করে বুদ্ধিমানী রাউটিং সিদ্ধান্ত নিতে পারে।
 
-- `/api/users` → API Server Pool-এ পাঠায়
-- `/images/logo.png` → CDN/Static Server Pool-এ পাঠায়
+**কিভাবে কাজ করে:**
+• Client TCP connection শেষ করে
+• HTTP request পরীক্ষা করে
+• নিয়মের ভিত্তিতে উপযুক্ত backend-এ রাউট করে
 
-**বৈশিষ্ট্য:**
-- বুদ্ধিমান — URL, header, cookie দেখে
-- SSL termination করতে পারে
-- বেশি রিসোর্স লাগে কিন্তু বেশি flexibility দেয়
+**উদাহরণ নিয়ম:**
+• `/api/*` → Backend API server
+• `/static/*` → CDN বা file server
+• `Host: shop.example.com` → Shopping cart server
 
-## Step 3: Load Balancing Algorithms
+L7 content-এর চেতনা সহ রাউটিং সম্ভব করে কিন্তু deep packet inspection-এর কারণে latency যোগ করে।
 
-Load Balancer কীভাবে বেছে নেয় কোন backend-তে request পাঠাবে:
+## Step 3: Load Balancing Algorithm
 
-- **Round Robin:** একটার পর একটা — প্রথমে Server 1, তারপর Server 2, তারপর Server 3, আবার Server 1
-- **Least Connections:** যেটাতে কম connection আছে, সেটায় পাঠায়
-- **IP Hash:** Client IP-এর hash দিয়ে সিদ্ধান্ত নেয় — একই client সবসময় একই backend-তে যায়
-- **Weighted:** বড় server-কে বেশি load দেয়
+Load balancer প্রতিটি connection কোন backend পাবে তা সিদ্ধান্ত নিতে একটা **algorithm** ব্যবহার করে:
 
-## Step 4: Backend Pool Management
+**Round Robin:**
+• Backendগুলো ক্রমিকভাবে ঘুরে ঘুরে আসে
+• সমান ক্ষমতার server-এর জন্য সাধারণ এবং ন্যায্য
 
-Load Balancer রাখে একটা **backend pool** — মানে একগুচ্ছ backend server। উদাহরণ:
+**Least Connections:**
+• সবচেয়ে কম active connection আছে এমন backend-এ রাউট করে
+• পরিবর্তনশীল request duration-এর জন্য ভালো
 
-```
-Backend Pool:
-├── Server 1: 10.0.0.10:8080
-├── Server 2: 10.0.0.11:8080
-└── Server 3: 10.0.0.12:8080
-```
+**IP Hash:**
+• Client IP hash করে backend নির্ধারণ করে
+• একই client সবসময় একই server-এ যায় (session persistence)
 
-Load Balancer জানে এই তিনটা server আছে এবং প্রত্যেকের health চেক করে। নতুন server যোগ করতে পারো, পুরোনো বাদ দিতে পারো — traffic ব্যাহত হয় না।
+**Weighted:**
+• Backend-এর weight নির্ধারিত থাকে (যেমন 3:1)
+• শক্তিশালী server বেশি traffic পায়
 
-## Step 5: Health Checks
+## Step 4: Backend Pool পরিচালনা
 
-Load Balancer নিয়মিতভাবে backend serverদের **health check** করে:
+Backendগুলো load balancer দ্বারা পরিচালিত একটা **server pool**-এ সাজানো থাকে।
 
-- প্রতি কিছু সেকেন্ডে ping বা HTTP request পাঠায়
-- যদি server respond না করে → **unhealthy** চিহ্নিত করে
-- Unhealthy server-তে traffic পাঠায় না
-- Server আবার respond করলে → **healthy** হয়ে যায়, আবার traffic পায়
+**মূল ধারণা:**
+• **Weighting** — Server capacity-র ভিত্তিতে সমানুপাতিকভাবে traffic বরাদ্দ করা
+• **Draining** — Active connection না ফেলে দিয়ে সুন্দরভাবে server-কে rotation থেকে সরিয়ে নেওয়া
+• **Connection limits** — প্রতি backend-তে concurrent connection-এর সীমা নির্ধারণ
+• **Session persistence** — Sticky session নিশ্চিত করে একই client একই backend-তে যায়
 
-এটা automatic — মানুষের কোনো intervention লাগে না।
+যখন একটা backend draining থাকে, নতুন connection অন্যত্র যায় যখন বিদ্যমানগুলো সম্পন্ন হয়। এটা zero-downtime maintenance সম্ভব করে।
 
-**সারসংক্ষেপ:** L4 দ্রুত ও সহজ, L7 বুদ্ধিমান ও flexible। দুটোই backend serverদের মধ্যে load ভাগ করে এবং নিশ্চিত করে যে কোনো একটা server down হলে সব বন্ধ হয়ে যায় না।
+## Step 5: Health Check
+
+Load balancer **health check** ব্যবহার করে backend health ধারাবাহিকভাবে পর্যবেক্ষণ করে।
+
+**সক্রিয় probes:**
+• **TCP check** — আমরা কি TCP connection স্থাপন করতে পারি?
+• **HTTP check** — `GET /health` কি 200 OK রিটার্ন করে?
+• Custom check — নির্দিষ্ট endpoint বা response যাচাই করা
+
+**নিষ্ক্রিয় monitoring:**
+• প্রকৃত traffic থেকে error rate ট্র্যাক করা
+• ধীর response বা timeout সনাক্ত করা
+
+**Failover:**
+• যদি backend check-এ ব্যর্থ হয় → **pool থেকে সরিয়ে দেওয়া হয়**
+• Traffic সুস্থ backend-এ পুনর্বিতরণ করা হয়
+• যখন health ফিরে আসে → **স্বয়ংক্রিয়ভাবে যোগ করা হয়**
+
+Health check load balancer-কে ব্যর্থ বা overloaded server-তে traffic পাঠানো থেকে বিরত রাখে।

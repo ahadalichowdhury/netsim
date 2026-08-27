@@ -1,48 +1,72 @@
 ---
-name: BGP (বর্ডার গেটওয়ে প্রোটোকল)
-description: ইন্টারনেট রুটিং প্রোটোকল — কীভাবে AS-এর মধ্যে রুটিং তথ্য বিনিময় হয়
+name: BGP
+description: ইন্টারনেটের routing protocol — autonomous system কীভাবে route exchange করে
+category: Advanced Networking
+order: 39
 ---
 
-## Step 1: eBGP — দুটো AS-এর মধ্যে যোগাযোগ
+## Step 1: eBGP — ASes-এর মধ্যে
 
-BGP হলো ইন্টারনেটের রুটিং প্রোটোকল। প্রতিটা ISP (যেমন Banglalink, Grameenphone) একটা Autonomous System (AS)। eBGP দিয়ে দুটো ভিন্ন AS-এর মধ্যে রুটিং তথ্য আদান-প্রদান হয়।
+**eBGP (External BGP)** হলো সেই protocol যা **বিভিন্ন Autonomous System-এর মধ্যে** routing তথ্য exchange করতে ব্যবহৃত হয়।
 
-ধরো, AS100 (তোমার ISP) এবং AS200 (অন্য একটা ISP) সরাসরি যুক্ত। eBGP দিয়ে তারা একে অপরকে বলে "আমার কাছে এই নেটওয়ার্কগুলো আছে।"
+প্রতিটি AS হলো একটি একক administrative domain (ISP, enterprise, cloud provider) অধীনে একটি নেটওয়ার্ক। eBGP peers সরাসরি সংযুক্ত link-এ বসে এবং তাদের prefix বিজ্ঞাপন দেয়।
 
-## Step 2: iBGP — একটা AS-র ভেতরে রুটিং
+**মূল কথা:**
+• উভয় পাশে ভিন্ন AS number
+• সরাসরি সংযুক্ত interface (ডিফল্টে TTL=1)
+• ISP boundary-র মধ্যে route শেয়ার করতে ব্যবহৃত হয়
 
-একটা AS-র ভেতরে অনেকগুলো রাউটার থাকে। iBGP দিয়ে এই রাউটারগুলো একে অপরকে BGP রুট তথ্য শেয়ার করে। যেমন, তোমার ISP-র ঢাকা অফিসের রাউটার এবং চট্টগ্রাম অফিসের রাউটার iBGP দিয়ে যুক্ত।
+## Step 2: iBGP — AS-এর ভেতরে
 
-iBGP-তে রুট তথ্য এক AS-র ভেতরে ঘুরে ঘুরে ছড়িয়ে পড়ে।
+**iBGP (Internal BGP)** eBGP-এর মাধ্যমে শেখা route **একটি একক Autonomous System-এর ভেতরে** বিতরণ করে।
 
-## Step 3: AS_PATH — রুটের পথ চিহ্নিতকরণ
+যখন AS 100 eBGP-এর মাধ্যমে AS 300 থেকে একটি route শেখে, iBGP সেই route AS 100-এর ভেতরে সব router-এ ছড়িয়ে দেয় (AS 200 সহ)।
 
-BGP-তে প্রতিটা রুটের সাথে একটা AS_PATH attribute থাকে। এটা দেখায় এই রুটটা কোন কোন AS দিয়ে গেছে।
+**মূল কথা:**
+• উভয় পাশে একই AS number
+• Route reflector full-mesh প্রয়োজনীয়তা কমায়
+• নিশ্চিত করে যে অভ্যন্তরীণ routerগুলো বাইরের route জানে
 
-উদাহরণ: যদি তুমি 8.8.8.8 (Google DNS) এর দিকে traffic পাঠাও, AS_PATH দেখতে এরকম হতে পারে:
-```
-AS_PATH: [AS200, AS15169]
-```
+## Step 3: AS_PATH Attribute
 
-মানে traffic প্রথমে AS200 দিয়ে গেছে, তারপর Google-এর AS15169-এ পৌঁছেছে। BGP সবসময় সবচেয়ে ছোট পথ বেছে নেয়।
+**AS_PATH** হলো একটি বাধ্যতামূলক BGP attribute যা একটি route যেসব AS দিয়ে গেছে তার তালিকা দেয়।
 
-## Step 4: BGP পাথ সিলেকশন — কোন রুট বেছে নেবে
+`AS_PATH: [AS300, AS100, AS200]`
 
-BGP-তে একটা destination-এর জন্য অনেকগুলো রুট থাকতে পারে। BGP কোনটা বেছে নেবে, সেটা নির্ধারণ করে কিছু নিয়ম:
+এটি দুটি উদ্দেশ্য পূরণ করে:
+**1. Loop prevention** — যদি একটি router তার নিজের AS path-এ দেখে, তাহলে route প্রত্যাখ্যান করে।
+**2. Path selection** — ছোট AS_PATH বেশি পছন্দযোগ্য (কম hop count)।
 
-1. **Local Preference** — সবচেয়ে বেশি প্রাধান্য পায়
-2. **AS_PATH** — যত ছোট, তত ভালো
-3. **MED (Multi-Exit Discriminator)** — বাইরের রাউটারকে বলে কোন পথ বেছে নিতে হবে
-4. **eBGP over iBGP** — eBGP-র রুট iBGP-র চেয়ে বেশি প্রাধান্য পায়
-5. **Lowest IGP Metric** — কাছের নেক্সট-হপ বেছে নেয়
+BGP একটি **path-vector** protocol — এটি পুরো AS path বহন করে, শুধুমাত্র একটি distance metric নয়।
 
-## Step 5: BGP সামারি — সংক্ষিপ্ত বিবরণ
+## Step 4: BGP Path Selection
 
-BGP হলো ইন্টারনেটের মূল রুটিং প্রোটোকল। এটা ব্যবহার করে:
+BGP একটি **decision process** ব্যবহার করে সেরা route নির্বাচন করে যাতে একাধিক attribute থাকে, ক্রমানুসারে মূল্যায়ন করা হয়:
 
-- **eBGP:** ভিন্ন AS-এর মধ্যে রুটিং তথ্য আদান-প্রদান
-- **iBGP:** একটা AS-র ভেতরে রুটিং তথ্য ছড়িয়ে দেওয়া
-- **AS_PATH:** রুটের পথ ট্র্যাক করা
-- **পাথ সিলেকশন:** সেরা রুট বেছে নেওয়া
+**1. Weight** (Cisco) — স্থানীয় পছন্দ, সর্বোচ্চ জিতে
+**2. Local Preference** — সর্বোচ্চ জিতে
+**3. AS_PATH length** — সবচেয়ে ছোট জিতে
+**4. Origin** — IGP < EGP < Incomplete
+**5. MED (Multi-Exit Discriminator)** — সবচেয়ে কম জিতে
 
-BGP ছাড়া তুমি Google, YouTube, Facebook — কিছুই এক্সেস করতে পারবে না।
+শুধুমাত্র **best path** routing table-এ স্থাপিত হয় এবং peers-কে বিজ্ঞাপিত হয়।
+
+## Step 5: BGP সারসংক্ষেপ
+
+**মূল কথা:** BGP হলো সেই protocol যা ইন্টারনেটকে কাজ করায়।
+
+**দুই ধরন:**
+• **eBGP** — ভিন্ন ASes-এর মধ্যে (ISP peering, customer/provider)
+• **iBGP** — একটি একক AS-এর ভেতরে (route distribution)
+
+**Path attributes:**
+• AS_PATH — loop prevention এবং path length
+• Local Pref — বহিঃগামী path selection
+• MED — প্রবেশ path suggestion
+• Weight — শুধুমাত্র স্থানীয় পছন্দ
+
+**ব্যবহার:**
+• ISP peering এবং transit
+• Enterprise multi-homing
+• Cloud provider connectivity
+• VPN এবং traffic engineering

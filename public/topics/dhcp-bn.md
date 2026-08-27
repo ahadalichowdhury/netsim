@@ -1,96 +1,100 @@
 ---
-name: DHCP (ডিনামিক হোস্ট কনফিগারেশন প্রোটোকল)
-description: DORA প্রক্রিয়া — কীভাবে একটা নতুন কম্পিউটার অটোমেটিক IP পায়
+name: DHCP
+description: Dynamic Host Configuration Protocol - DORA প্রক্রিয়া
+category: Networking Fundamentals
+order: 14
 ---
 
-## Step 1: নতুন PC-র কোনো IP নেই
+## Step 1: নতুন PC বুট হয় — IP address নেই!
 
-ধরো, তুমি একটা নতুন ল্যাপটপ নিয়ে অফিসে এলে। ল্যাপটপটা নেটওয়ার্কে প্লাগ করলে সে চালু হলো। কিন্তু এখনো কোনো IP এড্রেস নেই। ল্যাপটপ জানে না সে কার, সার্ভার কোথায়, গেটওয়ে কি। এখন DHCP কাজে লাগবে।
+একটি একদম নতুন PC একটি **burned-in MAC address** (AA:BB:CC:DD:EE:10) দিয়ে চালু হয় কিন্তো সম্পূর্ণরূপে **কোনো IP configuration নেই**।
 
-## Step 2: DHCP Discover — ব্রডকাস্ট
+IP ছাড়া, এটি নেটওয়ার্কে যোগাযোগ করতে পারে না। এটিকে অবশ্যই স্বয়ংক্রিয়ভাবে একটি পেতে **DHCP DORA** চালাতে হবে।
 
-ল্যাপটপ (DHCP Client) একটা DHCP Discover প্যাকেট তৈরি করে এবং ব্রডকাস্ট করে:
+**দ্রষ্টব্য:** DHCP **default gateway** এবং **DNS server** addressও প্রদান করে। বিস্তারিতের জন্য সেগুলো দেখুন।
 
-- Source IP: 0.0.0.0 (এখনো IP নেই)
-- Destination IP: 255.255.255.255 (ব্রডকাস্ট)
-- Message: "আমার কোনো IP নেই! কেউ আমাকে IP দেবে?"
+**দেখুনও:** Lease database-র বিস্তারিতের জন্য **DHCP Table** টপিক।
 
-সবাই এই প্যাকেটটা পাবে।
+## Step 2: PC DHCP Discover তৈরি করে (broadcast)
 
-## Step 3: Switch প্যাকেটটা ফ্লাড করে
+PC একটি **DHCP Discover** বার্তা গঠন করে — DORA প্রক্রিয়ার সবচেয়ে প্রথম ধাপ।
 
-Switch DHCP Discover প্যাকেট পায়। ডেস্টিনেশন IP 255.255.255.255 — এটা ব্রডকাস্ট। তাই Switch সব পোর্টে প্যাকেটটা পাঠায় — শুধু সেই পোর্ট ছাড়া যে পোর্ট থেকে প্যাকেটটা এসেছে।
+যেহেতু এখনো কোনো IP নেই, source address হলো `0.0.0.0:68`। Destination হলো broadcast address `255.255.255.255:67`, যাতে LAN-এ যেকোনো DHCP server অনুরোধ শুনতে পারে।
 
-## Step 4: DHCP সার্ভার পুল চেক করে
+Ethernet frame-ও broadcast (`FF:FF:FF:FF:FF:FF`)।
 
-নেটওয়ার্কে একটা DHCP সার্ভার আছে। সার্ভার DHCP Discover পায় এবং তার IP পুল চেক করে:
+## Step 3: DHCP Discover: PC → Switch
 
-```
-Available IPs:
-192.168.1.100 ✅
-192.168.1.101 ✅
-192.168.1.102 ✅
-...
-```
+DHCP Discover frame PC-A থেকে বের হয়ে **link-new**-তে Switch-এ পৌঁছায়।
 
-সার্ভার দেখে 192.168.1.100 এই IP এখনো ফাঁকা আছে।
+Frameটি একটি **broadcast** — switch এটিকে অন্য সব পোর্টে flood করবে।
 
-## Step 5: DHCP Offer — IP অফার
+## Step 4: Switch DHCP Server-তে flood করে
 
-সার্ভার একটা DHCP Offer প্যাকেট তৈরি করে:
+Switch broadcast Discover পায় এবং source বাদে সব পোর্টে **flood** করে।
 
-- Offered IP: 192.168.1.100
-- Subnet Mask: 255.255.255.0
-- Gateway: 192.168.1.1
-- DNS Server: 8.8.8.8
-- Lease Time: 86400 সেকেন্ড (24 ঘণ্টা)
+DHCP Server **link-dhcp**-তে বার্তা পায় এবং অনুরোধ প্রসেস করতে শুরু করে।
 
-সার্ভার বলে: "তোমাকে IP দিতে পারি — 192.168.1.100। এটা 24 ঘণ্টার জন্য তোমার।"
+## Step 5: DHCP Server IP pool চেক করে
 
-## Step 6: সার্ভার DHCP Offer পাঠায়
+DHCP Server তার **address pool** পরীক্ষা করে এবং একটি উপলব্ধ IP নির্বাচন করে: `192.168.1.100`।
 
-DHCP সার্ভার Offer প্যাকেট পাঠায়। এই প্যাকেটটা DHCP Client-এর ম্যাক এড্রেস `FF:FF:FF:FF:FF:FF` (ব্রডকাস্ট) এ যায় কারণ ক্লায়েন্টের কাছে এখনো IP নেই।
+এটি নতুন PC-র MAC address-এর জন্য এই address সংরক্ষণ করে এবং lease-কে **"offered"** হিসেবে চিহ্নিত করে — client-র নিশ্চিতকরণের অপেক্ষায়।
 
-## Step 7: Switch Offer প্যাকেট ফরোয়ার্ড করে
+## Step 6: Server DHCP Offer তৈরি করে
 
-Switch Offer প্যাকেট পায় এবং সব ক্লায়েন্টের দিকে পাঠায়। তবে শুধু সেই ক্লায়েন্টই Offer গ্রহণ করবে যার MAC Address ম্যাচ করবে।
+Server একটি **DHCP Offer** উত্তর তৈরি করে যাতে অন্তর্ভুক্ত:
+• Offered IP: `192.168.1.100`
+• Subnet Mask: `255.255.255.0`
+• Default Gateway: `192.168.1.1`
+• DNS Server: `8.8.8.8`
+• Lease Time: `86400 sec (24h)`
 
-## Step 8: ক্লায়েন্ট DHCP Request পাঠায়
+Offer broadcast হিসেবে ঠিকানাযুক্ত যাতে PC (যার এখনো IP নেই) এটি পেতে পারে।
 
-ক্লায়েন্ট Offer পায় এবং সিদ্ধান্ত নেয় যে সে এই IP গ্রহণ করতে চায়। তাই সে একটা DHCP Request প্যাকেট ব্রডকাস্ট করে:
+## Step 7: DHCP Offer: Server → Switch
 
-- Message: "আমি 192.168.1.100 IP নিতে চাই!"
-- Server Identifier: DHCP সার্ভারের IP
+DHCP Server Offer frame **link-dhcp** দিয়ে Switch-এ পাঠায়।
 
-সবাই এই প্যাকেটটা পাবে, কিন্তু শুধু DHCP সার্ভারই বুঝবে এটা তাকেই বলা হয়েছে।
+Frame broadcast যাতে IP-হীন PC এটি নিতে পারে।
 
-## Step 9: সার্ভার DHCP Ack পাঠায়
+## Step 8: Switch Offer PC-তে forward করে
 
-DHCP সার্ভার Request পায় এবং নিশ্চিত করে যে IP এখনো ফাঁকা আছে। তারপর সে একটা DHCP Acknowledgement (ACK) প্যাকেট পাঠায়:
+Switch broadcast Offer সব পোর্টে forward করে। নতুন PC এটি পায় এবং এখন জানে একটি IP উপলব্ধ।
 
-- Message: "ঠিক আছে! 192.168.1.100 তোমার।"
-- Lease Time: 86400 সেকেন্ড
-- Gateway: 192.168.1.1
-- DNS: 8.8.8.8
+PC offered IP নোট করে এবং তার উত্তর প্রস্তুত করে।
 
-## Step 10: ক্লায়েন্ট IP কনফিগার করে
+## Step 9: PC DHCP Request পাঠায় (broadcast)
 
-ক্লায়েন্ট ACK পায় এবং তার নেটওয়ার্ক ইন্টারফেস কনফিগার করে:
+PC একটি **DHCP Request** পাঠায় — এখনো broadcast — offered IP `192.168.1.100` গ্রহণ করে।
 
-- IP Address: 192.168.1.100
-- Subnet Mask: 255.255.255.0
-- Default Gateway: 192.168.1.1
-- DNS Server: 8.8.8.8
+এই broadcast দুটি উদ্দেশ্য পূরণ করে:
+1. নির্বাচিত Server-কে বলে: "আমি আপনার offer গ্রহণ করি"
+2. অন্য যেকোনো DHCP Server-কে বলে: "আপনার offer মুছুন — আমি অন্যকে বেছে নিলাম"
 
-এখন ল্যাপটপটা নেটওয়ার্কে যুক্ত!
+## Step 10: Server DHCP Ack পাঠায়
 
-## Step 11: DORA সম্পূর্ণ
+DHCP Server Request পায় এবং একটি **DHCP Acknowledge** পাঠায় — DORA-র চূড়ান্ত ধাপ।
 
-DHCP-র পুরো প্রক্রিয়াকে DORA বলে:
+ACK নিশ্চিত করে যে lease **আনুষ্ঠানিকভাবে প্রদান করা হয়েছে**। Server তার টেবিলে IP-কে "leased" হিসেবে চিহ্নিত করে।
 
-1. **D**iscover — ক্লায়েন্ট ব্রডকাস্ট করে
-2. **O**ffer — সার্ভার IP অফার দেয়
-3. **R**equest — ক্লায়েন্ট গ্রহণ করতে চায়
-4. **A**cknowledge — সার্ভার নিশ্চিত করে
+## Step 11: PC network interface কনফিগার করে
 
-DORA ছাড়া নতুন ডিভাইস নেটওয়ার্কে যোগ দিতে পারবে না।
+PC ACK পায় এবং তার NIC-তে **configuration প্রয়োগ করে**:
+• IP Address: `192.168.1.100`
+• Subnet Mask: `255.255.255.0`
+• Default Gateway: `192.168.1.1`
+• DNS Server: `8.8.8.8`
+• Lease Duration: `24 hours`
+
+Interface চালু হয় — PC এখন সম্পূর্ণরূপে কনফিগার করা।
+
+## Step 12: DORA প্রক্রিয়া সম্পূর্ণ!
+
+সম্পূর্ণ **DORA** cycle সমাপ্ত:
+
+**D**iscover → **O**ffer → **R**equest → **A**cknowledge
+
+PC-র এখন একটি বৈধ IP address, subnet mask, gateway এবং DNS server আছে। এটি নেটওয়ার্কে যোগাযোগ করতে পারে।
+
+DHCP Server-র lease table active lease দেখায় যার সাথে একটি running timer আছে। যখন lease মেয়াদোত্তীর্ণ হয়, PC-কে নবীকরণ করতে হবে — নাহলে IP pool-এ ফিরে যায়।

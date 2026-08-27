@@ -1,88 +1,88 @@
 ---
 name: NAT
-description: Network Address Translation — প্রাইভেট IP থেকে পাবলিক IP তে রূপান্তর
+description: Network Address Translation — প্রাইভেট থেকে পাবলিক IP ম্যাপিং
 category: Networking Fundamentals
 order: 18
 ---
 
 ## Step 1: PC-1 ইন্টারনেটে যেতে চাইছে
 
-PC-1 (192.168.1.10) ইন্টারনেটে একটা Web Server `93.184.216.34` তে পৌঁছাতে চাইছে।
+PC-1 (192.168.1.10) ইন্টারনেটে একটি Web Server `93.184.216.34` তে পৌঁছাতে চাইছে।
 
-PC-1 একটা **প্রাইভেট IP address** ব্যবহার করছে (192.168.1.x)। প্রাইভেট IP দিয়ে পাবলিক ইন্টারনেটে রুট করা যায় না — তাই **NAT Router** কে address টা অনুবাদ করতে হবে।
+PC-1 একটি **প্রাইভেট IP address** (192.168.1.x) ব্যবহার করছে। প্রাইভেট IP পাবলিক ইন্টারনেটে রুট করা যায় না — **NAT Router** কে অবশ্যই address টি translate করতে হবে।
 
-**আগে জানুন:** **Default Gateway** (প্যাকেট কিভাবে রাউটারে যায়) এবং **Layer 3** (রাউটার কিভাবে প্যাকেট ফরওয়ার্ড করে) সম্পর্কে জানা ভালো।
+**পূর্বশর্ত:** প্রথমে **Default Gateway** (কীভাবে packet router তে পৌঁছায়) এবং **Layer 3** (কীভাবে router packet forward করে) বুঝে নাও।
 
-## Step 2: PC-1 ডিফল্ট গেটওয়েতে প্যাকেট পাঠায়
+## Step 2: PC-1 default gateway তে packet পাঠায়
 
-PC-1 Web Server এর জন্য একটা প্যাকেট তৈরি করে:
+PC-1 Web Server এর জন্য একটি packet তৈরি করে:
 `Src IP: 192.168.1.10:49152`
 `Dst IP: 93.184.216.34:80`
 
-প্যাকেটটা NAT Router এর কাছে পৌঁছায়, **প্রাইভেট source address** সহ।
+Packet টি NAT Router তে পৌঁছায় **প্রাইভেট source address** সহ অক্ষত।
 
-## Step 3: প্যাকেট: PC-1 → Switch
+## Step 3: Packet: PC-1 → Switch
 
-প্যাকেটটা PC-1 থেকে LAN Switch হয়ে NAT Router এর দিকে যাচ্ছে।
+Packet টি PC-1 থেকে LAN Switch এর মধ্য দিয়ে NAT Router এর দিকে যাচ্ছে।
 
-## Step 4: Switch রাউটারে ফরওয়ার্ড করে
+## Step 4: Switch Router তে forward করে
 
-LAN Switch ফ্রেমটা গ্রহণ করে এবং NAT Router এর LAN interface তে ফরওয়ার্ড করে।
+LAN Switch frame টি গ্রহণ করে এবং তার LAN interface এ NAT Router তে forward করে।
 
-## Step 5: রাউটার NAT অনুবাদ করে
+## Step 5: Router NAT translation সম্পাদনা করে
 
-NAT Router প্যাকেটটা নেয় এবং **প্রাইভেট source IP** কে তার পাবলিক IP তে **অনুবাদ** করে:
+NAT Router packet টি গ্রহণ করে এবং প্রাইভেট source IP কে তার public IP তে **translate** করে:
 `192.168.1.10:49152 → 203.0.113.1:40001`
 
-একটা **NAT mapping entry** তৈরি হয়, যাতে পরে রেসপন্স আবার PC-1 এর কাছে ফেরানো যায়।
+এটি একটি **NAT mapping entry** তৈরি করে যাতে পরে response টি PC-1 তে ফেরত পাঠানো যায়।
 
-## Step 6: অনুবাদ হয়েছে: Router → Web Server
+## Step 6: Translated: Router → Web Server
 
-রাউটার অনুবাদ হওয়া প্যাকেটটা ইন্টারনেটে Web Server এর দিকে ফরওয়ার্ড করে।
+Router translated packet টি ইন্টারনেটে Web Server এর দিকে forward করে।
 `Src: 203.0.113.1:40001`
 `Dst: 93.184.216.34:80`
 
-সার্ভার **পাবলিক IP** দেখবে, প্রাইভেট না।
+Server **পাবলিক IP** দেখবে, প্রাইভেট IP নয়।
 
-## Step 7: Web Server পাবলিক IP তে রেসপন্স দেয়
+## Step 7: Web Server পাবলিক IP তে respond করে
 
-Web Server `203.0.113.1:40001` থেকে প্যাকেট পায় এবং রেসপন্স দেয়:
+Web Server `203.0.113.1:40001` থেকে packet গ্রহণ করে এবং respond করে:
 `Src IP: 93.184.216.34:80`
 `Dst IP: 203.0.113.1:40001`
 
-সার্ভার প্রাইভেট IP 192.168.1.10 সম্পর্কে **কিছুই জানে না** — সে শুধু পাবলিক address দেখে।
+Server এর প্রাইভেট IP 192.168.1.10 সম্পর্কে **কোনো ধারণা নেই** — এটি শুধুমাত্র পাবলিক address দেখে।
 
-## Step 8: রেসপন্স: Web Server → Router
+## Step 8: Response: Web Server → Router
 
-Web Server তার রেসপন্স NAT Router এর পাবলিক IP তে পাঠায়।
+Web Server তার response NAT Router এর পাবলিক IP তে পাঠায়।
 
-## Step 9: রাউটার ডেস্টিনেশন আবার অনুবাদ করে
+## Step 9: Router destination আবার translate করে
 
-NAT Router রেসপন্স পায় এবং mapping খুঁজে বের করে:
+NAT Router response গ্রহণ করে এবং mapping খুঁজে দেখে:
 `203.0.113.1:40001 → 192.168.1.10:49152`
 
-সে ডেস্টিনেশনকে **আসল প্রাইভেট IP** দিয়ে বদলে দেয় এবং প্যাকেটটা PC-1 এর দিকে ফরওয়ার্ড করে।
+এটি destination কে **মূল প্রাইভেট IP** দিয়ে প্রতিস্থাপন করে এবং packet টি PC-1 তে forward করে।
 
-## Step 10: অনুবাদ হয়েছে: Router → Switch
+## Step 10: Translated: Router → Switch
 
-রাউটার অনুবাদ হওয়া রেসপন্সটা LAN Switch এ পাঠায়।
+Router translated response টি LAN Switch তে forward করে।
 `Dst: 192.168.1.10:49152`
 
-## Step 11: Switch PC-1 এ ডেলিভার করে
+## Step 11: Switch PC-1 তে পৌঁছায়
 
-LAN Switch ডেস্টিনেশন MAC খুঁজে রেসপন্স ফ্রেমটা PC-1 এ ডেলিভার করে।
+LAN Switch destination MAC খুঁজে দেখে এবং response frame টি PC-1 তে পৌঁছায়।
 
-## Step 12: NAT সম্পূর্ণ!
+## Step 12: NAT সম্পন্ন!
 
-**মূল কথা:** NAT **প্রাইভেট IP কে পাবলিক IP** তে এবং আবার পাবলিক থেকে প্রাইভেটে অনুবাদ করে, যাতে অনেকগুলো ডিভাইস একটা পাবলিক address শেয়ার করতে পারে।
+**মূল কথা:** NAT **প্রাইভেট IP কে পাবলিক IP তে** এবং বিপরীতে translate করে, যাতে অনেকগুলো device একটি পাবলিক address ভাগ করে ব্যবহার করতে পারে।
 
-কিভাবে কাজ করেছে:
-1. PC-1 **প্রাইভেট source IP** দিয়ে পাঠিয়েছে
-2. Switch রাউটারে ফরওয়ার্ড করেছে
-3. রাউটার **source** কে তার পাবলিক IP + নতুন port দিয়ে বদলে দিয়েছে
-4. রাউটার একটা **mapping রেকর্ড** করেছে (প্রাইভেট ↔ পাবলিক)
-5. সার্ভার **পাবলিক IP** তে রেসপন্স দিয়েছে
-6. রাউটার **mapping খুঁজে** ডেস্টিনেশন বদলে দিয়েছে
-7. Switch PC-1 এ ডেলিভার করেছে
+কীভাবে কাজ করেছিল:
+1. PC-1 **প্রাইভেট source IP** সহ পাঠিয়েছিল
+2. Switch Router তে forward করেছিল
+3. Router **source কে প্রতিস্থাপন** করেছিল তার public IP + নতুন port দিয়ে
+4. Router একটি **mapping লিপিবদ্ধ** করেছিল (প্রাইভেট ↔ পাবলিক)
+5. Server **পাবলিক IP** তে respond করেছিল
+6. Router **mapping খুঁজে** destination প্রতিস্থাপন করেছিল
+7. Switch PC-1 তে পৌঁছিয়েছিল
 
-এভাবে পাবলিক IPv4 address বাঁচায় — NAT এর পেছনে একটা পাবলিক IP দিয়ে শত শত ডিভাইস সার্ভিস পায়।
+এটি পাবলিক IPv4 address সংরক্ষণ করে — NAT এর পেছনে একটি পাবলিক IP শত শত device কে সেবা দিতে পারে।

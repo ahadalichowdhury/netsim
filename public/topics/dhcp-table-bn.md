@@ -1,72 +1,81 @@
 ---
-name: DHCP লিজ টেবিল
-description: DHCP লিজ এন্ট্রি — কীভাবে IP বরাদ্দ থাকে এবং কীভাবে লিজ পরিচালনা করবে
+name: DHCP Lease Table
+description: Active IP leases — কে কোন address এবং কতক্ষরা ব্যবহার করছে
+category: Components
+order: 6
 ---
 
-## Step 1: DHCP টেবিল কি?
+## Step 1: DHCP Table কী?
 
-DHCP টেবিল হলো DHCP সার্ভারের একটা ডাটাবেস যেখানে সবার IP লিজ তথ্য রাখা হয়। যখন কোনো কম্পিউটার IP পায়, তখন সার্ভার একটা এন্ট্রি তৈরি করে। এই টেবিলে থাকে কে কোন IP পেয়েছে, কখন পেয়েছে, এবং কখন মেয়াদ শেষ হবে।
+**DHCP Lease Table** হলো DHCP server দ্বারা পরিচালিত একটি database।
 
-## Step 2: লিজ এন্ট্রির ফিল্ড
+এটি ট্র্যাক করে কোন ডিভাইসগুলোকে কোন IP address বরাদ্দ করা হয়েছে, সাথে MAC address, hostname এবং lease expiry time-এর মতু গুরুত্বপূর্ণ metadata।
 
-প্রতিটা লিজ এন্ট্রিতে কিছু গুরুত্বপূর্ণ তথ্য থাকে:
+এটিকে একটি **guest registry** হিসেবে ভাবুন — DHCP server প্রতিটি ডিভাইসকে "check in" করে এবং তাদের থাকার বিবরণ রেকর্ড করে।
 
-| ফিল্ড | বর্ণনা | উদাহরণ |
-|--------|--------|---------|
-| Client IP | বরাদ্দকৃত IP | 192.168.1.100 |
-| MAC Address | ক্লায়েন্টের ম্যাক | AA:BB:CC:DD:EE:01 |
-| Lease Start | লিজ শুরুর সময় | 2026-08-28 10:00 |
-| Lease End | লিজ শেষের সময় | 2026-08-29 10:00 |
-| Hostname | কম্পিউটারের নাম | PC-Office-1 |
+## Step 2: Lease Entry Fields
 
-## Step 3: লিজ লাইফসাইকেল — কতক্ষণ থাকে
+Lease table-র প্রতিটি এন্ট্রিতে বেশিরভাগ field থাকে:
 
-DHCP লিজ সবসময় থাকে না। এটার একটা লাইফসাইকেল আছে:
+`IP Address` — বরাদ্দ IP (যেমন, 192.168.1.100)
+`MAC Address` — client-র hardware address (যেমন, AA:BB:CC:01:01:01)
+`Hostname` — client-র নাম (যেমন, PC-A)
+`Lease Time` — lease কতক্ষরা বৈধ (যেমন, 8 ঘণ্টা)
+`Expiry` — lease কখন মেয়াদোত্তীর্ণ হবে (countdown timer)
 
-1. **ALLOCATED:** ক্লায়েন্ট IP পায়
-2. **BOUND:** ক্লায়েন্ট IP ব্যবহার করছে
-3. **RENEWING:** মেয়াদ শেষের আগে ক্লায়েন্ট নতুন লিজ চায়
-4. **REBINDING:** Renewal ব্যর্থ হলে আবার চেষ্টা করে
-5. **EXPIRED:** লিজ শেষ — IP ফিরে যায়
+এই field-গুলো server-কে ট্র্যাক করতে সাহায্য করে কে কোন IP ব্যবহার করছে এবং কখন address pool-এ ফিরে যাবে।
 
-সাধারণত 50% সময় পার হলেই Renewal শুরু হয়।
+## Step 3: Lease Lifecycle
 
-## Step 4: IP পুল রেঞ্জ
+DHCP leases **DORA** প্রক্রিয়া দ্বারা সংজ্ঞায়িত lifecycle অনুসরণ করে:
 
-DHCP সার্ভার একটা IP রেঞ্জ থেকে IP দেয়। যেমন:
+**1. Discover** — Client DHCP server খুঁজে broadcast করে
+**2. Offer** — Server pool থেকে একটি উপলব্ধ IP offer করে
+**3. Request** — Client offered IP গ্রহণ করে
+**4. Acknowledge** — Server নিশ্চিত করে এবং lease রেকর্ড করে
 
-```
-IP Pool: 192.168.1.100 - 192.168.1.200
-Total IPs: 101
+নবীকরণ automatically ঘটে:
+• **Lease time-র 50%**-তে — client মূল server-র সাথে নবীকরণ করার চেষ্টা করে
+• **87.5%**-তে — মূল server পৌঁছানো না গেলে client যেকোনো উপলব্ধ server-তে broadcast করে
+• **100%**-তে — lease মেয়াদোত্তীর্ণ হয়, IP pool-এ ফিরে যায়
 
-Assigned: 192.168.1.100, 192.168.1.101, 192.168.1.102
-Available: 192.168.1.103 - 192.168.1.200
-```
+## Step 4: IP Pool Range
 
-তুমি পুলের সাইজ বড় বা ছোট করতে পারো। শুধু মনে রাখো — পুল যত বড়, তত বেশি ডিভাইস IP পাবে।
+DHCP server একটি **address pool** পরিচালনা করে — একটি IP range যা এটি বরাদ্দ করতে পারে।
 
-## Step 5: DHCP লিজ কীভাবে দেখবে
+এই উদাহরণে:
+`Pool: 192.168.1.100 — 192.168.1.200`
+`Total: 101 addresses`
+`In use: 2 (PC-A, PC-B)`
+`Available: 99`
 
-**Linux (ISC DHCP Server):**
-```bash
-cat /var/lib/dhcp/dhcpd.leases
-```
+প্রশাসকরা এটিও কনফিগার করতে পারেন:
+• **Exclusions** — static ডিভাইসের জন্য সংরক্ষিত IP (printer, server)
+• **Reservations** — নির্দিষ্ট MAC address-এ সবসময় একই IP বরাদ্দ করুন
 
-**Windows Server:**
-```powershell
-Get-DhcpServerv4Lease -ScopeId 192.168.1.0
-```
+## Step 5: DHCP Leases দেখা
 
-**রাউটারে (ওয়েব ইন্টারফেস):**
-রাউটারের Admin Panel-এ DHCP Client List দেখো।
+Linux-এ, আপনি DHCP lease table দেখতে এগুলো ব্যবহার করতে পারেন:
 
-## Step 6: DHCP লিজ টেবিল — সারসংক্ষেপ
+`dhcp-lease-list` — DHCP server থেকে active leases দেখায়
+`cat /var/lib/dhcp/dhclient.leases` — Client-side lease file
+`journalctl -u dhcpd` — DHCP server logs
 
-DHCP লিজ টেবিল হলো IP বরাদ্দের হিসাব। এটা ছাড়া:
+একটি router বা নির্দিষ্ট DHCP server-এ, lease table সাধারণত web interface বা CLI-এর মাধ্যমে অ্যাক্সেসযোগ্য।
 
-- কে কোন IP পেয়েছে তা জানা যাবে না
-- IP কনফ্লিক্ট হতে পারে
-- মেয়াদ শেষ হলে IP ফিরে নেওয়া যাবে না
-- নেটওয়ার্ক ম্যানেজমেন্ট কঠিন হবে
+## Step 6: DHCP Table সারসংক্ষেপ
 
-লিজ টেবিল পরিষ্কার রাখো, IP পুল সঠিক রাখো — তাহলে নেটওয়ার্ক স্মুথলি চলবে।
+**মূল কথা:** DHCP Lease Table হলো নেটওয়ার্কে IP address বরাদ্দের **master record**।
+
+কীভাবে কাজ করে:
+1. Clients **DORA** (Discover, Offer, Request, Acknowledge) এর মাধ্যমে IP অনুরোধ করে
+2. Server **address pool** থেকে একটি IP বরাদ্দ করে
+3. Lease entry **MAC, hostname, lease time** সহ রেকর্ড হয়
+4. Clients মেয়াদোত্তীর্ণ হওয়ার আগে তাদের IP রাখতে **renew** করে
+5. মেয়াদোত্তীর্ণ IP pool-এ পুনর্ব্যবহারের জন্য ফিরে যায়
+
+**কেন গুরুত্বপূর্ণ:**
+• IP conflict troubleshoot করা
+• অননুমোদিত ডিভাইস শনাক্ত করা
+• Address space capacity পরিকল্পনা করা
+• নেটওয়ার্কে ডিভাইসের ইতিহাস ট্র্যাক করা

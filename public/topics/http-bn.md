@@ -1,71 +1,113 @@
 ---
-name: "HTTP ও HTTPS"
-description: "HTTP ও HTTPS প্রোটোকল কীভাবে কাজ করে — ওয়েব রিকোয়েস্ট, মেথড, রেসপন্স, TLS।"
+name: HTTP এবং HTTPS
+description: ওয়েব প্রোটোকল — request, response, status code, TLS
+category: Networking Fundamentals
+order: 35
 ---
 
-## Step 1: HTTP রিকোয়েস্ট
+## Step 1: HTTP Request
 
-তুমি যখন ব্রাউজারে কোনো ওয়েবসাইট খোলো, তখন ব্রাউজার **HTTP রিকোয়েস্ট** পাঠায় সার্ভারে। এটা একটা টেক্সট-বেসড মেসেজ — যেটা বলে সার্ভারকে তুমি কী চাও।
+একটি **HTTP Request** client দ্বারা server কে পাঠানো হয়।
 
-```
-GET /index.html HTTP/1.1
-Host: www.example.com
-User-Agent: Mozilla/5.0
-Accept: text/html
-```
+`GET /index.html HTTP/1.1`
+`Host: example.com`
+`User-Agent: Mozilla/5.0`
+`Accept: text/html`
 
-এখানে `GET` হলো মেথড, `/index.html` হলো পাথ, `HTTP/1.1` হলো ভার্সন। বাকি লাইনগুলো হলো **হেডার** — যেগুলো এক্সট্রা তথ্য দেয়।
+**Request এর উপাদান:**
+• **Method** — কোন কাজটি করতে হবে (GET, POST, ইত্যাদি)
+• **Path** — resource URL (/index.html)
+• **Version** — HTTP version (HTTP/1.1, HTTP/2)
+• **Headers** — metadata (Host, Accept, Authorization)
+• **Body** — data payload (POST/PUT এর জন্য)
 
-## Step 2: HTTP মেথড
+**উদাহরণ curl দিয়ে:**
+`curl -v https://example.com/index.html`
 
-HTTP-তে কিছু স্ট্যান্ডার্ড মেথড আছে:
+## Step 2: HTTP Methods
 
-- **GET**: ডেটা রিড করতে চাও — যেমন পেজ লোড করা
-- **POST**: নতুন ডেটা তৈরি করতে চাও — যেমন ফর্ম সাবমিট করা
-- **PUT**: আগের ডেটা আপডেট করতে চাও
-- **DELETE**: ডেটা ডিলিট করতে চাও
-- **PATCH**: আংশিক আপডেট করতে চাও
-- **HEAD**: GET-এর মতো, তবে শুধু হেডার দরকার, বডি নয়
+**HTTP Methods** resource এর উপর কোন কাজটি করতে হবে তা নির্ধারণ করে:
 
-বেশিরভাগ সময় GET আর POST ব্যবহার হয়।
+**GET** — একটি resource পড়ুন (idempotent)
+**POST** — একটি নতুন resource তৈরি করুন
+**PUT** — একটি resource প্রতিস্থাপন/আপডেট করুন (idempotent)
+**PATCH** — আংশিকভাবে একটি resource আপডেট করুন
+**DELETE** — একটি resource মুছুন (idempotent)
+**HEAD** — GET এর মতো কিন্তু body নেই (শুধু headers)
+**OPTIONS** — কোন methods অনুমোদিত (CORS preflight)
 
-## Step 3: HTTP রেসপন্স
+**Idempotent** মানে এটি একাধিকবার কল করলে একবার কল করার সমান ফলাফল হয়।
 
-সার্ভার যখন রিকোয়েস্ট পায়, সে **HTTP রেসপন্স** পাঠায়:
+**REST API উদাহরণ:**
+`GET /api/users` — ব্যবহারকারীদের তালিকা
+`POST /api/users` — ব্যবহারকারী তৈরি করুন
+`PUT /api/users/1` — ব্যবহারকারী 1 আপডেট করুন
+`DELETE /api/users/1` — ব্যবহারকারী 1 মুছুন
 
-```
-HTTP/1.1 200 OK
-Content-Type: text/html
-Content-Length: 1024
+## Step 3: HTTP Response
 
-<html>
-  <body>Hello World!</body>
-</html>
-```
+Server একটি **HTTP Response** ফিরিয়ে পাঠায়:
 
-রেসপন্সেও স্ট্যাটাস কোড থাকে (`200 OK`), হেডার থাকে, এবং শেষে বডি থাকে (আসল ডেটা)।
+`HTTP/1.1 200 OK`
+`Content-Type: text/html`
+`Content-Length: 1234`
 
-## Step 4: HTTPS ও TLS
+`&lt;!DOCTYPE html&gt;`
+`&lt;html&gt;...&lt;/html&gt;`
 
-**HTTPS** হলো HTTP-র নিরাপদ ভার্সন। HTTP-তে ডেটা **plain text**-এ যায় — তাই কেউ মাঝখানে থেকে পড়তে পারে।
+**Response এর উপাদান:**
+• **Status Line** — version + status code + reason phrase
+• **Headers** — metadata (Content-Type, Cache-Control, Set-Cookie)
+• **Body** — আসল কন্টেন্ট (HTML, JSON, image)
 
-HTTPS-তে **TLS (Transport Layer Security)** ব্যবহৃত হয়:
+**সাধারণ headers:**
+• `Content-Type` — body এর MIME type
+• `Cache-Control` — caching directive
+• `Set-Cookie` — browser cookie সেট করুন
+• `Location** — redirect URL (3xx)
 
-1. ক্লায়েন্ট সার্ভারকে বলে "আমি TLS চাই"
-2. সার্ভার একটা **সার্টিফিকেট** পাঠায়
-3. ক্লায়েন্ট সার্টিফিকেট ভেরিফাই করে
-4. দুইপক্ষ একটা **সিক্রেট কী** তৈরি করে
-5. এরপর সব ডেটা এনক্রিপ্টেড যায়
+## Step 4: HTTPS এবং TLS
 
-ব্রাউজারে লক আইকন দেখালে মানে HTTPS কাজ করছে।
+**HTTPS** হলো **TLS (Transport Layer Security)** encryption দিয়ে wrap করা HTTP।
 
-## Step 5: স্ট্যাটাস কোড
+**TLS Handshake:**
+1. Client **ClientHello** পাঠায় (supported cipher, TLS version)
+2. Server **ServerHello** পাঠায় (নির্বাচিত cipher, certificate)
+3. Client trusted CA এর সাথে certificate যাচাই করে
+4. Key exchange — উভয় পক্ষ shared secret তৈরি করে
+5. Encrypted communication শুরু হয়
 
-HTTP রেসপন্সের স্ট্যাটাস কোড বলে কী হয়েছে:
+**TLS কী রক্ষা করে:**
+• **Confidentiality** — encryption eavesdropping প্রতিরোধ করে
+• **Integrity** — MAC tampering প্রতিরোধ করে
+• **Authentication** — certificate server এর পরিচয় যাচাই করে
 
-- **2xx (সফল)**: `200 OK`, `201 Created`, `204 No Content`
-- **3xx (রিডাইরেক্ট)**: `301 Moved Permanently`, `302 Found`
-- **4xx (ক্লায়েন্ট এরর)**: `400 Bad Request`, `403 Forbidden`, `404 Not Found`
-- **5xx (সার্ভার এরর)**: `500 Internal Server Error`, `502 Bad Gateway`, `503 Service Unavailable`
+**TLS চেক করুন:**
+`openssl s_client -connect example.com:443`
+`curl -vI https://example.com`
 
-সবচেয়ে বেশি দেখা যায় `200`, `301`, `404`, `500`। এগুলো না জানলে ওয়েব ডেভেলপমেন্ট কঠিন হয়ে যায়।
+## Step 5: Status Codes
+
+**HTTP Status Codes** request এর ফলাফল নির্দেশ করে:
+
+**2xx Success:**
+• `200 OK` — Request সফল হয়েছে
+• `201 Created** — Resource তৈরি হয়েছে (POST)
+• `204 No Content` — সফল, body নেই (DELETE)
+
+**3xx Redirection:**
+• `301 Moved Permanently` — স্থায়ী redirect
+• `302 Found` — অস্থায়ী redirect
+• `304 Not Modified` — cached version ব্যবহার করুন
+
+**4xx Client Error:**
+• `400 Bad Request` — ভুল syntax
+• `401 Unauthorized` — authentication প্রয়োজন
+• `403 Forbidden` — অনুমতি নেই
+• `404 Not Found` — Resource বিদ্যমান নেই
+
+**5xx Server Error:**
+• `500 Internal Server Error` — সাধারণ server ব্যর্থতা
+• `502 Bad Gateway` — upstream server ত্রুটি
+• `503 Service Unavailable` — server overloaded
+• `504 Gateway Timeout` — upstream timeout

@@ -1,71 +1,78 @@
 ---
-name: ARP (এড্রেস রেজোলিউশন প্রোটোকল)
-description: IP থেকে MAC এড্রেস ম্যাপিং — কীভাবে একটা কম্পিউটার অন্য কম্পিউটারের MAC এড্রেস খুঁজে বের করে
+name: ARP
+description: Address Resolution Protocol - IP থেকে MAC mapping
+category: Networking Fundamentals
+order: 11
 ---
 
-## Step 1: PC-A-র কাছে PC-B-র MAC এড্রেস দরকার
+## Step 1: PC-A-র PC-B-র MAC address দরকার
 
-ধরো, PC-A (192.168.1.10) তোমাকে PC-B (192.168.1.20) এর সাথে যোগাযোগ করতে হবে। কিন্তু এখনো সমস্যা হলো — PC-A-র কাছে PC-B-র MAC এড্রেস নেই। তুমি জানো, লোকাল নেটওয়ার্কে ডেটা পাঠাতে হলে MAC এড্রেস লাগে। তাই PC-A প্রথমে তার ARP টেবিল চেক করে।
+PC-A PC-B-তে (192.168.1.20) ডেটা পাঠাতে চাইছে। **PC-A এই IP কীভাবে জানে?**
 
-## Step 2: ARP টেবিলে কিছু নেই — এখন ARP Request ব্রডকাস্ট যাবে
+• ব্যবহারকারী `ping 192.168.1.20` টাইপ করেছেন (IP সরাসরি দেওয়া হয়েছে)
+• অথবা ব্যবহারকারী `ping pc-b.local` টাইপ করেছেন এবং **DNS** এটিকে 192.168.1.20-তে রিজল্ভ করেছে
 
-PC-A-র ARP টেবিলে এখনো IP 192.168.1.20 এর জন্য কোনো MAC এড্রেস নেই। তাই PC-A একটা ARP Request প্যাকেট তৈরি করে। এই প্যাকেটে থাকবে:
+ব্যবহারকারীর কাজ থেকে প্রথম প্যাকেট পর্যন্ত পুরো যাত্রার জন্য দেখুন **How Networks Start** টপিক।
 
-- Source MAC: `AA:AA:AA:AA:00:01` (PC-A-র MAC)
-- Source IP: 192.168.1.10
-- Destination MAC: `FF:FF:FF:FF:FF:FF` (ব্রডকাস্ট)
-- Destination IP: 192.168.1.20
-- Message: "192.168.1.20 — তোমার MAC এড্রেস কি?"
+এখন PC-A একটি Ethernet frame পাঠাতে চাইছে, কিন্তু এর জন্য PC-B-র **MAC address** দরকার। PC-A তার ARP cache চেক করে — এটি খালি। এটিকে অবশ্যই ARP ব্যবহার করে MAC আবিষ্কার করতে হবে।
 
-## Step 3: ARP Request ব্রডকাস্ট হিসেবে যায়
+**দেখুনও:** ক্যাশ এন্ট্রি এবং টাইমআউটের জন্য **ARP Table** টপিক।
 
-ARP Request প্যাকেট ব্রডকাস্ট এড্রেস `FF:FF:FF:FF:FF:FF` এ পাঠানো হয়। মানে এই প্যাকেটটা নেটওয়ার্কের সবাইকে যায়। যে কম্পিউটারই হোক, সবাই এই প্যাকেটটা পাবে। তবে শুধু যার IP ম্যাচ করবে, সেইটাই রিপ্লাই দেবে।
+## Step 2: PC-A ARP Request তৈরি করে (broadcast)
 
-## Step 4: Switch প্যাকেটটা সব পোর্টে ফ্লাড করে
+PC-A একটি **ARP Request** তৈরি করে:
+`"Who has 192.168.1.20? Tell 192.168.1.10"`
 
-Switch যখন ARP Request প্যাকেটটা পায়, তখন সে দেখে ডেস্টিনেশন MAC `FF:FF:FF:FF:FF:FF`। কারণ এটা ব্রডকাস্ট, Switch সবাইকে প্যাকেটটা পাঠায় — এটাকে বলে flooding। শুধু সেই পোর্ট ছাড়া যে পোর্ট থেকে প্যাকেটটা এসেছে।
+Ethernet destination হলো `FF:FF:FF:FF:FF:FF` — একটি **broadcast** address। নেটওয়ার্কের প্রতিটি ডিভাইস এই frame পাবে।
 
-## Step 5: সবাই ARP Request পায়, কিন্তু শুধু PC-B রিপ্লাই দেবে
+ARP payload-এ **target IP** (যা PC-A চাইছে) এবং **sender MAC** (যাতে PC-B উত্তর দিতে পারে) অন্তর্ভুক্ত থাকে।
 
-নেটওয়ার্কের সবাই (PC-B, PC-C, ডিভাইস সব) ARP Request পায়। তবে প্রত্যেকেই প্যাকেটটা দেখে — Destination IP 192.168.1.20 কি আমার? শুধু PC-B বুঝতে পারে "হ্যাঁ, এই IP তো আমার!" বাকি সবাই প্যাকেটটা ডিসকার্ড করে।
+## Step 3: ARP Request: PC-A → Switch
 
-## Step 6: PC-B ARP Reply পাঠায় (Unicast)
+broadcast ARP Request **PC-A** থেকে **Switch**-এ যায়।
 
-PC-B ARP Request গ্রহণ করে এবং একটা ARP Reply তৈরি করে। এই প্যাকেটে থাকবে:
+Switch port 1-এ frame পায় এবং যেহেতু destination broadcast address, তাই অন্য সব পোর্টে এটি flood করবে।
 
-- Source MAC: `BB:BB:BB:BB:00:02` (PC-B-র MAC)
-- Source IP: 192.168.1.20
-- Destination MAC: `AA:AA:AA:AA:00:01` (PC-A-র MAC)
-- Destination IP: 192.168.1.10
-- Message: "আমার MAC হলো BB:BB:BB:BB:00:02"
+## Step 4: Switch broadcast কে PC-B-তে flood করে
 
-এবার ARP Reply unicast হিসেবে যায় — শুধু PC-A-র কাছে।
+Switch broadcast frame পায় এবং source বাদে সব পোর্টে **flood** করে।
 
-## Step 7: Switch ARP Reply PC-A-র দিকে ফরোয়ার্ড করে
+ARP Request port 2 দিয়ে **PC-B**-তে পৌঁছায়। নেটওয়ার্কের উভয় ডিভাইসই এই broadcast প্রসেস করবে।
 
-Switch ARP Reply প্যাকেট পায় এবং দেখে ডেস্টিনেশন MAC `AA:AA:AA:AA:00:01`। Switch তার MAC টেবিল চেক করে এবং দেখে যে এই MAC এড্রেস কোন পোর্টে আছে। তারপর সে শুধু সেই পোর্টে প্যাকেটটা পাঠায় — এটাই unicast forwarding।
+## Step 5: PC-B তার IP address চেনে
 
-## Step 8: PC-A ARP ক্যাশে আপডেট করে
+PC-B ARP Request পায় এবং **target IP address** (192.168.1.20) চেক করে — এটি PC-B-র নিজের IP সাথে মিলে!
 
-PC-A ARP Reply পায় এবং তার ARP টেবিলে একটা নতুন এন্ট্রি যোগ করে:
+PC-B এখন জানে যে কেউ তার MAC address চাইছে। এটি ARP payload থেকে PC-A-র IP এবং MAC **শিখে** এবং একটি **ARP Reply** পাঠাবে।
 
-| IP Address | MAC Address |
-|------------|-------------|
-| 192.168.1.20 | BB:BB:BB:BB:00:02 |
+## Step 6: PC-B ARP Reply তৈরি করে (unicast)
 
-এখন PC-A জানে যে 192.168.1.20 এর MAC এড্রেস BB:BB:BB:BB:00:02।
+PC-B একটি **ARP Reply** তৈরি করে:
+`"192.168.1.10 is at AA:BB:CC:DD:EE:02"`
 
-## Step 9: এখন PC-A সরাসরি প্যাকেট পাঠাতে পারে
+request-র পরিবর্তে, এটি একটি **unicast** frame — Ethernet destination হলো PC-A-র MAC address, broadcast address নয়। শুধুমাত্র PC-A এটি পাবে।
 
-ARP প্রক্রিয়া শেষ হয়ে গেছে। এখন PC-A তার ডেটা প্যাকেট PC-B কে পাঠাতে পারে। প্রতিবার MAC এড্রেস খুঁজে বের করার দরকার নেই। ARP ক্যাশেতে আগে থেকেই ম্যাপিং আছে।
+## Step 7: ARP Reply: PC-B → Switch
 
-## Step 10: ARP সারসংক্ষেপ
+unicast ARP Reply **PC-B** থেকে **Switch**-এ যায়।
 
-ARP হলো IP এড্রেসকে MAC এড্রেসে রূপান্তর করার প্রোটোকল। প্রতিবার যখন একটা ডিভাইস অন্য ডিভাইসের সাথে যোগাযোগ করতে চায়, ARP ধাপে ধাপে কাজ করে:
+Switch তার টেবিলে destination MAC (PC-A) খুঁজে বের করে এবং সরাসরি forward করবে।
 
-1. ARP Request (ব্রডকাস্ট)
-2. সবাই পায়, শুধু টার্গেট রিপ্লাই দেয়
-3. ARP Reply (ইউনিকাস্ট)
-4. MAC ক্যাশে আপডেট
+## Step 8: Switch unicast কে PC-A-তে forward করে
 
-ARP ছাড়া লোকাল নেটওয়ার্কে যোগাযোগ সম্ভব না।
+Switch ARP Reply পায় এবং destination MAC (AA:BB:CC:DD:EE:01) দেখে।
+
+এটি তার MAC টেবিলে খুঁজে পায় — **port 1 = PC-A**। শুধুমাত্র **PC-A-তে** frame forward করে। Flood কোনোটাই নেই!
+
+## Step 9: PC-A পায় এবং ARP cache আপডেট করে
+
+PC-A ARP Reply পায় এবং এখন জানে:
+`192.168.1.20 → AA:BB:CC:DD:EE:02`
+
+এই এন্ট্রি PC-A-র **ARP cache**-এ ভবিষ্যতের ব্যবহারের জন্য সংরক্ষিত হয়। PC-A এখন আরেকটি ARP request ছাড়াই PC-B-তে ডেটা পাঠাতে পারে!
+
+## Step 10: ARP resolution সম্পূর্ণ!
+
+উভয় ডিভাইসই এখন তাদের ARP cache-এ পরস্পরের MAC address রাখে।
+
+**ARP** IP address কে MAC address-তে রূপান্তরিত করে, যা Layer 2 communication সক্ষম করে। ARP ছাড়া, ডিভাইসগুলো স্থানীয় নেটওয়ার্কে ডেটা পাঠানোর জন্য প্রয়োজনীয় Ethernet frame তৈরি করতে পারত না।
